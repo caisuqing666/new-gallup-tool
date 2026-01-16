@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ResultData } from '@/lib/types';
 import { ScenarioId } from '@/lib/scenarios';
-import { getStopButtonText } from './result-helpers';
+import { getStopButtonText } from '../result-helpers';
 
 interface ActionSectionProps {
   data: ResultData;

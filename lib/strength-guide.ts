@@ -2,7 +2,7 @@
 // 根据用户选择的 TOP5 优势，生成个性化的发挥指南
 
 import { StrengthGuideResult, StrengthGuide, ComboGuide, WeeklyAction } from './types';
-import { StrengthId, ALL_STRENGTHS, getStrengthById } from './gallup-strengths';
+import { StrengthId, getStrengthById } from './gallup-strengths';
 
 // ============================================================
 // 优势发挥指南内容库
@@ -796,7 +796,7 @@ function generateLabelMeaning(
   const topStrengths = strengths.slice(0, 3).map((s) => s.name);
   const domains = Object.entries(domainCount)
     .filter(([_, count]) => count > 0)
-    .map(([domain, count]) => {
+    .map(([domain, _count]) => {
       const domainNames: Record<string, string> = {
         executing: '执行力',
         influencing: '影响力',
@@ -832,8 +832,6 @@ function generateOneLiner(strengthIds: string[]): string {
   }
 
   const topStrength = strengths[0];
-  const domains = Array.from(new Set(strengths.map((s) => s.domain)));
-
   const templates = [
     `你是一个用${topStrength.name}来定义和推动目标的人。`,
     `你的核心能量来自于${topStrength.name}，这让你在关键时刻能够挺身而出。`,
@@ -923,7 +921,6 @@ function generateTensionPairs(strengthIds: string[]): Array<{ strengths: [string
  * 生成本周行动建议
  */
 function generateWeeklyActions(strengthIds: string[]): WeeklyAction[] {
-  const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
   const actions: WeeklyAction[] = [];
   const strengths = strengthIds
     .map((id) => getStrengthById(id as StrengthId))

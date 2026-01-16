@@ -23,7 +23,7 @@ import { motion } from 'framer-motion';
 import { ResultData } from '@/lib/types';
 import { getScenarioConclusion } from '@/lib/scenario-conclusions';
 import { ScenarioId } from '@/lib/scenarios';
-import { getDiagnosisLabel } from './result-helpers';
+import { getDiagnosisLabel } from '../result-helpers';
 
 interface DiagnosisSectionProps {
   data: ResultData;
@@ -172,26 +172,6 @@ function PivotCard({ pivot, execution }: { pivot: string; execution?: string }) 
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-// 系统诊断补充说明
-function DiagnosisSupplement() {
-  return (
-    <div className="mt-6 pt-6 border-t border-border-light space-y-2">
-      <p className="text-sm text-text-secondary">
-        你已经想得足够多了，但并没有更接近决定。
-      </p>
-      <p className="text-sm text-text-secondary">
-        继续靠分析，只会让你更犹豫，而不是更笃定。
-      </p>
-      <p className="text-sm text-text-secondary">
-        你现在最用力的能力，暂时没有在帮你，反而在消耗你。
-      </p>
-      <p className="text-sm text-text-secondary">
-        先收一收，反而会让事情更容易推进。
-      </p>
     </div>
   );
 }

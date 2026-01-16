@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ALL_STRENGTHS, DOMAIN_NAMES } from '@/lib/gallup-strengths';
+import { ALL_STRENGTHS } from '@/lib/gallup-strengths';
 
 interface InputPageProps {
   selectedStrengths: string[];
   confusion: string;
-  onConfusionChange: (confusion: string) => void;
+  onConfusionChange: (_confusion: string) => void;
   onSubmit: () => void;
   onBack?: () => void;
 }

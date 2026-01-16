@@ -31,14 +31,16 @@ export interface PipelineResult {
 }
 
 export class PipelineError extends Error {
-  constructor(
-    public stage: number,
-    public stageName: string,
-    message: string,
-    public cause?: Error
-  ) {
+  public stage: number;
+  public stageName: string;
+  public cause?: Error;
+
+  constructor(stage: number, stageName: string, message: string, cause?: Error) {
     super(`[Stage ${stage}] ${stageName}: ${message}`);
     this.name = 'PipelineError';
+    this.stage = stage;
+    this.stageName = stageName;
+    this.cause = cause;
   }
 }
 
@@ -70,7 +72,7 @@ async function executeWithRetry<T>(
 export async function executePipeline(
   input: RawReport,
   config: PipelineConfig,
-  onProgress?: (progress: PipelineProgress) => void
+  onProgress?: (_progress: PipelineProgress) => void
 ): Promise<PipelineResult> {
   const startedAt = Date.now();
   const stageDurations: Record<string, number> = {};

@@ -6,7 +6,7 @@ import { ResultData } from '@/lib/types';
 interface ResultFooterProps {
   data: ResultData;
   isSaving: boolean;
-  onSave?: (data: ResultData) => void;
+  onSave?: (_data: ResultData) => void;
   onRegenerate?: () => void;
   onHandleSaveClick: () => void;
   onExportPDF?: () => void;

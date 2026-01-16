@@ -7,7 +7,7 @@ import { ScenarioId } from '@/lib/scenarios';
 
 interface ScenarioPageProps {
   selectedScenario?: ScenarioId;
-  onSelectScenario: (scenarioId: ScenarioId) => void;
+  onSelectScenario: (_scenarioId: ScenarioId) => void;
   onNext: () => void;
   onBack?: () => void;
 }

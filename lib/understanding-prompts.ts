@@ -1,5 +1,20 @@
 // 理解层转译 Prompt
 //
+// ⚠️ DEPRECATED - 此文件已弃用
+// ============================================================
+// 所有 prompt 构建已迁移到 lib/prompts.ts 的 buildPrompt() 函数
+// 请使用统一的入口：
+//
+//   import { buildPrompt } from '@/lib/prompts';
+//
+//   const { systemPrompt, userPrompt } = buildPrompt({
+//     pathType: 'understanding-translate',
+//     params: { strengths, confusion, scenarioTitle }
+//   });
+//
+// 此文件保留仅用于向后兼容，未来版本将移除。
+// ============================================================
+//
 // 目标：将用户的困惑文本，转译为「揭示内在控制机制」的结构化理解
 // 核心原则：完全没有"想太多""做太少"，但理解深度高一个维度
 

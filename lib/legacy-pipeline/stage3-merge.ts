@@ -3,7 +3,7 @@
  * 将所有 chunk 的提取结果合并为统一诊断
  */
 
-import type { Stage2Output, Stage3Output, TopStrength } from './types';
+import type { Stage2Output, Stage3Output } from './types';
 import type { AIProviderConfig } from './types';
 
 // ========== Prompt 模板 ==========

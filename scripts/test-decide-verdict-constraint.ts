@@ -5,7 +5,7 @@
  */
 
 import { ProblemType, PROBLEM_TYPE_LABELS } from '../lib/types';
-import { buildDecideSystemPrompt } from '../lib/prompts';
+import { buildPrompt } from '../lib/prompts';
 
 const testProblemType = ProblemType.BOUNDARY_OVERLOAD;
 const testProblemFocus = '如何在多方需求之间确定优先级？';
@@ -20,7 +20,15 @@ console.log('- 问题类型:', testProblemType, PROBLEM_TYPE_LABELS[testProblemT
 console.log('- 问题焦点:', testProblemFocus);
 console.log('');
 
-const decidePrompt = buildDecideSystemPrompt(testProblemType, testProblemFocus);
+const { systemPrompt: decidePrompt } = buildPrompt({
+  pathType: 'breakthrough-decide',
+  params: {
+    strengths: [],
+    confusion: '',
+    problemType: testProblemType,
+    problemFocus: testProblemFocus,
+  },
+});
 
 // ============================================================================
 // 判定力度检查

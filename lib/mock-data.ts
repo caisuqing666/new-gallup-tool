@@ -427,3 +427,16 @@ export function generatePersonalizedMockResult(
   const result = generateResultFromContext(context);
   return { result, context };
 }
+
+
+// ============================================================
+// 从 schema 统一导出（推荐使用）
+// ============================================================
+
+/**
+ * 统一的结果数据类型
+ *
+ * 这是前端页面直接使用的数据结构，包含元信息。
+ * 推荐使用此类型而非直接使用 GallupResult。
+ */
+export type { ResultData } from './schema';

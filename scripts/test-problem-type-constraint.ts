@@ -5,12 +5,13 @@
  * 问题类型：P2 - 边界与责任过载
  */
 
-import { ProblemType, PROBLEM_TYPE_LABELS, PROBLEM_TYPE_DESCRIPTIONS } from '../lib/types';
-import { buildExplainSystemPrompt, buildDecideSystemPrompt } from '../lib/prompts';
+import { ProblemType, PROBLEM_TYPE_LABELS, PROBLEM_TYPE_DESCRIPTIONS, StrengthId } from '../lib/types';
+import { buildPrompt } from '../lib/prompts';
 
 // 测试参数
-const testStrengths = ['和谐', '体谅', '责任'];
+const testStrengths: StrengthId[] = ['harmony', 'empathy', 'responsibility']; // 使用优势 ID
 const testProblemType = ProblemType.BOUNDARY_OVERLOAD; // P2
+const testProblemFocus = '如何在多方需求之间确定优先级？';
 const testScenario = '职场决策';
 const testConfusion = '事情太多，每件都想负责，结果把自己累垮了，不知道怎么拒绝别人';
 
@@ -35,7 +36,15 @@ console.log('【1. Explain 系统 Prompt 验证】');
 console.log('='.repeat(80));
 console.log('');
 
-const explainPrompt = buildExplainSystemPrompt(testProblemType);
+const { systemPrompt: explainPrompt } = buildPrompt({
+  pathType: 'breakthrough-explain',
+  params: {
+    strengths: testStrengths,
+    confusion: testConfusion,
+    problemType: testProblemType,
+    problemFocus: testProblemFocus,
+  },
+});
 console.log(explainPrompt.substring(0, 1000) + '...');
 console.log('');
 console.log('【验证点】');
@@ -50,7 +59,15 @@ console.log('【2. Decide 系统 Prompt 验证】');
 console.log('='.repeat(80));
 console.log('');
 
-const decidePrompt = buildDecideSystemPrompt(testProblemType);
+const { systemPrompt: decidePrompt } = buildPrompt({
+  pathType: 'breakthrough-decide',
+  params: {
+    strengths: testStrengths,
+    confusion: testConfusion,
+    problemType: testProblemType,
+    problemFocus: testProblemFocus,
+  },
+});
 console.log(decidePrompt.substring(0, 1000) + '...');
 console.log('');
 console.log('【验证点】');

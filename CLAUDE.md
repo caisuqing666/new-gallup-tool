@@ -23,16 +23,27 @@ npm run test -- path/to/test.ts  # 运行单个测试文件
 
 # 工具脚本
 npm run check-config     # 检查 AI 配置状态
+npm run pipeline:example # 运行流水线示例
 ```
 
 ## 核心架构
+
+### 四路径系统
+
+应用通过 `PathId` 定义四条用户路径：
+- **report-interpret**: 报告解读（OCR上传，Phase 3）
+- **career-match**: 职业匹配（Phase 2）
+- **breakthrough**: 突破方案（核心功能，场景+优势+困惑）
+- **strength-guide**: 优势发挥指南
+
+每条路径有独立的步骤流程配置（见 `lib/path-config.ts` 的 `PATH_FLOWS`）。
 
 ### 数据流
 
 ```
 用户输入 (场景 + 优势 + 困惑)
     ↓
-API Route (/api/generate)
+API Route (/api/generate, /api/career, /api/guide, /api/interpret)
     ↓
 confusion-parser → 解析问题类型(ProblemType) + 问题焦点(problemFocus)
     ↓
@@ -40,23 +51,32 @@ Context Pack 构建 (strength-profiles + combo-rules)
     ↓
 AI 生成 / Mock 降级
     ↓
-GallupResult { explain: ExplainData, decide: DecideData }
+路径特定结果 (GallupResult / CareerMatchResult / StrengthGuideResult / ReportInterpretResult)
 ```
 
 ### 核心类型 (`lib/types.ts`)
 
+**问题与路径类型**：
 - **ProblemType**: P1(方向不确定) / P2(边界过载) / P3(信息瘫痪) / P4(效率瓶颈)
 - **PathDecision**: DoubleDown / Reframe / Narrow / Exit - 路径判定的四种结果
-- **GallupResult**: `{ explain: ExplainData, decide: DecideData }` - AI 输出的完整结构
+- **PathId**: 四条用户路径的标识符
+
+**结果类型**：
+- **GallupResult**: `{ explain: ExplainData, decide: DecideData }` - 突破方案结果
 - **ExplainData**: 优势行为表现、组合互动、盲区、总结
 - **DecideData**: 路径判定、pathLogic、doMore/doLess、责任边界
+- **CareerMatchResult**: 职业匹配结果（TOP3 + 通用建议）
+- **StrengthGuideResult**: 优势发挥指南（个人化标签 + 每个优势的指南）
+- **ReportInterpretResult**: 报告解读结果（TOP5优势 + 组合解读）
 
 ### 状态管理 (`app/hooks/useStepMachine.ts`)
 
-使用 useReducer 实现的状态机，步骤流程：
-```
-landing → scenario → strengths → input → loading → result
-```
+使用 useReducer 实现的状态机，根据路径动态变化步骤：
+- **breakthrough**: landing → path-selection → scenario → strengths → input → loading → result
+- **career-match**: landing → path-selection → strengths → loading → career-result
+- **strength-guide**: landing → path-selection → strengths → loading → guide-result
+- **report-interpret**: landing → path-selection → ocr-upload → loading → report-result
+
 表单数据持久化到 localStorage，结果不持久化。
 
 ### AI 生成层 (`lib/ai-generate.ts`)
@@ -84,6 +104,8 @@ landing → scenario → strengths → input → loading → result
 | `lib/combo-rules.ts` | 优势组合的陷阱/盲区/放大效应 |
 | `lib/context-generator.ts` | Mock 降级时的结构化内容生成 |
 | `lib/understanding-layer.ts` | 理解层转译（智谱 GLM4） |
+| `lib/path-config.ts` | 四路径流程配置 |
+| `app/hooks/useStepMachine.ts` | 状态机核心逻辑 |
 
 ## 环境配置
 
@@ -103,3 +125,15 @@ ZHIPU_API_KEY=...                 # 理解层转译
 - 组件使用 `'use client'` 标记客户端组件
 - 类型优先从 `lib/types.ts` 导入
 - AI prompt 修改需同步更新 Mock 数据结构
+- 新增路径需在 `lib/path-config.ts` 的 `PATH_FLOWS` 中配置流程
+
+## 多路径开发指南
+
+### 添加新路径时
+
+1. 在 `lib/types.ts` 中添加 `PathId` 类型
+2. 在 `lib/path-config.ts` 的 `PATH_FLOWS` 中配置流程
+3. 在 `app/hooks/useStepMachine.ts` 中添加对应的 action 处理
+4. 在 `app/page.tsx` 中添加对应的步骤渲染
+5. 创建对应的 API Route（`app/api/{path}/route.ts`）
+6. 创建对应的结果页组件（`app/components/*ResultPage.tsx`）

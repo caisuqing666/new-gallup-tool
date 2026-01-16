@@ -8,6 +8,7 @@
  * 问题类型枚举
  * 用于判定"这是一类什么样的困境"
  */
+/* eslint-disable no-unused-vars */
 export enum ProblemType {
   /** 方向迷茫：不知道做什么、换赛道、转型 */
   Direction = 'Direction',
@@ -30,6 +31,7 @@ export enum ProblemType {
   /** 未识别：无法归类 */
   Unknown = 'Unknown',
 }
+/* eslint-enable no-unused-vars */
 
 /**
  * 问题类型描述（供 prompt 使用）
@@ -627,4 +629,3 @@ export function formatConfusionForPrompt(profile: ConfusionProfile): string {
 export function getShortProblemDescription(profile: ConfusionProfile): string {
   return `${PROBLEM_TYPE_DESCRIPTIONS[profile.problemType].split('——')[0]}：${profile.problemFocus}`;
 }
-

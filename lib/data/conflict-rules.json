@@ -1,0 +1,42 @@
+{
+  "domainConflicts": {
+    "executing": ["strategic"],
+    "influencing": ["relationship"],
+    "strategic": ["executing"],
+    "relationship": ["influencing"]
+  },
+  "specificConflicts": [
+    { "strength1": "command", "strength2": "harmony" },
+    { "strength1": "focus", "strength2": "arranger" }
+  ],
+  "demoCases": {
+    "info-overload": {
+      "confusionKeywords": ["信息", "搜集", "信息囤积", "信息涌入", "无法决策", "决策", "焦虑", "太多"],
+      "strengthKeywords": ["input", "analytical"]
+    },
+    "responsibility-overload": {
+      "confusionKeywords": ["责任", "接单", "兜底", "琐事", "扛住", "太多", "接不住", "失控"],
+      "strengthKeywords": ["responsibility"]
+    }
+  },
+  "basementTriggers": {
+    "work-decision": {
+      "domains": ["executing"],
+      "keywords": ["决策", "选择", "优先"]
+    },
+    "efficiency": {
+      "domains": ["executing"],
+      "keywords": ["效率", "累", "透支"]
+    },
+    "communication": {
+      "domains": [],
+      "keywords": ["沟通", "理解", "表达"]
+    },
+    "career-transition": {
+      "domains": [],
+      "keywords": ["转型", "职业", "方向"]
+    }
+  },
+  "version": "1.0.0",
+  "lastUpdated": "2024-01-01"
+}

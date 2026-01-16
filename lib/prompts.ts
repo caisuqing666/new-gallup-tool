@@ -1,12 +1,121 @@
-// 盖洛普优势工具的核心 Prompt
+// 盖洛普优势工具的核心 Prompt（统一入口）
 // 【解释页】和【判定页】完全分离
+//
+// ============================================================
+// 统一 Prompt 构建接口（收敛入口，避免规则分叉）
+// ============================================================
+//
+// 所有 prompt 构建必须通过 buildPrompt() 函数
+// 禁止在其他文件中直接拼接 prompt 字符串
+//
+// 用法：
+//   import { buildPrompt, PromptPathType } from '@/lib/prompts';
+//
+//   const { systemPrompt, userPrompt } = buildPrompt({
+//     pathType: 'breakthrough-explain',
+//     params: { problemType, problemFocus, contextPack, ... }
+//   });
+//
+// ============================================================
 
 import { ProblemType, PROBLEM_TYPE_LABELS, PROBLEM_TYPE_DESCRIPTIONS, PathDecision } from './types';
 import { StrengthId } from './gallup-strengths';
-import { getStrengthProfiles } from './strength-profiles';
+import { getStrengthProfiles, STRENGTH_PROFILES } from './strength-profiles';
 import { getComboEffect } from './combo-rules';
 import { parseConfusion } from './confusion-parser';
 import type { ConfusionUnderstanding } from './understanding-layer';
+
+// ============================================================
+// Prompt 路径类型
+// ============================================================
+
+/**
+ * Prompt 构建路径类型
+ * 用于区分不同业务场景的 prompt 构建需求
+ */
+export type PromptPathType =
+  // 突破方案路径
+  | 'breakthrough-explain'     // 解释页 prompt
+  | 'breakthrough-decide'      // 判定页 prompt
+  | 'breakthrough-problem-lock' // 问题锁定 prompt
+  // 理解层转译
+  | 'understanding-translate'   // 理解层转译 prompt
+  // 报告解读
+  | 'report-interpret';         // 报告解读 prompt
+
+// ============================================================
+// 统一的 Prompt 参数接口
+// ============================================================
+
+/**
+ * 基础参数（所有路径通用）
+ */
+export interface BasePromptParams {
+  /** 优势 ID 列表 */
+  strengths: StrengthId[];
+  /** 用户困惑描述 */
+  confusion: string;
+}
+
+/**
+ * 突破方案路径参数（解释页 & 判定页）
+ */
+export interface BreakthroughPromptParams extends BasePromptParams {
+  /** 问题类型 */
+  problemType: ProblemType;
+  /** 问题焦点 */
+  problemFocus: string;
+  /** Context Pack（可选，内部会自动构建） */
+  contextPack?: ContextPack;
+  /** 理解层转译结果（仅判定页需要） */
+  understanding?: ConfusionUnderstanding;
+}
+
+/**
+ * 问题锁定参数
+ */
+export interface ProblemLockParams extends BasePromptParams {
+  /** 场景标题 */
+  scenarioTitle: string;
+}
+
+/**
+ * 理解层转译参数
+ */
+export interface UnderstandingTranslateParams extends BasePromptParams {
+  /** 场景标题（可选） */
+  scenarioTitle?: string;
+}
+
+/**
+ * 报告解读参数
+ */
+export interface ReportInterpretParams {
+  /** 优势 ID 列表 */
+  strengths: StrengthId[];
+  /** OCR 识别文本（可选） */
+  ocrText?: string;
+}
+
+/**
+ * 统一的 Prompt 参数类型
+ */
+export type PromptConfig =
+  | { pathType: 'breakthrough-explain'; params: BreakthroughPromptParams }
+  | { pathType: 'breakthrough-decide'; params: BreakthroughPromptParams }
+  | { pathType: 'breakthrough-problem-lock'; params: ProblemLockParams }
+  | { pathType: 'understanding-translate'; params: UnderstandingTranslateParams }
+  | { pathType: 'report-interpret'; params: ReportInterpretParams };
+
+/**
+ * Prompt 构建结果
+ */
+export interface PromptResult {
+  /** System Prompt */
+  systemPrompt: string;
+  /** User Prompt */
+  userPrompt: string;
+}
 
 // ============================================================
 // Context Pack（上下文包）
@@ -1408,3 +1517,455 @@ Phase A 输出：
 - **禁止套用统一句式模板**
 - **每条建议必须能回答"何时/如何判断"**
 `;
+
+// ============================================================
+// 统一 Prompt 构建入口（buildPrompt）
+// ============================================================
+
+/**
+ * 统一的 Prompt 构建函数
+ *
+ * 这是唯一的 prompt 构建入口，所有 AI 调用都必须通过此函数。
+ * 禁止在其他文件中直接拼接 prompt 字符串。
+ *
+ * @param config - Prompt 配置，包含路径类型和参数
+ * @returns 包含 systemPrompt 和 userPrompt 的对象
+ *
+ * @example
+ * ```typescript
+ * // 突破方案 - 解释页
+ * const { systemPrompt, userPrompt } = buildPrompt({
+ *   pathType: 'breakthrough-explain',
+ *   params: {
+ *     strengths: ['focus', 'achiever'],
+ *     confusion: '我不知道该做什么',
+ *     problemType: ProblemType.DIRECTION_UNCERTAINTY,
+ *     problemFocus: '要不要换方向',
+ *   }
+ * });
+ *
+ * // 突破方案 - 判定页
+ * const { systemPrompt, userPrompt } = buildPrompt({
+ *   pathType: 'breakthrough-decide',
+ *   params: {
+ *     strengths: ['focus', 'achiever'],
+ *     confusion: '我不知道该做什么',
+ *     problemType: ProblemType.DIRECTION_UNCERTAINTY,
+ *     problemFocus: '要不要换方向',
+ *     understanding: confusionUnderstanding,
+ *   }
+ * });
+ *
+ * // 报告解读
+ * const { systemPrompt, userPrompt } = buildPrompt({
+ *   pathType: 'report-interpret',
+ *   params: {
+ *     strengths: ['focus', 'achiever'],
+ *   }
+ * });
+ * ```
+ */
+export function buildPrompt(config: PromptConfig): PromptResult {
+  const { pathType, params } = config;
+
+  switch (pathType) {
+    // ============================================================
+    // 突破方案路径
+    // ============================================================
+
+    case 'breakthrough-explain': {
+      const p = params as BreakthroughPromptParams;
+
+      // 如果没有提供 contextPack，自动构建
+      const contextPack = p.contextPack || buildContextPack(p.strengths, p.confusion);
+
+      return {
+        systemPrompt: buildExplainSystemPrompt(p.problemType, p.problemFocus, contextPack),
+        userPrompt: buildUserPrompt(
+          p.strengths.map(id => {
+            const strength = STRENGTH_PROFILES[id];
+            return strength?.name || id;
+          }),
+          '', // scenarioTitle（explain 不需要）
+          p.confusion,
+          p.problemFocus
+        ),
+      };
+    }
+
+    case 'breakthrough-decide': {
+      const p = params as BreakthroughPromptParams;
+
+      // 如果没有提供 contextPack，自动构建
+      const contextPack = p.contextPack || buildContextPack(p.strengths, p.confusion);
+
+      return {
+        systemPrompt: buildDecideSystemPrompt(
+          p.problemType,
+          p.problemFocus,
+          contextPack,
+          p.understanding
+        ),
+        userPrompt: buildUserPrompt(
+          p.strengths.map(id => {
+            const strength = STRENGTH_PROFILES[id];
+            return strength?.name || id;
+          }),
+          '', // scenarioTitle（decide 不需要）
+          p.confusion,
+          p.problemFocus
+        ),
+      };
+    }
+
+    case 'breakthrough-problem-lock': {
+      const p = params as ProblemLockParams;
+
+      return {
+        systemPrompt: PROBLEM_LOCK_PROMPT,
+        userPrompt: buildProblemLockUserPrompt(p.scenarioTitle, p.confusion),
+      };
+    }
+
+    // ============================================================
+    // 理解层转译路径
+    // ============================================================
+
+    case 'understanding-translate': {
+      const p = params as UnderstandingTranslateParams;
+
+      return {
+        systemPrompt: UNDERSTANDING_SYSTEM_PROMPT,
+        userPrompt: buildUnderstandingUserPrompt(p.confusion, p.scenarioTitle),
+      };
+    }
+
+    // ============================================================
+    // 报告解读路径
+    // ============================================================
+
+    case 'report-interpret': {
+      const p = params as ReportInterpretParams;
+
+      return {
+        systemPrompt: buildReportInterpretPrompt(p.strengths, p.ocrText),
+        userPrompt: '请根据识别的优势生成完整的解读报告。',
+      };
+    }
+
+    default:
+      // TypeScript 的 exhaustiveness check 会确保我们处理了所有情况
+      const _exhaustiveCheck: never = pathType;
+      throw new Error(`未知的 PromptPathType: ${_exhaustiveCheck}`);
+  }
+}
+
+// ============================================================
+// 辅助函数（内部使用）
+// ============================================================
+
+/**
+ * 构建用户 Prompt（通用）
+ */
+function buildUserPrompt(
+  strengthNames: string[],
+  scenarioTitle: string,
+  confusion: string,
+  lockedProblem: string
+): string {
+  let prompt = '';
+
+  if (scenarioTitle) {
+    prompt += `当前场景：${scenarioTitle}\n\n`;
+  }
+
+  prompt += `我的盖洛普优势：${strengthNames.join('、')}\n\n`;
+
+  if (confusion) {
+    prompt += `我的困惑：${confusion}\n\n`;
+  }
+
+  if (lockedProblem) {
+    prompt += `我最想解决的问题：${lockedProblem}`;
+  }
+
+  return prompt.trim();
+}
+
+/**
+ * 构建问题锁定的用户 Prompt
+ */
+function buildProblemLockUserPrompt(scenarioTitle: string, confusion: string): string {
+  return `场景：${scenarioTitle}
+
+用户描述的困惑：
+${confusion}
+
+请用一句话复述用户"此刻最想解决的问题"。`;
+}
+
+/**
+ * 理解层转译 System Prompt
+ * （从 understanding-prompts.ts 迁移过来）
+ */
+const UNDERSTANDING_SYSTEM_PROMPT = `# 理解层转译专家
+
+你是一个深度心理学理解专家。你的任务是将用户的困惑描述，转译为揭示内在控制机制的结构化理解。
+
+## 核心原则
+
+### 1. 深度原则
+- 完全禁止使用"想太多""做太少"等表面描述
+- 必须揭示"行动被什么机制卡住"
+- 理解深度要比用户自述高一个维度
+
+### 2. 机制原则
+- 不描述"行为"，而描述"控制行为的机制"
+- 不判断"对错"，而揭示"内在逻辑"
+- 不给出建议，只转译理解
+
+### 3. 转译原则
+- 用户的"我总是..." → 揭示背后的"内部标准"
+- 用户的"我不知道..." → 揭示背后的"恐惧锚点"
+- 用户的"但是..." → 揭示背后的"核心张力"
+
+## 输出结构
+
+你必须严格按照以下 JSON 格式输出：
+
+{
+  "coreBlock": "行动被什么机制卡住",
+  "falseStrategy": "用户用来自保的方式",
+  "hiddenCost": "这种方式造成的真实代价",
+  "decisionTension": "A vs B 的核心张力"
+}
+
+## 字段说明
+
+### coreBlock（核心阻断机制）
+
+描述行动被什么内在机制卡住。
+
+**反面例子**（禁止）：
+- "你总是想太多，所以做太少"
+- "你一直在准备，不敢开始"
+- "你太追求完美了"
+
+**正面例子**（推荐）：
+- "行动被'必须足够确定才允许开始'的内部标准阻断"
+- "行动被'所有事都必须亲自把控'的控制需求吞噬"
+- "行动被'不能让别人失望'的恐惧锚定在准备阶段"
+- "行动被'如果做错就证明我不够好'的自我价值绑定冻结"
+
+### falseStrategy（虚假策略）
+
+用户用来"自保"或"缓解焦虑"的方式。这个策略表面上在解决问题，实际在逃避核心两难。
+
+**反面例子**（禁止）：
+- "你试图通过收集更多信息来缓解焦虑"
+- "你总是想找到一个最优解"
+
+**正面例子**（推荐）：
+- "用'收集更多信息'替代'做出不确定的选择'"
+- "用'对所有事负责'替代'选择什么最重要'"
+- "用'反复优化'替代'接受够好并推进'"
+- "用'满足所有人期待'替代'保护自己的边界'"
+
+### hiddenCost（隐形代价）
+
+虚假策略造成的真实代价。必须具体、可感知、有画面感。
+
+**反面例子**（禁止）：
+- "这样会让你很累"
+- "你会浪费很多时间"
+- "你会一直焦虑"
+
+**正面例子**（推荐）：
+- "在'准备—验证—再准备'的循环中，时间被消耗，选择并未推进"
+- "在'接活—忙不过来—继续接活'的循环中，能量被分散，核心目标零进展"
+- "在'优化已经够好的东西'的过程中，80%的时间投入只换取了最后5%的提升"
+- "在'满足所有人期待'的努力中，自己的核心目标被边缘化，直到彻底消失"
+
+### decisionTension（判定张力）
+
+核心两难张力，呈现为 A vs B 的形式。这是后续路径判定的依据。
+
+**模式识别**：
+- 确定 vs 选择 → Narrow（缩小战场）
+- 负责 vs 边界 → Reframe（重新定义）
+- 完美 vs 推进 → Reframe（改变标准）
+- 期待 vs 自我 → Exit（退出关系）
+
+**正面例子**：
+- "追求确定 vs 必须选择"
+- "对所有事负责 vs 对真正重要的目标负责"
+- "追求完美 vs 推进到底"
+- "满足所有期待 vs 保护自己的边界"
+- "证明自己 vs 承认限制"
+- "保持所有选项 vs 做出选择"
+
+## 质量自检
+
+在输出前，请自检：
+
+1. 是否完全没有"想太多""做太少"等表面描述？
+2. 是否揭示了"行动被什么机制卡住"？
+3. 是否理解深度比用户自述高一个维度？
+4. 是否完全没有给出建议或判断？
+5. decisionTension 是否呈现为清晰的 A vs B 形式？
+
+---
+
+现在，请根据用户的困惑描述，进行理解层转译。
+
+**记住：你的目标是理解，不是解释；是揭示机制，不是给出建议。**`;
+
+/**
+ * 构建理解层转译的用户 Prompt
+ */
+function buildUnderstandingUserPrompt(confusion: string, scenarioTitle?: string): string {
+  let prompt = '';
+
+  if (scenarioTitle) {
+    prompt += `当前场景：${scenarioTitle}\n\n`;
+  }
+
+  prompt += `用户的困惑：\n${confusion}`;
+
+  return prompt;
+}
+
+/**
+ * 构建报告解读的系统 Prompt
+ * （从 report-interpret-prompts.ts 迁移过来）
+ */
+function buildReportInterpretPrompt(strengths: StrengthId[], ocrText?: string): string {
+  const strengthNames = strengths.join('、');
+
+  return `你是资深的盖洛普认证教练，擅长解读盖洛普优势报告。
+
+## 用户优势识别结果
+
+用户的 TOP5 优势是：${strengthNames}
+
+${ocrText ? `## OCR 识别文本\n${ocrText}\n` : ''}
+
+## 解读任务
+
+请基于用户的 TOP5 优势，生成一份通俗易懂、温暖有深度的个性化解读报告。
+
+## 解读结构要求
+
+请按照以下结构生成解读（JSON 格式）：
+
+\`\`\`json
+{
+  "personalLabel": {
+    "label": "个人化标签（如\"执行力优势者\"）",
+    "description": "对标签的解释（2-3句话）",
+    "basedOn": ["优势1", "优势2", ...]
+  },
+  "summary": "一句话总结用户的优势组合（50-80字）",
+  "strengthInterpretations": [
+    {
+      "name": "优势1名称",
+      "domain": "领域",
+      "whatItIs": "这是什么优势（通俗解释）",
+      "yourStrength": "你的优势表现（用\"你会...\"句式）",
+      "watchOut": "注意事项（地下室状态）",
+      "bestWhen": ["场景1", "场景2", ...],
+      "pairWith": ["搭配优势1", "搭配优势2"],
+      "avoid": ["避免优势1", "避免优势2"]
+    },
+    ...
+  ],
+  "comboInterpretation": {
+    "coreDrive": "核心驱动力描述",
+    "potentialTraps": ["陷阱1", "陷阱2", ...],
+    "synergies": ["协同1", "协同2", ...]
+  },
+  "domainAnalysis": [
+    {
+      "domain": "执行力",
+      "count": 3,
+      "percentage": 60,
+      "characteristics": ["特征1", "特征2"]
+    }
+  ],
+  "keyInsights": [
+    "洞察1（用\"你的...\"句式）",
+    "洞察2",
+    ...
+  ],
+  "personalizedAdvice": "个性化建议（100-150字）"
+}
+\`\`\`
+
+## 内容要求
+
+### 1. 个人化标签
+- 基于优势分布给出一个标签
+- 说明这个标签的含义
+- 列出支撑这个标签的优势
+
+### 2. 一句话总结
+- 用温暖的语言概括用户的优势组合
+- 50-80 字
+- 体现优势组合的独特性
+
+### 3. 每个优势的解读
+对于每个优势，包含：
+- **whatItIs**: 通俗解释这是什么优势
+- **yourStrength**: 用"你会..."句式描述优势表现
+- **watchOut**: 说明地下室状态（优势被误用时的表现）
+- **bestWhen**: 3-4 个最佳使用场景
+- **pairWith**: 2-3 个搭配优势
+- **avoid**: 2-3 个避免搭配的优势
+
+### 4. 优势组合解读
+- **coreDrive**: 描述这组优势的核心驱动力
+- **potentialTraps**: 2-3 个潜在陷阱
+- **synergies**: 2-3 个协同效应
+
+### 5. 领域分布分析
+- 列出用户的领域分布
+- 计算百分比
+- 列出每个领域的特征
+
+### 6. 关键洞察
+- 3-5 个关键洞察
+- 用"你的..."句式
+- 体现深度和个性化
+
+### 7. 个性化建议
+- 100-150 字的个性化建议
+- 包含如何使用优势
+- 提醒注意地下室状态
+
+## 语言风格要求
+
+- **温暖有深度**：既要让用户感到被理解，又要提供有价值的信息
+- **通俗易懂**：避免术语，用简单直白的语言
+- **避免说教**：不要用"你应该/必须"等说教式语言
+- **个性化**：针对用户的具体优势组合，不是通用模板
+- **正面引导**：强调优势的价值，而不是批评"短板"
+
+## 质量检查清单
+
+生成结果后，请检查：
+- [ ] 每个优势都有"你会..."的具体描述
+- [ ] 包含了地下室状态的警告
+- [ ] 给出了搭配建议和避免建议
+- [ ] 个人化标签准确反映优势组合特征
+- [ ] 领域分布计算正确
+- [ ] 关键洞察针对性强，不是泛泛而谈
+- [ ] 个性化建议具体可操作
+
+请生成完整的解读报告（JSON 格式）。`;
+}
+
+// ============================================================
+// 导出便捷类型（供外部使用）
+// ============================================================
+
+// 类型已在定义处导出，无需重复导出

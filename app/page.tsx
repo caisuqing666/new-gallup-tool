@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import LandingPage from './components/LandingPage';
+import PathSelectionPage from './components/PathSelectionPage';
 import ScenarioPage from './components/ScenarioPage';
 import StrengthsPage from './components/StrengthsPage';
 import InputPage from './components/InputPage';
@@ -9,16 +10,16 @@ import LoadingPage from './components/LoadingPage';
 import ResultPage from './components/ResultPage';
 import GuideResultPage from './components/GuideResultPage';
 import CareerResultPage from './components/CareerResultPage';
-import OcrUploadPlaceholder from './components/OcrUploadPlaceholder';
+import OcrUploadWithTesseract from './components/OcrUploadWithTesseract';
 import ReportResultPlaceholder from './components/ReportResultPlaceholder';
 import { useStepMachine } from './hooks/useStepMachine';
-import { GallupResult, StrengthGuideResult, CareerMatchResult, ReportInterpretResult } from '@/lib/types';
+import { GallupResult } from '@/lib/types';
+import { ALL_STRENGTHS } from '@/lib/gallup-strengths';
 import { generateMockResult } from '@/lib/mock-data';
 import { generateMockGuideResult } from '@/lib/strength-guide';
 import { generateMockCareerResult } from '@/lib/mock-career';
 import { generateMockReportResult } from '@/lib/mock-report';
 import { addHistory } from '@/lib/history';
-import { PATH_FLOWS } from '@/lib/path-config';
 
 export default function Home() {
   const { state, actions } = useStepMachine();
@@ -65,7 +66,8 @@ export default function Home() {
             }
 
             const responseJson = await response.json();
-            actions.careerSuccess(responseJson.data, false);
+            const usedMockFallback = responseJson.metadata?.usedMockFallback ?? false;
+            actions.careerSuccess(responseJson.data, usedMockFallback);
           } else if (state.path === 'strength-guide') {
             // 优势指南路径
             const response = await fetch('/api/guide', {
@@ -84,7 +86,8 @@ export default function Home() {
             }
 
             const responseJson = await response.json();
-            actions.guideSuccess(responseJson.data, false);
+            const usedMockFallback = responseJson.metadata?.usedMockFallback ?? false;
+            actions.guideSuccess(responseJson.data, usedMockFallback);
           } else if (state.path === 'breakthrough') {
             // 突破方案路径（现有功能）
             const response = await fetch('/api/generate', {
@@ -106,7 +109,8 @@ export default function Home() {
             }
 
             const responseJson = await response.json();
-            actions.submitSuccess(responseJson.data, false);
+            const usedMockFallback = responseJson.metadata?.usedMockFallback ?? false;
+            actions.submitSuccess(responseJson.data, usedMockFallback);
           } else {
             // 其他路径暂时使用 mock
             throw new Error('该功能即将推出');
@@ -165,7 +169,15 @@ export default function Home() {
   // 渲染当前步骤（使用状态机统一管理）
   switch (state.step) {
     case 'landing':
-      return <LandingPage onSelectPath={actions.selectPath} />;
+      return <LandingPage onStart={actions.start} />;
+
+    case 'path-selection':
+      return (
+        <PathSelectionPage
+          onSelectPath={actions.selectPath}
+          onBack={actions.back}
+        />
+      );
 
     case 'scenario':
       return (
@@ -197,6 +209,7 @@ export default function Home() {
           onMoveDown={actions.moveStrengthDown}
           onNext={handleNext}
           onBack={actions.back}
+          path={state.path}
         />
       );
     }
@@ -266,11 +279,51 @@ export default function Home() {
 
     case 'ocr-upload':
       return (
-        <OcrUploadPlaceholder
-          onNext={(imageData) => {
-            // Phase 3 占位：直接使用 Mock 数据
-            const mockData = generateMockReportResult(imageData);
-            actions.reportSuccess(mockData, true);
+        <OcrUploadWithTesseract
+          onNext={async (strengths) => {
+            // OCR 识别完成后，自动设置优势
+            strengths.forEach(strengthId => {
+              if (!state.formData.strengths.includes(strengthId)) {
+                actions.selectStrength(strengthId);
+              }
+            });
+            
+            // 准备优势数据（包含排名和领域信息）
+            const top5Strengths = strengths.map((strengthId, index) => {
+              const strength = ALL_STRENGTHS.find(s => s.id === strengthId);
+              return {
+                rank: index + 1,
+                name: strength?.name || strengthId,
+                domain: strength?.domain || '未知领域',
+              };
+            });
+
+            try {
+              // 调用报告解读 API
+              const response = await fetch('/api/interpret', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  strengths: top5Strengths,
+                  useAi: true,
+                }),
+              });
+
+              if (!response.ok) {
+                throw new Error('生成解读失败');
+              }
+
+              const responseJson = await response.json();
+              const usedMockFallback = responseJson.metadata?.usedMockFallback ?? false;
+              actions.reportSuccess(responseJson.data, usedMockFallback);
+            } catch (error) {
+              console.error('解读生成失败，使用 Mock 数据:', error);
+              // 降级到 Mock 数据
+              const mockData = generateMockReportResult(state.formData.strengths);
+              actions.reportSuccess(mockData, true);
+            }
           }}
           onBack={actions.back}
         />
@@ -289,6 +342,6 @@ export default function Home() {
       );
 
     default:
-      return <LandingPage onSelectPath={actions.selectPath} />;
+      return <LandingPage onStart={actions.start} />;
   }
 }

@@ -13,8 +13,9 @@ import { PathId } from './types';
  */
 export type Step =
   // 通用步骤
-  | 'landing'      // 首页/路径选择
-  | 'strengths'    // 优势选择
+  | 'landing'       // 首页落地页
+  | 'path-selection' // 路径选择页（4入口卡片）
+  | 'strengths'     // 优势选择
   | 'input'        // 困惑输入（仅 breakthrough 路径）
   | 'loading'      // 加载中
   | 'result'       // 突破方案结果（breakthrough 路径）
@@ -52,7 +53,7 @@ export interface PathFlowConfig {
 export const PATH_FLOWS: Record<PathId, PathFlowConfig> = {
   // 报告解读（Phase 3 实现）
   'report-interpret': {
-    steps: ['landing', 'ocr-upload', 'loading', 'report-result'],
+    steps: ['landing', 'path-selection', 'ocr-upload', 'loading', 'report-result'],
     requiresStrengths: false,  // OCR 自动识别
     requiresConfusion: false,
     requiresScenario: false,
@@ -61,7 +62,7 @@ export const PATH_FLOWS: Record<PathId, PathFlowConfig> = {
 
   // 职业匹配（Phase 2 实现）
   'career-match': {
-    steps: ['landing', 'strengths', 'loading', 'career-result'],
+    steps: ['landing', 'path-selection', 'strengths', 'loading', 'career-result'],
     requiresStrengths: true,
     requiresConfusion: false,
     requiresScenario: false,
@@ -70,7 +71,7 @@ export const PATH_FLOWS: Record<PathId, PathFlowConfig> = {
 
   // 突破方案（现有功能）
   'breakthrough': {
-    steps: ['landing', 'strengths', 'input', 'loading', 'result'],
+    steps: ['landing', 'path-selection', 'strengths', 'input', 'loading', 'result'],
     requiresStrengths: true,
     requiresConfusion: true,
     requiresScenario: true,
@@ -79,7 +80,7 @@ export const PATH_FLOWS: Record<PathId, PathFlowConfig> = {
 
   // 优势指南
   'strength-guide': {
-    steps: ['landing', 'strengths', 'loading', 'guide-result'],
+    steps: ['landing', 'path-selection', 'strengths', 'loading', 'guide-result'],
     requiresStrengths: true,
     requiresConfusion: false,
     requiresScenario: false,
@@ -175,9 +176,8 @@ export function isPathImplemented(path: PathId): boolean {
     case 'breakthrough':
     case 'strength-guide':
     case 'career-match':
-      return true;
     case 'report-interpret':
-      return false;  // Phase 3
+      return true;
     default:
       return false;
   }

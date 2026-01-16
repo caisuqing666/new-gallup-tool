@@ -4,19 +4,17 @@
 import { ExplainData, DecideData, GallupResult } from './types';
 import { ScenarioId, StrengthId, ProblemType, ProblemFocus } from './types';
 import {
-  PROBLEM_LOCK_PROMPT,
-  buildExplainSystemPrompt,
-  buildDecideSystemPrompt,
+  buildPrompt,
   ExplainOutput,
   DecideOutput,
   buildContextPack,
   ContextPack,
+  PROBLEM_LOCK_PROMPT,
 } from './prompts';
-import { generateMockResult, getAnalysisContext } from './mock-data';
+import { generateMockResult } from './mock-data';
 import { buildAnalysisContext, generateExplainFromContext, generateDecideFromContext } from './context-generator';
 import {
   generateUnderstanding,
-  generateMockUnderstanding,
   type ConfusionUnderstanding,
   type UnderstandingInput,
 } from './generate-understanding';
@@ -195,7 +193,7 @@ function parseExplainResponse(content: string): ExplainData {
 async function generateDecideWithClaude(
   systemPrompt: string,
   userPrompt: string
-): Promise<DecideData> {
+): Promise<DecideOutput> {
   const config = getAIConfig();
 
   const controller = new AbortController();
@@ -245,7 +243,7 @@ async function generateDecideWithClaude(
 async function generateDecideWithOpenAI(
   systemPrompt: string,
   userPrompt: string
-): Promise<DecideData> {
+): Promise<DecideOutput> {
   const config = getAIConfig();
 
   const controller = new AbortController();
@@ -296,7 +294,7 @@ async function generateDecideWithOpenAI(
 }
 
 // 解析判定页响应
-function parseDecideResponse(content: string): DecideData {
+function parseDecideResponse(content: string): DecideOutput {
   try {
     const rawResult = JSON.parse(content) as DecideOutput;
     return rawResult;
@@ -507,13 +505,30 @@ export async function generateResult(
       lockedProblem = contextPack?.confusion.problemFocus || `用户问题：${confusion}`;
     }
 
-    // 第二步：使用锁定的"用户当前问题"构建用户 Prompt
-    const userPrompt = buildUserPrompt(strengthNames, scenarioTitle, confusion, lockedProblem);
+    // 第二步：使用统一的 buildPrompt 函数构建 prompt
+    // 这是唯一的 prompt 构建入口，确保所有路径使用一致的规范
+    const explainPrompt = buildPrompt({
+      pathType: 'breakthrough-explain',
+      params: {
+        strengths,
+        confusion,
+        problemType,
+        problemFocus,
+        contextPack,
+      },
+    });
 
-    // 第三步：构建带 Context Pack 的系统 Prompt
-    // Context Pack 放在最前面，包含强约束声明
-    const explainSystemPrompt = buildExplainSystemPrompt(problemType, problemFocus, contextPack);
-    const decideSystemPrompt = buildDecideSystemPrompt(problemType, problemFocus, contextPack, confusionUnderstanding);
+    const decidePrompt = buildPrompt({
+      pathType: 'breakthrough-decide',
+      params: {
+        strengths,
+        confusion,
+        problemType,
+        problemFocus,
+        contextPack,
+        understanding: confusionUnderstanding,
+      },
+    });
 
     console.info(`✓ 已应用问题类型硬约束: ${problemType}`);
     console.info(`✓ 已应用问题焦点锁定: ${problemFocus}`);
@@ -526,37 +541,37 @@ export async function generateResult(
       (async () => {
         if (config.provider === 'anthropic') {
           try {
-            return await generateExplainWithClaude(explainSystemPrompt, userPrompt);
+            return await generateExplainWithClaude(explainPrompt.systemPrompt, explainPrompt.userPrompt);
           } catch (claudeError) {
             console.warn('Claude API (解释页) 调用失败:', claudeError);
             // 尝试 OpenAI 备用
             const openaiKey = process.env.OPENAI_API_KEY;
             if (openaiKey) {
               console.info('尝试使用 OpenAI 作为备用方案（解释页）');
-              return await generateExplainWithOpenAI(explainSystemPrompt, userPrompt);
+              return await generateExplainWithOpenAI(explainPrompt.systemPrompt, explainPrompt.userPrompt);
             }
             throw claudeError;
           }
         } else {
-          return await generateExplainWithOpenAI(explainSystemPrompt, userPrompt);
+          return await generateExplainWithOpenAI(explainPrompt.systemPrompt, explainPrompt.userPrompt);
         }
       })(),
       (async () => {
         if (config.provider === 'anthropic') {
           try {
-            return await generateDecideWithClaude(decideSystemPrompt, userPrompt);
+            return await generateDecideWithClaude(decidePrompt.systemPrompt, decidePrompt.userPrompt);
           } catch (claudeError) {
             console.warn('Claude API (判定页) 调用失败:', claudeError);
             // 尝试 OpenAI 备用
             const openaiKey = process.env.OPENAI_API_KEY;
             if (openaiKey) {
               console.info('尝试使用 OpenAI 作为备用方案（判定页）');
-              return await generateDecideWithOpenAI(decideSystemPrompt, userPrompt);
+              return await generateDecideWithOpenAI(decidePrompt.systemPrompt, decidePrompt.userPrompt);
             }
             throw claudeError;
           }
         } else {
-          return await generateDecideWithOpenAI(decideSystemPrompt, userPrompt);
+          return await generateDecideWithOpenAI(decidePrompt.systemPrompt, decidePrompt.userPrompt);
         }
       })(),
     ]);
@@ -781,7 +796,7 @@ function ensureExplainData(input: {
 }
 
 function isDecideDataValid(input: {
-  decideData: DecideData;
+  decideData: DecideOutput;
   problemFocus: string;
   strengthNames: string[];
   understanding?: ConfusionUnderstanding;
@@ -825,7 +840,7 @@ function isDecideDataValid(input: {
 }
 
 function ensureDecideData(input: {
-  decideData: DecideData;
+  decideData: DecideOutput;
   scenario: ScenarioId;
   strengths: StrengthId[];
   strengthNames: string[];
@@ -838,6 +853,7 @@ function ensureDecideData(input: {
   if (isDecideDataValid({ decideData, problemFocus, strengthNames, understanding })) {
     return {
       ...decideData,
+      problemFocus,
       doMore: decideData.doMore.slice(0, 2),
       doLess: decideData.doLess.slice(0, 2),
       boundaries: decideData.boundaries.slice(0, 2),

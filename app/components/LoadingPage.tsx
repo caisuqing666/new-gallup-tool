@@ -1,8 +1,17 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ALL_STRENGTHS } from '@/lib/gallup-strengths';
+
+const LOADING_PHASES = [
+  { text: '分析优势组合...', duration: 2000 },
+  { text: '识别优势冲突...', duration: 2000 },
+  { text: '生成行动方案...', duration: 2000 },
+  { text: '优化建议输出...', duration: 1500 },
+];
+
+const ESTIMATED_TIME = LOADING_PHASES.reduce((acc, phase) => acc + phase.duration, 0);
 
 interface LoadingPageProps {
   selectedStrengths: string[];
@@ -15,16 +24,6 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
   const [progress, setProgress] = useState(0);
   const [currentPhase, setCurrentPhase] = useState(0);
   
-  // 加载阶段
-  const phases = [
-    { text: '分析优势组合...', duration: 2000 },
-    { text: '识别优势冲突...', duration: 2000 },
-    { text: '生成行动方案...', duration: 2000 },
-    { text: '优化建议输出...', duration: 1500 },
-  ];
-  
-  // 预估总时间
-  const estimatedTime = phases.reduce((acc, p) => acc + p.duration, 0);
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
@@ -34,13 +33,13 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
     const progressInterval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) return 100;
-        return prev + 100 / (estimatedTime / 100);
+        return prev + 100 / (ESTIMATED_TIME / 100);
       });
     }, 100);
     
     // 阶段切换
     let delay = 0;
-    phases.forEach((_, index) => {
+    LOADING_PHASES.forEach((_, index) => {
       setTimeout(() => {
         setCurrentPhase(index);
       }, delay);
@@ -56,7 +55,7 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
       clearInterval(progressInterval);
       clearInterval(timer);
     };
-  }, [estimatedTime]);
+  }, []);
   
   // 格式化时间显示
   const formatTime = (ms: number) => {
@@ -67,7 +66,7 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
     return `${minutes}分${remainingSeconds}秒`;
   };
   
-  const remainingTime = estimatedTime - elapsed;
+  const remainingTime = ESTIMATED_TIME - elapsed;
 
   // 获取前两个优势名称
   const strengthNames = selectedStrengths
@@ -177,13 +176,13 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
               className="flex items-center justify-center gap-2 mb-4"
             >
               <div className="w-2 h-2 rounded-full bg-brand animate-pulse" />
-              <span className="text-sm text-text-secondary">{phases[currentPhase]?.text}</span>
+              <span className="text-sm text-text-secondary">{LOADING_PHASES[currentPhase]?.text}</span>
             </motion.div>
           </AnimatePresence>
 
           {/* 进度点 */}
           <div className="flex justify-center gap-2 mb-6">
-            {phases.map((_, i) => (
+            {LOADING_PHASES.map((_, i) => (
               <div
                 key={i}
                 className={`w-2 h-2 rounded-full transition-all duration-300 ${

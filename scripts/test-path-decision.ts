@@ -4,12 +4,12 @@
  * 验证 Decide 是否已经从"行动列表"升级为"路径判定"
  */
 
-import { ProblemType, PROBLEM_TYPE_LABELS, PathDecision, PATH_DECISION_LABELS, PATH_DECISION_ENERGY_STATES } from '../lib/types';
-import { buildDecideSystemPrompt } from '../lib/prompts';
+import { ProblemType, PROBLEM_TYPE_LABELS, PathDecision, PATH_DECISION_LABELS, PATH_DECISION_ENERGY_STATES, StrengthId } from '../lib/types';
+import { buildPrompt } from '../lib/prompts';
 
 const testProblemType = ProblemType.BOUNDARY_OVERLOAD;
 const testProblemFocus = '如何在多方需求之间确定优先级？';
-const testStrengths = ['和谐', '体谅', '责任'];
+const testStrengths: StrengthId[] = ['harmony', 'empathy', 'responsibility']; // 使用优势 ID
 
 console.log('='.repeat(80));
 console.log('【路径选择重构验证测试】');
@@ -52,7 +52,16 @@ console.log('【2. Decide System Prompt 验证】');
 console.log('='.repeat(80));
 console.log("");
 
-const decidePrompt = buildDecideSystemPrompt(testProblemType, testProblemFocus);
+// 使用统一的 buildPrompt 函数
+const { systemPrompt: decidePrompt } = buildPrompt({
+  pathType: 'breakthrough-decide',
+  params: {
+    strengths: testStrengths,
+    confusion: '如何在多方需求之间确定优先级？',
+    problemType: testProblemType,
+    problemFocus: testProblemFocus,
+  },
+});
 
 const promptChecks = [
   {

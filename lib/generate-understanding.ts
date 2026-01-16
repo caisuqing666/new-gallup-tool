@@ -1,13 +1,21 @@
 // 理解层转译 - AI 生成函数
 // 支持智谱GLM4、Anthropic Claude、OpenAI
+//
+// ============================================================
+// 统一 Prompt 构建入口
+// ============================================================
+// 所有 prompt 构建必须通过 buildPrompt() 函数
+// 禁止在其他文件中直接拼接 prompt 字符串
+// ============================================================
 
 import {
   ConfusionUnderstanding,
   UnderstandingInput,
 } from './understanding-layer';
 import {
-  UNDERSTANDING_SYSTEM_PROMPT,
-  buildUnderstandingUserPrompt,
+  buildPrompt,
+} from './prompts';
+import {
   parseUnderstandingResponse,
 } from './understanding-prompts';
 import {
@@ -252,11 +260,15 @@ export async function generateUnderstanding(
   input: UnderstandingInput,
   provider: AIProvider = 'zhipu'
 ): Promise<ConfusionUnderstanding> {
-  const systemPrompt = UNDERSTANDING_SYSTEM_PROMPT;
-  const userPrompt = buildUnderstandingUserPrompt(
-    input.confusion,
-    input.scenarioTitle
-  );
+  // 使用统一的 buildPrompt 函数构建 prompt
+  const { systemPrompt, userPrompt } = buildPrompt({
+    pathType: 'understanding-translate',
+    params: {
+      strengths: [], // 理解层转译不需要优势
+      confusion: input.confusion,
+      scenarioTitle: input.scenarioTitle,
+    },
+  });
 
   console.info('开始生成理解层转译...', {
     provider,

@@ -111,7 +111,7 @@ export function searchHistory(keyword: string): HistoryItem[] {
 
   return history.filter(item =>
     item.confusion.toLowerCase().includes(lowerKeyword) ||
-    item.result.decide.verdict.toLowerCase().includes(lowerKeyword)
+    item.result.decide.pathLogic.toLowerCase().includes(lowerKeyword)
   );
 }
 

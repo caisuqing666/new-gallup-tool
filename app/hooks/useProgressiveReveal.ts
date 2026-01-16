@@ -23,7 +23,7 @@ export function useProgressiveReveal(
     autoPlay?: boolean;      // 是否自动播放
     startCondition?: boolean; // 启动条件（如打字机完成）
   } = {}
-): [number, (step: number) => void, () => void] {
+): [number, (_step: number) => void, () => void] {
   const {
     baseDelay = 400,
     stepDelay = 400,

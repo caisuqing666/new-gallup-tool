@@ -78,6 +78,7 @@ export type { DecidePhaseAOutput, DecidePhaseBOutput } from './prompts';
  * - problemType 必须显式注入到 system prompt 中
  * - 所有生成逻辑必须假设"当前只允许解决这一类问题"
  */
+/* eslint-disable no-unused-vars */
 export enum ProblemType {
   /** P1: 方向不确定性 - 在多个选项中无法确定方向 */
   DIRECTION_UNCERTAINTY = 'P1',
@@ -91,6 +92,7 @@ export enum ProblemType {
   /** P4: 效率瓶颈与优先级混乱 - 多事并行，无法聚焦 */
   EFFICIENCY_BOTTLENECK = 'P4',
 }
+/* eslint-enable no-unused-vars */
 
 /** 问题类型的中文名称映射 */
 export const PROBLEM_TYPE_LABELS: Record<ProblemType, string> = {
@@ -176,6 +178,7 @@ export function isValidProblemFocus(focus: string): boolean {
  * - 优势在这条路上是否被正向使用
  * - 是否具备可持续推进性
  */
+/* eslint-disable no-unused-vars */
 export enum PathDecision {
   /** Path A：继续投入（Double Down）- 优势被正向使用，能量被放大，外部阻力 */
   DOUBLE_DOWN = 'DoubleDown',
@@ -189,6 +192,7 @@ export enum PathDecision {
   /** Path D：退出/放弃（Exit）- 优势长期处于代价区，继续投入只会放大消耗 */
   EXIT = 'Exit',
 }
+/* eslint-enable no-unused-vars */
 
 /** 路径决策的中文名称映射 */
 export const PATH_DECISION_LABELS: Record<PathDecision, string> = {
@@ -332,13 +336,10 @@ export interface DecideData {
 
 // ============================================================
 // 完整结果类型（用于兼容旧代码）
-// @deprecated 使用 ExplainData 和 DecideData 替代
+// 【DEPRECATED】仅 legacy 使用，禁止新业务使用
 //
 // 保留用于向后兼容，将在未来版本移除。
-// 如果您正在使用此类型，请迁移到新的数据结构：
-//   - ExplainData: 用于"理解发生了什么"页面
-//   - DecideData: 用于"现在该怎么做"页面
-//   - GallupResult: 包含 explain 和 decide 的完整结果
+// 新业务请使用 ExplainData + DecideData + GallupResult
 // ============================================================
 
 /**
@@ -492,6 +493,55 @@ export interface CareerMatchResult {
 // ============================================================
 
 /**
+ * 单个优势解读
+ */
+export interface StrengthInterpretation {
+  /** 优势名称 */
+  name: string;
+  /** 领域 */
+  domain: string;
+  /** 这是什么优势（通俗解释） */
+  whatItIs: string;
+  /** 你的优势表现（用"你会..."句式） */
+  yourStrength: string;
+  /** 注意事项（地下室状态） */
+  watchOut: string;
+  /** 最佳使用场景 */
+  bestWhen: string[];
+  /** 搭配建议 */
+  pairWith: string[];
+  /** 避免 */
+  avoid: string[];
+}
+
+/**
+ * 优势组合解读
+ */
+export interface ComboInterpretation {
+  /** 核心驱动力 */
+  coreDrive: string;
+  /** 潜在陷阱 */
+  potentialTraps: string[];
+  /** 协同效应 */
+  synergies: string[];
+}
+
+/**
+ * 个人化标签
+ */
+export interface PersonalLabel {
+  label: string;
+  description: string;
+  basedOn: string[];
+}
+
+/**
+ * TOP5 优势输入类型
+ * 用于报告解读 API
+ */
+export type Top5StrengthsInput = StrengthId[];
+
+/**
  * 报告解读结果
  */
 export interface ReportInterpretResult {
@@ -501,12 +551,37 @@ export interface ReportInterpretResult {
     name: string;
     domain: string;
   }>;
+  
+  /** 个人化标签 */
+  personalLabel: PersonalLabel;
+  
   /** 一句话总结 */
   summary: string;
+  
+  /** 每个优势的解读 */
+  strengthInterpretations: StrengthInterpretation[];
+  
+  /** 优势组合解读 */
+  comboInterpretation: ComboInterpretation;
+  
+  /** 领域分布分析 */
+  domainAnalysis: {
+    domain: string;
+    count: number;
+    percentage: number;
+    characteristics: string[];
+  }[];
+  
   /** 关键洞察 */
   keyInsights: string[];
+  
   /** 建议的下一步路径 */
-  suggestedPaths: string[];
-  /** 占位提示信息 */
-  notice: string;
+  suggestedPaths: Array<{
+    path: 'breakthrough' | 'career-match' | 'strength-guide';
+    title: string;
+    reason: string;
+  }>;
+  
+  /** AI 生成的个性化建议 */
+  personalizedAdvice: string;
 }

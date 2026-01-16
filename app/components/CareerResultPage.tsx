@@ -189,7 +189,7 @@ function GeneralAdviceSection({
 // 主组件
 export default function CareerResultPage({
   careerData,
-  strengths,
+  strengths: _strengths,
   onRegenerate,
   onBack,
 }: CareerResultPageProps) {

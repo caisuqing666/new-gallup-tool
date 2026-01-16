@@ -63,7 +63,7 @@ function generateGeneralAdvice(
 /**
  * 生成能量管理建议
  */
-function generateEnergyManagementAdvice(userStrengths: StrengthId[]): string {
+function generateEnergyManagementAdvice(_userStrengths: StrengthId[]): string {
   // 根据优势组合生成能量管理建议
   const adviceTemplates: string[] = [
     '在职业选择时，优先选择那些让你能够"做自己擅长的事"的工作环境，而不是需要你长期扮演"不擅长角色"的岗位。',

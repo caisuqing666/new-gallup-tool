@@ -1,0 +1,34 @@
+{
+  "scenarios": [
+    {
+      "id": "work-decision",
+      "title": "手头事太多，不知道该先保哪一个",
+      "description": "你同时承担多个任务或项目，但不知道如何确定优先级",
+      "keywords": ["决策", "选择", "优先", "多任务", "并行"],
+      "typicalProblemType": "EFFICIENCY_BOTTLENECK"
+    },
+    {
+      "id": "career-transition",
+      "title": "想换赛道，但不确定优势在哪",
+      "description": "你正在考虑职业转型，但不确定自己的优势如何在新领域发挥",
+      "keywords": ["转型", "职业", "方向", "赛道", "新领域"],
+      "typicalProblemType": "DIRECTION_UNCERTAINTY"
+    },
+    {
+      "id": "efficiency",
+      "title": "每天都累到透支，但效率还是上不去",
+      "description": "你感觉付出了很多努力，但成果不明显",
+      "keywords": ["效率", "累", "透支", "努力", "成果"],
+      "typicalProblemType": "EFFICIENCY_BOTTLENECK"
+    },
+    {
+      "id": "communication",
+      "title": "沟通心累，总觉得别人不理解我",
+      "description": "你在与他人沟通时遇到困难，感觉自己的想法没有被正确理解",
+      "keywords": ["沟通", "理解", "表达", "别人", "心累"],
+      "typicalProblemType": "BOUNDARY_OVERLOAD"
+    }
+  ],
+  "version": "1.0.0",
+  "lastUpdated": "2024-01-01"
+}

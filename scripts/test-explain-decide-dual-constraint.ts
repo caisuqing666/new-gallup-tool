@@ -6,11 +6,13 @@
  * - problemFocus: "如何在多方需求之间确定优先级？"
  */
 
-import { ProblemType, PROBLEM_TYPE_LABELS } from '../lib/types';
-import { buildExplainSystemPrompt, buildDecideSystemPrompt } from '../lib/prompts';
+import { ProblemType, PROBLEM_TYPE_LABELS, StrengthId } from '../lib/types';
+import { buildPrompt } from '../lib/prompts';
 
 const testProblemType = ProblemType.BOUNDARY_OVERLOAD; // P2
 const testProblemFocus = '如何在多方需求之间确定优先级？';
+const testStrengths: StrengthId[] = ['harmony', 'empathy', 'responsibility']; // 使用优势 ID
+const testConfusion = '事情太多，每件都想负责，结果把自己累垮了，不知道怎么拒绝别人';
 
 console.log('='.repeat(80));
 console.log('【Explain + Decide 双重硬约束完整测试】');
@@ -31,7 +33,16 @@ console.log('【1. Explain 双重硬约束验证】');
 console.log('='.repeat(80));
 console.log('');
 
-const explainPrompt = buildExplainSystemPrompt(testProblemType, testProblemFocus);
+// 使用统一的 buildPrompt 函数
+const { systemPrompt: explainPrompt } = buildPrompt({
+  pathType: 'breakthrough-explain',
+  params: {
+    strengths: testStrengths,
+    confusion: testConfusion,
+    problemType: testProblemType,
+    problemFocus: testProblemFocus,
+  },
+});
 
 const explainChecks = [
   {
@@ -120,7 +131,16 @@ console.log('【2. Decide 双重硬约束验证】');
 console.log('='.repeat(80));
 console.log('');
 
-const decidePrompt = buildDecideSystemPrompt(testProblemType, testProblemFocus);
+// 使用统一的 buildPrompt 函数
+const { systemPrompt: decidePrompt } = buildPrompt({
+  pathType: 'breakthrough-decide',
+  params: {
+    strengths: testStrengths,
+    confusion: testConfusion,
+    problemType: testProblemType,
+    problemFocus: testProblemFocus,
+  },
+});
 
 const decideChecks = [
   {

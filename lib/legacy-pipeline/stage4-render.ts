@@ -3,7 +3,7 @@
  * 将诊断 JSON 转换为页面可渲染的内容
  */
 
-import type { Stage3Output, Stage4Output, RenderTone, PageSection } from './types';
+import type { Stage3Output, Stage4Output, RenderTone } from './types';
 import type { AIProviderConfig } from './types';
 
 // ========== Prompt 模板 ==========

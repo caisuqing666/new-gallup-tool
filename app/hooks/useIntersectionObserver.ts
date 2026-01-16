@@ -43,7 +43,7 @@ export function useIntersectionObserver<T extends HTMLElement = HTMLElement>(
     return () => {
       observer.disconnect();
     };
-  }, [elementRef, options.threshold, options.rootMargin]);
+  }, [elementRef, options]);
 
   return [isVisible, elementRef];
 }
@@ -52,7 +52,7 @@ export function useIntersectionObserver<T extends HTMLElement = HTMLElement>(
  * 使用 Intersection Observer 实现多个元素的顺序渐进式显示
  * @param count - 元素数量
  * @param options - Intersection Observer 配置项
- * @returns visibleIndexes - 已可见元素的索引数组
+ * @returns [visibleIndexes, setRef] - 已可见元素的索引数组与 ref 绑定函数
  * 
  * @example
  * const visibleIndexes = useSequentialReveal(3);
@@ -61,7 +61,7 @@ export function useIntersectionObserver<T extends HTMLElement = HTMLElement>(
 export function useSequentialReveal(
   count: number,
   options: IntersectionObserverInit = {}
-): number[] {
+): [number[], (_index: number) => (_el: HTMLElement | null) => void] {
   const [visibleIndexes, setVisibleIndexes] = useState<number[]>([]);
   const refs = useRef<(HTMLElement | null)[]>([]);
 
@@ -93,11 +93,11 @@ export function useSequentialReveal(
     return () => {
       observer.disconnect();
     };
-  }, [count]);
+  }, [count, options, visibleIndexes]);
 
   const setRef = (index: number) => (el: HTMLElement | null) => {
     refs.current[index] = el;
   };
 
-  return visibleIndexes;
+  return [visibleIndexes, setRef];
 }

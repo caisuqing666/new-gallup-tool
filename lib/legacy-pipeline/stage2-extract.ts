@@ -193,7 +193,7 @@ export async function stage2_extractChunk(
 export async function stage2_extractAllChunks(
   chunks: Chunk[],
   config: AIProviderConfig,
-  onProgress?: (current: number, total: number) => void
+  onProgress?: (_current: number, _total: number) => void
 ): Promise<Stage2Output[]> {
   const results: Stage2Output[] = [];
   

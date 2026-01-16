@@ -287,7 +287,7 @@ function WeeklyActionsSection({ weeklyActions }: { weeklyActions: StrengthGuideR
 }
 
 // 主组件
-export default function GuideResultPage({ guideData, strengths, onRegenerate, onBack }: GuideResultPageProps) {
+export default function GuideResultPage({ guideData, strengths: _strengths, onRegenerate, onBack }: GuideResultPageProps) {
   const [mounted, setMounted] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const [isSaving, setIsSaving] = useState(false);

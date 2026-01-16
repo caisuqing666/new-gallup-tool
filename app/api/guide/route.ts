@@ -37,11 +37,16 @@ export async function POST(request: NextRequest) {
 
     // 生成 Mock 数据
     const guideData = generateMockGuideResult(strengths);
+    const startTime = Date.now();
 
     return NextResponse.json({
       success: true,
       data: guideData,
-      isMock: true,
+      metadata: {
+        usedMockFallback: true,
+        processingTimeMs: Date.now() - startTime,
+        version: '1.0.0',
+      },
     });
 
   } catch (error) {

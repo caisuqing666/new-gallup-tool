@@ -5,11 +5,12 @@ import { ALL_STRENGTHS, DOMAIN_COLORS, DOMAIN_NAMES, StrengthId, StrengthDomain 
 
 interface StrengthsPageProps {
   selectedStrengths: StrengthId[];
-  onSelectStrength: (strengthId: StrengthId) => void;
-  onMoveUp?: (index: number) => void;
-  onMoveDown?: (index: number) => void;
+  onSelectStrength: (_strengthId: StrengthId) => void;
+  onMoveUp?: (_index: number) => void;
+  onMoveDown?: (_index: number) => void;
   onNext: () => void;
   onBack?: () => void;
+  path?: string; // 当前路径，用于显示不同的按钮文本
 }
 
 export default function StrengthsPage({
@@ -19,8 +20,22 @@ export default function StrengthsPage({
   onMoveDown,
   onNext,
   onBack,
+  path = 'breakthrough',
 }: StrengthsPageProps) {
   const [activeTab, setActiveTab] = useState<StrengthDomain>('executing');
+
+  // 根据路径获取按钮文本
+  const getButtonText = () => {
+    switch (path) {
+      case 'career-match':
+        return '生成适合你的职业方向';
+      case 'strength-guide':
+        return '生成优势发挥指南';
+      case 'breakthrough':
+      default:
+        return '下一步：描述困惑';
+    }
+  };
 
   const canProceed = selectedStrengths.length >= 3 && selectedStrengths.length <= 5;
   const selectedCount = selectedStrengths.length;
@@ -268,7 +283,7 @@ export default function StrengthsPage({
           disabled={!canProceed}
           className="btn-primary w-full sm:w-auto text-base sm:text-lg px-8 sm:px-12 py-3 sm:py-4 min-h-[48px] touch-manipulation"
         >
-          下一步：描述困惑
+          {getButtonText()}
           <svg className="w-4 h-4 ml-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>

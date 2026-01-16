@@ -384,7 +384,7 @@ function DecidePage({ data }: { data: DecideData }) {
 interface ResultPageProps {
   explainData: ExplainData;
   decideData: DecideData;
-  onSave?: (savedData: GallupResult) => void;
+  onSave?: (_savedData: GallupResult) => void;
   onRegenerate?: () => void;
   onBack?: () => void;
 }

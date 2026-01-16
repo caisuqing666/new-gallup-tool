@@ -181,19 +181,19 @@ function generateInteractions(
   // 优先使用组合陷阱
   if (combo.traps.length > 0) {
     const trap = combo.traps[0];
-    return `当你面对「${problemFocus}」时，你的「${names.slice(0, 2).join('」与「')}」组合触发了「${trap.split('：')[0]}」：${trap.split('：')[1] || ''}你陷入了这个循环，越用力越消耗。`;
+    return `当你面对「${problemFocus}」时，你的「${names.slice(0, 2).join('」与「')}」组合触发了「${trap.name}」：${trap.symptom || ''}你陷入了这个循环，越用力越消耗。`;
   }
-  
+
   // 其次使用组合冲突
   if (combo.conflicts.length > 0) {
     const conflict = combo.conflicts[0];
-    return `在「${problemFocus}」时，你的「${names[0]}」和「${names[1] || names[0]}」产生了内在冲突：${conflict.split('：')[1] || conflict}你被撕裂在两种力量之间。`;
+    return `在「${problemFocus}」时，你的「${names[0]}」和「${names[1] || names[0]}」产生了内在冲突：${conflict.description || conflict.name}你被撕裂在两种力量之间。`;
   }
-  
+
   // 使用组合盲区
   if (combo.blindspots.length > 0) {
     const blindspot = combo.blindspots[0];
-    return `这组优势在「${problemFocus}」时产生了盲区：${blindspot.split('：')[1] || blindspot}你可能没有意识到这一点。`;
+    return `这组优势在「${problemFocus}」时产生了盲区：${blindspot.symptom || blindspot.name}你可能没有意识到这一点。`;
   }
   
   // 默认描述
@@ -205,24 +205,24 @@ function generateInteractions(
  */
 function generateBlindspots(combo: ComboEffect, confusion: ConfusionProfile): string {
   const { problemFocus } = confusion;
-  
+
   if (combo.traps.length > 0) {
-    const trapName = combo.traps[0].split('：')[0];
-    return `你这组优势在「${problemFocus}」时会让你误以为「再用点力就能解决」，但其实你已经掉进了「${trapName}」。问题不是你不够努力，而是用力的方式错了。`;
+    const trap = combo.traps[0];
+    return `你这组优势在「${problemFocus}」时会让你误以为「再用点力就能解决」，但其实你已经掉进了「${trap.name}」。问题不是你不够努力，而是用力的方式错了。`;
   }
-  
+
   if (combo.blindspots.length > 0) {
     const blindspot = combo.blindspots[0];
-    return `你这组优势的盲区是「${blindspot.split('：')[0]}」。在面对「${problemFocus}」时，${blindspot.split('：')[1] || '你可能看不到问题的真正所在'}。`;
+    return `你这组优势的盲区是「${blindspot.name}」。在面对「${problemFocus}」时，${blindspot.symptom || '你可能看不到问题的真正所在'}。`;
   }
-  
+
   return `你这组优势会让你误以为「${problemFocus}」需要更多准备或更多坚持，但其实问题可能出在使用优势的方式上。`;
 }
 
 /**
  * 生成总结
  */
-function generateSummary(profiles: StrengthProfile[], confusion: ConfusionProfile): string {
+function generateSummary(profiles: StrengthProfile[], _confusion: ConfusionProfile): string {
   const firstProfile = profiles[0];
   const secondProfile = profiles[1];
   
@@ -241,7 +241,7 @@ function generateSummary(profiles: StrengthProfile[], confusion: ConfusionProfil
  * 生成判词
  */
 function generateVerdict(profiles: StrengthProfile[], confusion: ConfusionProfile): string {
-  const { problemType, problemFocus } = confusion;
+  const { problemType } = confusion;
   const firstProfile = profiles[0];
   const secondProfile = profiles[1];
   
@@ -302,7 +302,7 @@ function generatePathLogic(
   confusion: ConfusionProfile,
   pathDecision: PathDecision
 ): string {
-  const { problemType, problemFocus } = confusion;
+  const { problemType } = confusion;
   const firstProfile = profiles[0];
   const secondProfile = profiles[1];
   const firstStrength = firstProfile?.name || '责任';
@@ -362,12 +362,13 @@ function generateDoMore(
   });
   
   // 如果有纠偏建议，添加到第一条
-  if (combo.topCorrection) {
+  if (combo.corrections && combo.corrections.length > 0) {
+    const topCorrection = combo.corrections[0];
     actions[0] = {
-      action: combo.topCorrection.action,
+      action: topCorrection.action,
       timing: '立即',
-      criteria: combo.topCorrection.boundary,
-      consequence: `否则，${combo.topCorrection.insight.replace('你的', '你会继续')}`,
+      criteria: topCorrection.boundary,
+      consequence: `否则，${topCorrection.insight.replace('你的', '你会继续')}`,
     };
   }
   
@@ -380,7 +381,7 @@ function generateDoMore(
 function generateDoLess(
   profiles: StrengthProfile[],
   combo: ComboEffect,
-  confusion: ConfusionProfile
+  _confusion: ConfusionProfile
 ): Array<{ action: string; replacement: string; timing: string }> {
   const actions: Array<{ action: string; replacement: string; timing: string }> = [];
   
@@ -397,12 +398,12 @@ function generateDoLess(
   
   // 如果有组合陷阱，替换第一条
   if (combo.traps.length > 0) {
-    const trapName = combo.traps[0].split('：')[0];
-    const trapSymptom = combo.traps[0].split('：')[1] || '';
-    
+    const trap = combo.traps[0];
+    const topCorrection = combo.corrections?.[0];
+
     actions[0] = {
-      action: `不再陷入「${trapName}」——${trapSymptom}`,
-      replacement: combo.topCorrection?.action || profiles[1]?.reframe || '用另一种方式使用优势',
+      action: `不再陷入「${trap.name}」——${trap.symptom || ''}`,
+      replacement: topCorrection?.action || profiles[1]?.reframe || '用另一种方式使用优势',
       timing: '立即',
     };
   }
@@ -415,15 +416,16 @@ function generateDoLess(
  */
 function generateBoundaries(
   combo: ComboEffect,
-  confusion: ConfusionProfile
+  _confusion: ConfusionProfile
 ): Array<{ responsibleFor: string; notResponsibleFor: string }> {
   const boundaries: Array<{ responsibleFor: string; notResponsibleFor: string }> = [];
   
   // 基于纠偏建议生成边界
-  if (combo.topCorrection) {
+  if (combo.corrections && combo.corrections.length > 0) {
+    const topCorrection = combo.corrections[0];
     boundaries.push({
-      responsibleFor: combo.topCorrection.boundary.replace('负责', '').replace('，不负责', ''),
-      notResponsibleFor: combo.topCorrection.boundary.split('不负责')[1] || '所有人的期待',
+      responsibleFor: topCorrection.boundary.replace('负责', '').replace('，不负责', ''),
+      notResponsibleFor: topCorrection.boundary.split('不负责')[1] || '所有人的期待',
     });
   }
   

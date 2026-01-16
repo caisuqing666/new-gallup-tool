@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tesseract.js OCR 测试</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 { margin-top: 0; }
+    .upload-area {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      margin: 20px 0;
+      cursor: pointer;
+    }
+    .upload-area:hover {
+      border-color: #5D4037;
+      background: #f9f9f9;
+    }
+    .result {
+      background: #f9f9f9;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 20px;
+    }
+    .progress {
+      width: 100%;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 16px;
+    }
+    .progress-bar {
+      height: 100%;
+      background: #5D4037;
+      transition: width 0.3s;
+    }
+    button {
+      background: #5D4037;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #4A3A2F;
+    }
+    .strength-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .strength-tag {
+      background: #5D4037;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Tesseract.js OCR 测试</h1>
+    <p>上传盖洛普报告图片，测试 OCR 识别功能</p>
+
+    <input type="file" id="fileInput" accept="image/*" style="display: none">
+    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+      <p>📁 点击或拖拽上传图片</p>
+      <p style="color: #999; font-size: 14px;">支持 JPG、PNG 格式</p>
+    </div>
+
+    <div id="status"></div>
+    <div class="progress" id="progressContainer" style="display: none;">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="result" id="result" style="display: none;">
+      <h3>识别结果：</h3>
+      <div class="strength-tags" id="strengthTags"></div>
+      <pre id="resultText" style="white-space: pre-wrap; margin-top: 16px; font-size: 14px;"></pre>
+    </div>
+  </div>
+
+  <script>
+    const GALLUP_STRENGTHS = [
+      '专注', '信仰', '公平', '审慎', '成就', '排难', '纪律', '统筹', '责任',
+      '取悦', '完美', '沟通', '竞争', '统率', '自信', '行动', '追求',
+      '个别', '交往', '伯乐', '体谅', '关联', '包容', '和谐', '积极', '适应',
+      '分析', '前瞻', '回顾', '学习', '思维', '战略', '搜集', '理念'
+    ];
+
+    function extractStrengths(text) {
+      const found = new Set();
+      
+      // 查找编号格式
+      const numberedPattern = /(\d+)[.、\s]*([\u4e00-\u9fa5]{2})/g;
+      const matches = text.match(numberedPattern);
+      if (matches) {
+        matches.forEach(match => {
+          const nameMatch = match.match(/[\u4e00-\u9fa5]{2}/);
+          if (nameMatch) {
+            const name = nameMatch[0];
+            if (GALLUP_STRENGTHS.includes(name)) {
+              found.add(name);
+            }
+          }
+        });
+      }
+      
+      // 直接搜索
+      GALLUP_STRENGTHS.forEach(strength => {
+        if (text.includes(strength)) {
+          found.add(strength);
+        }
+      });
+      
+      return Array.from(found).slice(0, 5);
+    }
+
+    document.getElementById('fileInput').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById('status');
+      const progressContainer = document.getElementById('progressContainer');
+      const progressBar = document.getElementById('progressBar');
+      const resultEl = document.getElementById('result');
+      const resultTextEl = document.getElementById('resultText');
+      const strengthTagsEl = document.getElementById('strengthTags');
+
+      statusEl.innerHTML = '<p>🔄 开始识别...</p>';
+      progressContainer.style.display = 'block';
+      progressBar.style.width = '0%';
+      resultEl.style.display = 'none';
+
+      try {
+        const result = await Tesseract.recognize(
+          file,
+          'chi_sim',
+          {
+            logger: (m) => {
+              if (m.status === 'recognizing text') {
+                const progress = Math.round(m.progress * 100);
+                progressBar.style.width = progress + '%';
+                statusEl.innerHTML = `<p>🔄 正在识别... ${progress}%</p>`;
+              } else if (m.status === 'loading tesseract core') {
+                statusEl.innerHTML = '<p>📥 加载 OCR 引擎...</p>';
+              } else if (m.status.includes('language')) {
+                statusEl.innerHTML = '<p>📥 下载语言包...</p>';
+              }
+            }
+          }
+        );
+
+        const strengths = extractStrengths(result.data.text);
+        
+        statusEl.innerHTML = '<p style="color: green;">✅ 识别完成！</p>';
+        
+        resultTextEl.textContent = result.data.text;
+        
+        strengthTagsEl.innerHTML = strengths
+          .map(s => `<span class="strength-tag">${s}</span>`)
+          .join('');
+        
+        resultEl.style.display = 'block';
+
+        if (strengths.length === 0) {
+          statusEl.innerHTML += '<p style="color: orange;">⚠️ 未识别到盖洛普优势，请确保图片清晰</p>';
+        }
+      } catch (error) {
+        statusEl.innerHTML = `<p style="color: red;">❌ 识别失败: ${error.message}</p>`;
+      }
+    });
+
+    // 拖拽支持
+    const uploadArea = document.querySelector('.upload-area');
+    
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.style.borderColor = '#5D4037';
+      uploadArea.style.background = '#f9f9f9';
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.style.borderColor = '#ccc';
+      uploadArea.style.background = 'transparent';
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.style.borderColor = '#ccc';
+      uploadArea.style.background = 'transparent';
+      
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        document.getElementById('fileInput').files = dataTransfer.files;
+        document.getElementById('fileInput').dispatchEvent(new Event('change'));
+      }
+    });
+  </script>
+</body>
+</html>
