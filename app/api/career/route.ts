@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateMockCareerResult } from '@/lib/mock-career';
+import { isValidCareerResultData } from '@/lib/schema';
 import { validateConfig } from '@/lib/config-validator';
 
 export async function POST(request: NextRequest) {
@@ -37,6 +38,13 @@ export async function POST(request: NextRequest) {
 
     // 生成 Mock 数据
     const careerData = generateMockCareerResult(strengths);
+    if (!isValidCareerResultData(careerData)) {
+      console.error('职业匹配结果未通过 schema 校验');
+      return NextResponse.json(
+        { error: '职业匹配结果格式错误' },
+        { status: 500 }
+      );
+    }
     const startTime = Date.now();
 
     return NextResponse.json({

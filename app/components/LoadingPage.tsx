@@ -79,11 +79,15 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
   const confusionPreview = confusion.slice(0, 15) + (confusion.length > 15 ? '...' : '');
 
   if (!mounted) {
-    return <div className="min-h-screen bg-bg-primary" />;
+    return (
+      <div className="min-h-screen bg-warm-gradient flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
+    <div className="min-h-screen bg-warm-gradient flex flex-col items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
       <div className="max-w-lg mx-auto text-center px-2">
         {/* 加载动画 */}
         <motion.div
@@ -93,31 +97,31 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
           className="mb-10"
         >
           {/* 圆环动画 */}
-          <div className="relative w-24 h-24 mx-auto mb-8">
-            {/* 外圈 */}
+          <div className="relative w-28 h-28 sm:w-32 sm:h-32 mx-auto mb-8">
+            {/* 外圈 - Subtle base */}
             <motion.div
-              className="absolute inset-0 rounded-full border-4 border-border-light"
+              className="absolute inset-0 rounded-full border-4 border-border-light shadow-inner-soft"
               animate={{ rotate: 360 }}
+              transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+            />
+            {/* 中圈 - Brand accent */} 
+            <motion.div
+              className="absolute inset-2 rounded-full border-4 border-brand/50"
+              animate={{ rotate: -360 }}
               transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
             />
-            {/* 中圈 */}
+            {/* 内圈 - Active progress glow */} 
             <motion.div
-              className="absolute inset-2 rounded-full border-4 border-brand/30"
-              animate={{ rotate: -360 }}
-              transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
-            />
-            {/* 内圈 - 进度指示 */}
-            <motion.div
-              className="absolute inset-4 rounded-full border-4 border-transparent border-t-brand"
+              className="absolute inset-4 rounded-full border-4 border-transparent border-t-brand ring-2 ring-brand/30 shadow-glow animate-glow-pulse"
               animate={{ rotate: 360 }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
             />
-            {/* 中心点 */}
+            {/* 中心点 - Core activity */} 
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.div
-                className="w-4 h-4 rounded-full bg-brand"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
+                className="w-5 h-5 rounded-full bg-brand shadow-lg"
+                animate={{ scale: [1, 1.3, 1], opacity: [0.8, 1, 0.8] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
               />
             </div>
           </div>
@@ -127,7 +131,7 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl sm:text-2xl md:text-3xl font-serif font-bold text-text-primary mb-3 sm:mb-4"
+            className="text-h3 font-serif text-text-primary mb-3 sm:mb-4"
           >
             正在生成你的行动方案
           </motion.h2>
@@ -136,7 +140,7 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="text-sm sm:text-base text-text-tertiary leading-relaxed mb-4 sm:mb-6"
+            className="text-body text-text-secondary leading-relaxed mb-4 sm:mb-6"
           >
             基于你的「<span className="text-brand font-medium">{strengthNames}</span>」优势
             <br className="hidden sm:block" />
@@ -149,9 +153,9 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="max-w-xs mx-auto mb-6"
+            className="max-w-xs mx-auto mb-6 bg-white/60 backdrop-blur-sm p-3 rounded-xl shadow-inner-soft border border-white/80"
           >
-            <div className="h-2 bg-border-light rounded-full overflow-hidden">
+            <div className="h-2 bg-border rounded-full overflow-hidden mb-2">
               <motion.div
                 className="h-full bg-gradient-to-r from-brand to-accent rounded-full"
                 initial={{ width: 0 }}
@@ -159,9 +163,9 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
                 transition={{ duration: 0.3 }}
               />
             </div>
-            <div className="flex justify-between items-center mt-2 text-xs text-text-muted">
-              <span>{Math.round(progress)}%</span>
-              <span>预计剩余 {formatTime(Math.max(0, remainingTime))}</span>
+            <div className="flex justify-between items-center text-xs text-text-secondary">
+              <span className="font-medium">{Math.round(progress)}%</span>
+              <span className="font-normal">预计剩余 {formatTime(Math.max(0, remainingTime))}</span>
             </div>
           </motion.div>
 
@@ -173,10 +177,10 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3 }}
-              className="flex items-center justify-center gap-2 mb-4"
+              className="flex items-center justify-center gap-2 mb-4 p-2 bg-white/40 backdrop-blur-sm rounded-lg shadow-soft border border-white/50"
             >
-              <div className="w-2 h-2 rounded-full bg-brand animate-pulse" />
-              <span className="text-sm text-text-secondary">{LOADING_PHASES[currentPhase]?.text}</span>
+              <div className="w-2.5 h-2.5 rounded-full bg-brand animate-pulse" />
+              <span className="text-sm text-text-primary font-medium">{LOADING_PHASES[currentPhase]?.text}</span>
             </motion.div>
           </AnimatePresence>
 
@@ -185,8 +189,8 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
             {LOADING_PHASES.map((_, i) => (
               <div
                 key={i}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  i <= currentPhase ? 'bg-brand' : 'bg-border-light'
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                  i <= currentPhase ? 'bg-brand shadow-md' : 'bg-border-light'
                 }`}
               />
             ))}
@@ -198,7 +202,7 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="text-sm text-text-muted mb-6"
+          className="text-body-sm text-text-secondary mb-6 max-w-sm mx-auto"
         >
           AI 正在深度解读你的优势组合，请稍候...
         </motion.p>
@@ -210,9 +214,12 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
             onClick={onCancel}
-            className="btn-ghost"
+            className="flex items-center gap-2 text-text-muted hover:text-text-primary transition-colors duration-200 group bg-black/5 hover:bg-black/10 px-4 py-2 rounded-full"
           >
-            取消生成
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span className="text-sm">取消生成</span>
           </motion.button>
         )}
       </div>

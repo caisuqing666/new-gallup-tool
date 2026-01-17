@@ -19,14 +19,14 @@ const PATH_ORDER: PathId[] = [
 
 export default function PathSelectionPage({ onSelectPath, onBack }: PathSelectionPageProps) {
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-warm-gradient flex flex-col">
       {/* 顶部导航 */}
       <header className="px-4 sm:px-6 py-4 sm:py-6">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+          className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors duration-200 group bg-black/5 hover:bg-black/10 px-3 py-2 rounded-full"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           <span className="text-sm">返回</span>
@@ -43,10 +43,10 @@ export default function PathSelectionPage({ onSelectPath, onBack }: PathSelectio
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="text-center mb-8 sm:mb-12"
           >
-            <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-black mb-3 sm:mb-4">
+            <h1 className="font-serif text-h2 text-text-primary mb-3 sm:mb-4">
               选择你想要的帮助方式
             </h1>
-            <p className="text-sm sm:text-base text-gray-500">
+            <p className="text-body-lg text-text-secondary">
               根据你的需求，选择最合适的入口
             </p>
           </motion.div>
@@ -71,30 +71,30 @@ export default function PathSelectionPage({ onSelectPath, onBack }: PathSelectio
                   onClick={() => isImplemented && onSelectPath(pathId)}
                   disabled={!isImplemented}
                   className={`
-                    relative p-6 sm:p-8 rounded-2xl text-left transition-all duration-300
+                    relative p-6 sm:p-8 rounded-2xl text-left transition-all duration-300 border
                     ${isImplemented
-                      ? 'bg-gray-50 hover:bg-white hover:shadow-lg hover:scale-[1.02] cursor-pointer border border-gray-100 hover:border-[#5D4037]/30'
-                      : 'bg-gray-50/50 cursor-not-allowed border border-gray-100 opacity-60'
+                      ? 'bg-bg-card/80 backdrop-blur-sm shadow-card hover:shadow-elevated hover:-translate-y-1 cursor-pointer border-transparent hover:border-brand'
+                      : 'bg-bg-secondary/50 cursor-not-allowed border-border-light opacity-60'
                     }
                   `}
                 >
                   {/* 图标 */}
-                  <div className="text-3xl sm:text-4xl mb-4">
+                  <div className="text-3xl sm:text-4xl mb-4 text-brand">
                     {pathInfo.icon}
                   </div>
 
                   {/* 标题 */}
                   <h3 className={`
-                    text-lg sm:text-xl font-bold mb-2
-                    ${isImplemented ? 'text-black' : 'text-gray-400'}
+                    text-h4 font-serif mb-2
+                    ${isImplemented ? 'text-text-primary' : 'text-text-muted'}
                   `}>
                     {pathInfo.title}
                   </h3>
 
                   {/* 副标题 */}
                   <p className={`
-                    text-sm sm:text-base
-                    ${isImplemented ? 'text-gray-600' : 'text-gray-400'}
+                    text-body-sm
+                    ${isImplemented ? 'text-text-secondary' : 'text-text-muted'}
                   `}>
                     {pathInfo.subtitle}
                   </p>
@@ -102,7 +102,7 @@ export default function PathSelectionPage({ onSelectPath, onBack }: PathSelectio
                   {/* 未实现标记 */}
                   {!isImplemented && (
                     <div className="absolute top-4 right-4">
-                      <span className="text-xs px-2 py-1 bg-gray-200 text-gray-500 rounded-full">
+                      <span className="text-xs px-2 py-1 bg-bg-tertiary text-text-tertiary rounded-full">
                         即将推出
                       </span>
                     </div>

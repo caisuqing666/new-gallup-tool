@@ -29,7 +29,7 @@ export default function ScenarioPage({
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary px-4 sm:px-6 py-8 sm:py-12">
+    <div className="min-h-screen bg-warm-gradient px-4 sm:px-6 py-8 sm:py-12">
       <div className="max-w-4xl mx-auto">
         {/* 返回按钮 */}
         {onBack && (
@@ -37,9 +37,9 @@ export default function ScenarioPage({
             onClick={onBack}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            className="back-button mb-10"
+            className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors duration-200 group bg-black/5 hover:bg-black/10 px-3 py-2 rounded-full mb-10"
           >
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             <span>返回</span>
@@ -64,12 +64,12 @@ export default function ScenarioPage({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.6 }}
-          className="mb-8 sm:mb-12"
+          className="mb-8 sm:mb-12 text-center"
         >
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-text-primary mb-3 sm:mb-4 px-2">
+          <h1 className="text-h2 font-serif text-text-primary mb-3 sm:mb-4">
             你现在最需要用优势解决哪类问题？
           </h1>
-          <p className="text-base sm:text-lg text-text-tertiary px-2">
+          <p className="text-body-lg text-text-secondary max-w-2xl mx-auto">
             选择一个您最关心的现实场景，我们将基于此进行深度调频
           </p>
         </motion.div>
@@ -87,23 +87,16 @@ export default function ScenarioPage({
                 transition={{ delay: 0.2 + index * 0.05, duration: 0.5 }}
                 onClick={() => onSelectScenario(scenario.id)}
                 className={`
-                  text-left p-4 sm:p-6 md:p-8 rounded-xl border transition-all duration-300
-                  min-h-[100px] sm:min-h-[120px]
-                  touch-manipulation active:scale-[0.98]
+                  text-left p-6 rounded-2xl border transition-all duration-300
+                  group
                   ${isSelected
-                    ? 'bg-bg-card border-border-light shadow-card text-text-primary'
-                    : 'bg-bg-card border-border-light hover:border-border hover:shadow-card hover:-translate-y-0.5 hover:bg-bg-tertiary hover:text-text-primary'
+                    ? 'bg-white/80 backdrop-blur-sm shadow-elevated border-brand ring-2 ring-brand/50'
+                    : 'bg-white/50 backdrop-blur-sm shadow-card border-transparent hover:shadow-elevated hover:-translate-y-1 hover:border-brand/50'
                   }
                 `}
-                style={{
-                  borderLeft: isSelected ? '4px solid #6B5B4D' : undefined,
-                  boxShadow: isSelected 
-                    ? '0 0 0 4px rgba(107, 91, 77, 0.2), 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)' 
-                    : undefined,
-                }}
               >
                 <div className="flex items-start justify-between mb-4">
-                  <span className={`text-xs font-medium tracking-wider uppercase ${
+                  <span className={`text-label transition-colors duration-300 ${
                     isSelected ? 'text-brand' : 'text-text-muted'
                   }`}>
                     场景 {String(index + 1).padStart(2, '0')}
@@ -114,7 +107,7 @@ export default function ScenarioPage({
                     w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300
                     ${isSelected
                       ? 'border-brand bg-brand'
-                      : 'border-border-dark bg-transparent'
+                      : 'border-border-dark bg-transparent group-hover:border-brand'
                     }
                   `}>
                     {isSelected && (
@@ -132,9 +125,7 @@ export default function ScenarioPage({
                   </div>
                 </div>
 
-                <h3 className={`text-base sm:text-lg md:text-xl font-semibold leading-relaxed ${
-                  isSelected ? 'text-brand-dark' : 'text-text-primary'
-                }`}>
+                <h3 className="text-h4 font-serif text-text-primary">
                   {scenario.title}
                 </h3>
               </motion.button>
@@ -147,11 +138,11 @@ export default function ScenarioPage({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.5 }}
-          className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 sm:p-6 bg-bg-secondary rounded-2xl"
+          className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 sm:p-6 bg-white/60 backdrop-blur-md rounded-2xl shadow-elevated border border-white/80"
         >
-          <p className="text-sm text-text-tertiary text-center sm:text-left">
+          <p className="text-sm text-text-secondary text-center sm:text-left">
             {selectedScenario
-              ? '场景已选择，点击下一步继续'
+              ? <span className="font-medium text-text-primary">场景已选定，请继续</span>
               : '请选择一个场景以继续...'
             }
           </p>
@@ -159,12 +150,12 @@ export default function ScenarioPage({
           <motion.button
             onClick={onNext}
             disabled={!selectedScenario}
-            whileHover={selectedScenario ? { scale: 1.02 } : {}}
+            whileHover={selectedScenario ? { scale: 1.02, y: -1 } : {}}
             whileTap={selectedScenario ? { scale: 0.98 } : {}}
-            className="btn-primary w-full sm:w-auto whitespace-nowrap min-h-[48px] touch-manipulation"
+            className="w-full sm:w-auto px-6 py-3 rounded-lg text-white font-semibold transition-all duration-300 shadow-lg disabled:shadow-none disabled:bg-gray-300 disabled:cursor-not-allowed bg-brand hover:bg-brand-dark"
           >
             下一步：选择优势
-            <svg className="w-4 h-4 ml-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 ml-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </motion.button>

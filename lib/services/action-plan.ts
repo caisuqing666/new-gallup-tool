@@ -11,6 +11,7 @@
 import type { ScenarioId, StrengthId, ProblemFocus } from '../types';
 import { ProblemType } from '../types';
 import type { GallupResult } from '../schema';
+import { isValidResultData } from '../schema';
 import { generateResult } from '../ai-generate';
 import { parseConfusion, ProblemType as ConfusionProblemType } from '../confusion-parser';
 
@@ -24,7 +25,7 @@ export type ProviderType = 'mock' | 'ai';
 /** Provider 配置 */
 export interface ProviderConfig {
   type: ProviderType;
-  provider?: 'anthropic' | 'openai' | 'zhipu';
+  provider?: 'anthropic' | 'openai' | 'zhipu' | 'minimax';
 }
 
 /** 生成选项 */
@@ -195,6 +196,18 @@ export async function generateActionPlan(options: GenerateOptions): Promise<Gene
       result = await generateWithMock(scenario, strengths, confusion, finalProblemType, finalProblemFocus);
       usedMockFallback = true;
     }
+  }
+
+  if (!isValidResultData(result)) {
+    console.warn('生成结果未通过 schema 校验，进行降级处理');
+    if (effectiveProvider.type === 'ai') {
+      result = await generateWithMock(scenario, strengths, confusion, finalProblemType, finalProblemFocus);
+      usedMockFallback = true;
+    }
+  }
+
+  if (!isValidResultData(result)) {
+    throw new Error('生成结果未通过 schema 校验');
   }
 
   return {

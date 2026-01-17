@@ -16,7 +16,7 @@
 // 此文件保留仅用于向后兼容，未来版本将移除。
 // ============================================================
 
-import { StrengthId } from './gallup-strengths';
+import { StrengthId, ALL_STRENGTHS, DOMAIN_NAMES } from './gallup-strengths';
 import { ReportInterpretResult } from './types';
 
 /**
@@ -153,16 +153,12 @@ ${ocrText ? `## OCR 识别文本\n${ocrText}\n` : ''}
 /**
  * 解析 AI 响应
  */
-export function parseReportInterpretResponse(content: string): ReportInterpretResult {
-  try {
-    const jsonMatch = content.match(/```json\n?([\s\S]*?)\n?```/) || content.match(/\{[\s\S]*\}/);
-    const jsonString = jsonMatch ? jsonMatch[1] || jsonMatch[0] : content;
-    const result = JSON.parse(jsonString);
-    return result;
-  } catch (e) {
-    console.error('解析报告解读响应失败:', e);
-    throw new Error('AI 返回格式不正确');
-  }
+export function parseReportInterpretResponse(
+  content: string,
+  strengths: StrengthId[] = []
+): ReportInterpretResult {
+  const raw = safeJsonParse(content);
+  return repairReportInterpretResult(raw, strengths);
 }
 
 /**
@@ -170,20 +166,175 @@ export function parseReportInterpretResponse(content: string): ReportInterpretRe
  */
 export function isValidReportInterpretResult(data: any): data is ReportInterpretResult {
   if (!data || typeof data !== 'object') return false;
-  
-  const requiredFields = [
-    'personalLabel',
-    'summary',
-    'strengthInterpretations',
-    'comboInterpretation',
-    'domainAnalysis',
-    'keyInsights',
-    'personalizedAdvice',
-  ];
-  
-  for (const field of requiredFields) {
-    if (!(field in data)) return false;
-  }
-  
+  if (!Array.isArray(data.top5Strengths)) return false;
+  if (!data.personalLabel || typeof data.personalLabel !== 'object') return false;
+  if (typeof data.personalLabel.label !== 'string') return false;
+  if (typeof data.summary !== 'string') return false;
+  if (!Array.isArray(data.strengthInterpretations)) return false;
+  if (!data.comboInterpretation || typeof data.comboInterpretation !== 'object') return false;
+  if (!Array.isArray(data.domainAnalysis)) return false;
+  if (!Array.isArray(data.keyInsights)) return false;
+  if (!Array.isArray(data.suggestedPaths)) return false;
+  if (typeof data.personalizedAdvice !== 'string') return false;
   return true;
+}
+
+function safeJsonParse(content: string): unknown {
+  const jsonMatch = content.match(/```json\n?([\s\S]*?)\n?```/) || content.match(/\{[\s\S]*\}/);
+  const jsonString = jsonMatch ? jsonMatch[1] || jsonMatch[0] : content;
+
+  try {
+    return JSON.parse(jsonString);
+  } catch (error) {
+    try {
+      const repaired = jsonString
+        .replace(/,\s*([}\]])/g, '$1')
+        .replace(/[“”]/g, '"')
+        .replace(/[‘’]/g, "'");
+      return JSON.parse(repaired);
+    } catch (repairError) {
+      console.error('解析报告解读响应失败:', repairError);
+      return {};
+    }
+  }
+}
+
+function buildTop5Strengths(strengths: StrengthId[]): ReportInterpretResult['top5Strengths'] {
+  return strengths.map((id, index) => {
+    const info = ALL_STRENGTHS.find(s => s.id === id);
+    return {
+      rank: index + 1,
+      name: info?.name || id,
+      domain: info ? DOMAIN_NAMES[info.domain] : '未知领域',
+    };
+  });
+}
+
+function buildDomainAnalysis(strengths: StrengthId[]): ReportInterpretResult['domainAnalysis'] {
+  const total = strengths.length || 1;
+  const counts: Record<string, number> = {};
+
+  strengths.forEach((id) => {
+    const info = ALL_STRENGTHS.find(s => s.id === id);
+    const domainKey = info?.domain || 'unknown';
+    counts[domainKey] = (counts[domainKey] || 0) + 1;
+  });
+
+  return Object.entries(counts).map(([domainKey, count]) => ({
+    domain: DOMAIN_NAMES[domainKey as keyof typeof DOMAIN_NAMES] || '未知领域',
+    count,
+    percentage: Math.round((count / total) * 100),
+    characteristics: [],
+  }));
+}
+
+function buildStrengthInterpretations(
+  strengths: StrengthId[]
+): ReportInterpretResult['strengthInterpretations'] {
+  return strengths.map((id) => {
+    const info = ALL_STRENGTHS.find(s => s.id === id);
+    return {
+      name: info?.name || id,
+      domain: info ? DOMAIN_NAMES[info.domain] : '未知领域',
+      whatItIs: '',
+      yourStrength: '',
+      watchOut: '',
+      bestWhen: [],
+      pairWith: [],
+      avoid: [],
+    };
+  });
+}
+
+function normalizeTop5Strength(
+  input: any,
+  fallback: ReportInterpretResult['top5Strengths'][number]
+): ReportInterpretResult['top5Strengths'][number] {
+  const result = typeof input === 'object' && input ? input : {};
+  return {
+    rank: typeof result.rank === 'number' ? result.rank : fallback.rank,
+    name: typeof result.name === 'string' ? result.name : fallback.name,
+    domain: typeof result.domain === 'string' ? result.domain : fallback.domain,
+  };
+}
+
+function normalizeInterpretation(
+  input: any,
+  fallback: ReportInterpretResult['strengthInterpretations'][number]
+): ReportInterpretResult['strengthInterpretations'][number] {
+  const result = typeof input === 'object' && input ? input : {};
+  return {
+    name: typeof result.name === 'string' ? result.name : fallback.name,
+    domain: typeof result.domain === 'string' ? result.domain : fallback.domain,
+    whatItIs: typeof result.whatItIs === 'string' ? result.whatItIs : '',
+    yourStrength: typeof result.yourStrength === 'string' ? result.yourStrength : '',
+    watchOut: typeof result.watchOut === 'string' ? result.watchOut : '',
+    bestWhen: Array.isArray(result.bestWhen) ? result.bestWhen : [],
+    pairWith: Array.isArray(result.pairWith) ? result.pairWith : [],
+    avoid: Array.isArray(result.avoid) ? result.avoid : [],
+  };
+}
+
+function repairReportInterpretResult(raw: unknown, strengths: StrengthId[]): ReportInterpretResult {
+  const source = (raw && typeof raw === 'object' && 'data' in (raw as any))
+    ? (raw as any).data
+    : (raw as any);
+  const base = (source && typeof source === 'object') ? (source as any) : {};
+
+  const fallbackTop5 = buildTop5Strengths(strengths);
+  const fallbackInterpretations = buildStrengthInterpretations(strengths);
+
+  const top5Strengths = Array.isArray(base.top5Strengths) && base.top5Strengths.length > 0
+    ? fallbackTop5.map((fallback, index) => normalizeTop5Strength(base.top5Strengths[index], fallback))
+    : fallbackTop5;
+
+  const personalLabel = typeof base.personalLabel === 'object' && base.personalLabel
+    ? {
+        label: typeof base.personalLabel.label === 'string' ? base.personalLabel.label : '你的优势标签',
+        description: typeof base.personalLabel.description === 'string' ? base.personalLabel.description : '',
+        basedOn: Array.isArray(base.personalLabel.basedOn) ? base.personalLabel.basedOn : top5Strengths.map((s: any) => s.name),
+      }
+    : {
+        label: '你的优势标签',
+        description: '',
+        basedOn: top5Strengths.map((s: any) => s.name),
+      };
+
+  const strengthInterpretations = Array.isArray(base.strengthInterpretations) && base.strengthInterpretations.length > 0
+    ? fallbackInterpretations.map((fallback, index) =>
+        normalizeInterpretation(base.strengthInterpretations[index], fallback)
+      )
+    : fallbackInterpretations;
+
+  const comboInterpretation = typeof base.comboInterpretation === 'object' && base.comboInterpretation
+    ? {
+        coreDrive: typeof base.comboInterpretation.coreDrive === 'string' ? base.comboInterpretation.coreDrive : '',
+        potentialTraps: Array.isArray(base.comboInterpretation.potentialTraps) ? base.comboInterpretation.potentialTraps : [],
+        synergies: Array.isArray(base.comboInterpretation.synergies) ? base.comboInterpretation.synergies : [],
+      }
+    : { coreDrive: '', potentialTraps: [], synergies: [] };
+
+  const domainAnalysis = Array.isArray(base.domainAnalysis) && base.domainAnalysis.length > 0
+    ? base.domainAnalysis
+    : buildDomainAnalysis(strengths);
+
+  const suggestedPaths = Array.isArray(base.suggestedPaths) && base.suggestedPaths.length > 0
+    ? base.suggestedPaths
+    : [
+        { path: 'breakthrough', title: '突破方案', reason: '用优势梳理当前困惑' },
+        { path: 'career-match', title: '职业匹配', reason: '探索更适合的方向' },
+        { path: 'strength-guide', title: '优势指南', reason: '把优势转化为可执行行动' },
+      ];
+
+  return {
+    top5Strengths,
+    personalLabel,
+    summary: typeof base.summary === 'string' ? base.summary : '',
+    strengthInterpretations,
+    comboInterpretation,
+    domainAnalysis,
+    keyInsights: Array.isArray(base.keyInsights) ? base.keyInsights : [],
+    suggestedPaths,
+    personalizedAdvice: typeof base.personalizedAdvice === 'string' ? base.personalizedAdvice : '',
+  };
 }

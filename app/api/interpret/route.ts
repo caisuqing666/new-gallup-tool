@@ -3,6 +3,7 @@ import { ReportInterpretResult, Top5StrengthsInput, StrengthId } from '@/lib/typ
 import { ALL_STRENGTHS } from '@/lib/gallup-strengths';
 import { generateMockReportResult } from '@/lib/mock-report';
 import { buildPrompt } from '@/lib/prompts';
+import { isValidReportResultData } from '@/lib/schema';
 
 // 重新导出类型，供内部使用
 import { parseReportInterpretResponse, isValidReportInterpretResult } from '@/lib/report-interpret-prompts';
@@ -26,7 +27,7 @@ interface FullStrength {
 interface InterpretRequest {
   strengths?: SimplifiedStrength[] | FullStrength[] | StrengthId[];
   useAi?: boolean;
-  provider?: 'zhipu' | 'anthropic' | 'openai';
+  provider?: 'zhipu' | 'anthropic' | 'openai' | 'minimax';
 }
 
 interface InterpretResponse {
@@ -35,13 +36,14 @@ interface InterpretResponse {
   error?: string;
 }
 
-type AIProvider = 'anthropic' | 'openai' | 'zhipu';
+type AIProvider = 'anthropic' | 'openai' | 'zhipu' | 'minimax';
 
 interface AIConfig {
   endpoint: string;
   model: string;
   apiKey: string;
   provider: AIProvider;
+  groupId?: string;
 }
 
 // ========================================
@@ -75,6 +77,24 @@ function getAIConfig(provider: AIProvider = 'zhipu'): AIConfig {
     };
   }
 
+  if (provider === 'minimax') {
+    const apiKey = process.env.MINIMAX_API_KEY;
+    const groupId = process.env.MINIMAX_GROUP_ID;
+    if (!apiKey) {
+      throw new Error('MINIMAX_API_KEY 未配置');
+    }
+    if (!groupId) {
+      throw new Error('MINIMAX_GROUP_ID 未配置');
+    }
+    return {
+      endpoint: process.env.MINIMAX_ENDPOINT || 'https://api.minimax.chat/v1/text/chatcompletion_v2',
+      model: process.env.MINIMAX_MODEL || 'abab6.5-chat',
+      apiKey,
+      groupId,
+      provider: 'minimax',
+    };
+  }
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY 未配置');
@@ -87,7 +107,7 @@ function getAIConfig(provider: AIProvider = 'zhipu'): AIConfig {
   };
 }
 
-const API_TIMEOUT = 60000;
+const API_TIMEOUT = 120000;
 
 // ========================================
 // AI 生成函数
@@ -95,7 +115,8 @@ const API_TIMEOUT = 60000;
 
 async function generateWithZhipu(
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  strengths: StrengthId[]
 ): Promise<ReportInterpretResult> {
   const config = getAIConfig('zhipu');
   const controller = new AbortController();
@@ -114,7 +135,7 @@ async function generateWithZhipu(
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        max_tokens: 4096,
+        max_tokens: 2048,
         temperature: 0.7,
       }),
       signal: controller.signal,
@@ -130,7 +151,7 @@ async function generateWithZhipu(
     const data = await response.json();
     const content = data.choices[0].message.content;
 
-    const parsedResult = parseReportInterpretResponse(content);
+    const parsedResult = parseReportInterpretResponse(content, strengths);
     if (!isValidReportInterpretResult(parsedResult)) {
       throw new Error('智谱响应格式不完整');
     }
@@ -147,7 +168,8 @@ async function generateWithZhipu(
 
 async function generateWithClaude(
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  strengths: StrengthId[]
 ): Promise<ReportInterpretResult> {
   const config = getAIConfig('anthropic');
   const controller = new AbortController();
@@ -163,7 +185,7 @@ async function generateWithClaude(
       },
       body: JSON.stringify({
         model: config.model,
-        max_tokens: 4096,
+        max_tokens: 2048,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
       }),
@@ -180,7 +202,7 @@ async function generateWithClaude(
     const data = await response.json();
     const content = data.content[0].text;
 
-    const parsedResult = parseReportInterpretResponse(content);
+    const parsedResult = parseReportInterpretResponse(content, strengths);
     if (!isValidReportInterpretResult(parsedResult)) {
       throw new Error('Claude 响应格式不完整');
     }
@@ -197,7 +219,8 @@ async function generateWithClaude(
 
 async function generateWithOpenAI(
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  strengths: StrengthId[]
 ): Promise<ReportInterpretResult> {
   const config = getAIConfig('openai');
   const controller = new AbortController();
@@ -217,7 +240,7 @@ async function generateWithOpenAI(
           { role: 'user', content: userPrompt },
         ],
         response_format: { type: 'json_object' },
-        max_tokens: 4096,
+        max_tokens: 2048,
         temperature: 0.7,
       }),
       signal: controller.signal,
@@ -233,7 +256,7 @@ async function generateWithOpenAI(
     const data = await response.json();
     const content = data.choices[0].message.content;
 
-    const parsedResult = parseReportInterpretResponse(content);
+    const parsedResult = parseReportInterpretResponse(content, strengths);
     if (!isValidReportInterpretResult(parsedResult)) {
       throw new Error('OpenAI 响应格式不完整');
     }
@@ -266,11 +289,13 @@ async function generateAiInterpretation(
   });
 
   if (provider === 'zhipu') {
-    return await generateWithZhipu(systemPrompt, userPrompt);
+    return await generateWithZhipu(systemPrompt, userPrompt, strengths);
   } else if (provider === 'anthropic') {
-    return await generateWithClaude(systemPrompt, userPrompt);
+    return await generateWithClaude(systemPrompt, userPrompt, strengths);
+  } else if (provider === 'minimax') {
+    return await generateWithMinimax(systemPrompt, userPrompt, strengths);
   } else {
-    return await generateWithOpenAI(systemPrompt, userPrompt);
+    return await generateWithOpenAI(systemPrompt, userPrompt, strengths);
   }
 }
 
@@ -396,8 +421,25 @@ export async function POST(request: NextRequest): Promise<NextResponse<Interpret
       strengths: normalizedStrengths.map(s => s.name).join(', ')
     });
 
-    const { data: result, usedMockFallback } = await generateReportInterpret(normalizedStrengths, useAi, provider);
+    let { data: result, usedMockFallback } = await generateReportInterpret(normalizedStrengths, useAi, provider);
     const startTime = Date.now();
+
+    if (!isValidReportResultData(result)) {
+      console.warn('报告解读结果未通过 schema 校验，降级到 Mock 数据');
+      const strengthIds = normalizedStrengths.map(s => {
+        const strength = ALL_STRENGTHS.find(st => st.name === s.name);
+        return (strength?.id || s.name) as StrengthId;
+      });
+      result = generateMockReportResult(strengthIds);
+      usedMockFallback = true;
+    }
+
+    if (!isValidReportResultData(result)) {
+      return NextResponse.json(
+        { success: false, error: '报告解读结果格式错误' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
@@ -416,5 +458,60 @@ export async function POST(request: NextRequest): Promise<NextResponse<Interpret
       { success: false, error: errorMessage },
       { status: 500 }
     );
+  }
+}
+async function generateWithMinimax(
+  systemPrompt: string,
+  userPrompt: string,
+  strengths: StrengthId[]
+): Promise<ReportInterpretResult> {
+  const config = getAIConfig('minimax');
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+  // 构建带 GroupId 的完整 URL
+  const fullUrl = `${config.endpoint}?GroupId=${config.groupId}`;
+
+  try {
+    const response = await fetch(fullUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        max_tokens: 2048,
+        temperature: 0.7,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Minimax API 错误 (${response.status}): ${error}`);
+    }
+
+    const data = await response.json();
+    const content = data?.choices?.[0]?.message?.content ?? '';
+
+    const parsedResult = parseReportInterpretResponse(content, strengths);
+    if (!isValidReportInterpretResult(parsedResult)) {
+      throw new Error('Minimax 响应格式不完整');
+    }
+
+    return parsedResult;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`AI 请求超时（${API_TIMEOUT}ms）`);
+    }
+    throw error;
   }
 }

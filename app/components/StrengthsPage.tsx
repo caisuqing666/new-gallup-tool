@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { ALL_STRENGTHS, DOMAIN_COLORS, DOMAIN_NAMES, StrengthId, StrengthDomain } from '@/lib/gallup-strengths';
 
 interface StrengthsPageProps {
@@ -54,17 +55,16 @@ export default function StrengthsPage({
     const index = selectedStrengths.indexOf(strengthId);
     return index >= 0 ? index + 1 : null;
   };
-
   return (
-    <div className="min-h-screen bg-bg-primary px-4 sm:px-6 py-8 sm:py-12">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-warm-gradient px-4 sm:px-6 py-8 sm:py-12">
+      <div className="max-w-5xl mx-auto">
         {/* 返回按钮 */}
         {onBack && (
           <button
             onClick={onBack}
-            className="back-button mb-10"
+            className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors duration-200 group bg-black/5 hover:bg-black/10 px-3 py-2 rounded-full mb-10"
           >
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             <span>返回</span>
@@ -72,28 +72,28 @@ export default function StrengthsPage({
         )}
 
         {/* 步骤指示器 */}
-        <div className="step-indicator mb-12">
-          <div className="step-dot-completed" />
-          <div className="step-dot-active rounded-full" />
-          <div className="step-dot-inactive" />
-          <span className="text-sm text-text-muted ml-3">步骤 2 / 3</span>
+        <div className="flex items-center gap-2 mb-12 p-2 bg-white/60 backdrop-blur-md rounded-full border border-white/80 shadow-soft w-fit">
+          <div className="w-3 h-3 rounded-full bg-brand" />
+          <div className="w-3 h-3 rounded-full bg-brand" />
+          <div className="w-3 h-3 rounded-full bg-border-light" />
+          <span className="text-sm text-text-secondary ml-1">步骤 2 / 3</span>
         </div>
 
         {/* 标题区 */}
         <div className="text-center mb-8 sm:mb-12">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-text-primary mb-3 sm:mb-4">
-            选择你的 <span className="text-gradient">Top 5</span> 优势
+          <h1 className="text-h2 font-serif text-text-primary mb-3 sm:mb-4">
+            选择你的 <span className="bg-gradient-to-r from-brand to-accent text-transparent bg-clip-text">Top 5</span> 优势
           </h1>
-          <p className="text-base sm:text-lg text-text-tertiary mb-4 sm:mb-6 px-2">
+          <p className="text-body-lg text-text-secondary mb-4 sm:mb-6 px-2 max-w-2xl mx-auto">
             按报告顺序选择你最突出的 3-5 项优势
           </p>
 
           {/* 选择计数器 */}
           <div className={`
-            inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300
+            inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 border
             ${canProceed
-              ? 'bg-status-success/10 text-status-success border border-status-success/20'
-              : 'bg-bg-secondary text-text-tertiary border border-border'
+              ? 'bg-status-success/10 text-status-success border-status-success/20'
+              : 'bg-bg-secondary text-text-tertiary border-border'
             }
           `}>
             <span>已选择</span>
@@ -122,12 +122,13 @@ export default function StrengthsPage({
                   rounded-full text-xs sm:text-sm font-medium 
                   transition-all duration-300 touch-manipulation
                   ${isActive
-                    ? 'text-white shadow-card'
-                    : 'bg-bg-card text-text-secondary border border-border hover:border-border-dark'
+                    ? 'text-white shadow-card border border-transparent'
+                    : 'bg-white/50 backdrop-blur-sm text-text-secondary border border-transparent hover:border-border hover:shadow-soft'
                   }
                 `}
                 style={{
                   backgroundColor: isActive ? color : undefined,
+                  color: isActive ? 'white' : undefined, // 确保文字在有色背景上可见
                 }}
               >
                 {DOMAIN_NAMES[domain]}
@@ -145,7 +146,7 @@ export default function StrengthsPage({
         </div>
 
         {/* 优势选择区 */}
-        <div className="bg-bg-card rounded-2xl border border-border-light p-4 sm:p-6 md:p-8 mb-6 sm:mb-8">
+        <div className="bg-white/60 backdrop-blur-md rounded-2xl border border-white/80 p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 shadow-card">
           <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
             {strengthsByDomain[activeTab].map((strength) => {
               const isSelected = selectedStrengths.includes(strength.id);
@@ -163,24 +164,18 @@ export default function StrengthsPage({
                     min-h-[44px] sm:min-h-[48px]
                     rounded-xl text-sm sm:text-base font-medium 
                     transition-all duration-300 touch-manipulation
-                    border border-border-light shadow-card
+                    border group
                     ${isSelected
-                      ? 'bg-bg-card text-text-primary'
+                      ? `bg-bg-card text-text-primary border-[2px] border-[${color}] ring-2 ring-[${color}]/30 shadow-glow`
                       : isDisabled
                         ? 'bg-bg-secondary text-text-muted cursor-not-allowed opacity-50 border-border'
-                        : 'bg-bg-card text-text-secondary hover:bg-bg-tertiary hover:text-text-primary hover:-translate-y-0.5 hover:shadow-elevated active:scale-[0.98]'
+                        : 'bg-bg-card text-text-secondary border-transparent hover:border-[${color}]/50 hover:shadow-card hover:-translate-y-0.5 hover:bg-white/80 hover:text-text-primary active:scale-[0.98]'
                     }
                   `}
-                  style={{
-                    borderLeft: isSelected ? `4px solid ${color}` : undefined,
-                    boxShadow: isSelected 
-                      ? `0 0 0 4px ${color}33, 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)` 
-                      : undefined,
-                  }}
                 >
                   {rank && (
                     <span 
-                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center shadow-soft"
+                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center shadow-soft transition-all duration-300 group-hover:scale-110"
                       style={{ backgroundColor: color }}
                     >
                       {rank}
@@ -196,10 +191,10 @@ export default function StrengthsPage({
       {/* 已选优势列表 */}
       {selectedStrengths.length > 0 && (
         <div className="mb-8 sm:mb-12 px-2">
-          <h3 className="text-base sm:text-lg font-semibold text-text-primary mb-3 sm:mb-4 text-center">
+          <h3 className="text-h4 font-serif text-text-primary mb-3 sm:mb-4 text-center">
             已选优势排序
           </h3>
-          <div className="space-y-2 max-w-2xl mx-auto">
+          <motion.div layout className="space-y-2 max-w-2xl mx-auto">
             {selectedStrengths.map((strengthId, index) => {
               const strength = ALL_STRENGTHS.find(s => s.id === strengthId);
               if (!strength) return null;
@@ -208,13 +203,14 @@ export default function StrengthsPage({
               const canMoveDown = index < selectedStrengths.length - 1 && onMoveDown;
 
               return (
-                <div
+                <motion.div
+                  layout
                   key={strengthId}
-                  className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4 bg-bg-card rounded-xl border border-border-light"
+                  className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-white/80 shadow-card"
                 >
                   {/* 排名标识 */}
                   <div
-                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold text-white flex-shrink-0"
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold text-white flex-shrink-0 shadow-soft"
                     style={{ backgroundColor: color }}
                   >
                     {index + 1}
@@ -222,8 +218,8 @@ export default function StrengthsPage({
 
                   {/* 优势名称 */}
                   <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0">
-                    <span className="text-sm sm:text-base text-text-primary font-medium truncate">{strength.name}</span>
-                    <span className="text-xs text-text-muted px-2 py-1 rounded-full bg-bg-secondary whitespace-nowrap">
+                    <span className="text-body text-text-primary font-semibold truncate">{strength.name}</span>
+                    <span className="text-caption text-text-tertiary px-2 py-1 rounded-full bg-bg-secondary whitespace-nowrap">
                       {DOMAIN_NAMES[strength.domain]}
                     </span>
                   </div>
@@ -233,7 +229,7 @@ export default function StrengthsPage({
                     {canMoveUp && (
                       <button
                         onClick={() => onMoveUp(index)}
-                        className="p-2 sm:p-2.5 min-w-[44px] min-h-[44px] rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-secondary transition-colors touch-manipulation"
+                        className="p-2 sm:p-2.5 w-9 h-9 flex items-center justify-center rounded-lg text-text-muted hover:text-brand-dark hover:bg-brand-subtle transition-colors touch-manipulation"
                         title="上移"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -244,50 +240,52 @@ export default function StrengthsPage({
                     {canMoveDown && (
                       <button
                         onClick={() => onMoveDown(index)}
-                        className="p-2 sm:p-2.5 min-w-[44px] min-h-[44px] rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-secondary active:bg-bg-tertiary transition-colors touch-manipulation"
+                        className="p-2 sm:p-2.5 w-9 h-9 flex items-center justify-center rounded-lg text-text-muted hover:text-brand-dark hover:bg-brand-subtle transition-colors touch-manipulation"
                         title="下移"
                       >
-                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
                     )}
                     <button
                       onClick={() => onSelectStrength(strengthId)}
-                      className="p-2 sm:p-2.5 min-w-[44px] min-h-[44px] rounded-lg text-text-muted hover:text-status-error hover:bg-status-error/10 active:bg-status-error/20 transition-colors touch-manipulation"
+                      className="p-2 sm:p-2.5 w-9 h-9 flex items-center justify-center rounded-lg text-text-muted hover:text-status-error hover:bg-status-error/10 transition-colors touch-manipulation"
                       title="移除"
                     >
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
-          </div>
+          </motion.div>
         </div>
       )}
 
       {/* 完成提示 */}
       {selectedStrengths.length === 5 && (
-        <p className="text-center text-status-success font-medium mb-6">
-          已捕捉到你的核心优势组合
+        <p className="text-center text-status-success font-medium text-body-lg mb-6">
+          已捕捉到你的核心优势组合！
         </p>
       )}
 
       {/* 底部操作区 */}
       <div className="flex justify-center px-4">
-        <button
-          onClick={onNext}
-          disabled={!canProceed}
-          className="btn-primary w-full sm:w-auto text-base sm:text-lg px-8 sm:px-12 py-3 sm:py-4 min-h-[48px] touch-manipulation"
-        >
-          {getButtonText()}
-          <svg className="w-4 h-4 ml-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 sm:p-6 bg-white/60 backdrop-blur-md rounded-2xl shadow-elevated border border-white/80 w-full max-w-2xl">
+          <button
+            onClick={onNext}
+            disabled={!canProceed}
+            className="w-full px-6 py-3 rounded-lg text-white font-semibold transition-all duration-300 shadow-lg disabled:shadow-none disabled:bg-gray-300 disabled:cursor-not-allowed bg-brand hover:bg-brand-dark flex items-center justify-center min-h-[48px]"
+          >
+            {getButtonText()}
+            <svg className="w-4 h-4 ml-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
       </div>
       </div>
     </div>

@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateMockGuideResult } from '@/lib/strength-guide';
+import { isValidGuideResultData } from '@/lib/schema';
 import { validateConfig } from '@/lib/config-validator';
 
 export async function POST(request: NextRequest) {
@@ -37,6 +38,13 @@ export async function POST(request: NextRequest) {
 
     // 生成 Mock 数据
     const guideData = generateMockGuideResult(strengths);
+    if (!isValidGuideResultData(guideData)) {
+      console.error('优势指南结果未通过 schema 校验');
+      return NextResponse.json(
+        { error: '优势指南结果格式错误' },
+        { status: 500 }
+      );
+    }
     const startTime = Date.now();
 
     return NextResponse.json({

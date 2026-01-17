@@ -357,10 +357,18 @@ export const flowMachine = setup({
           target: 'input',
           actions: 'setError',
         },
-        BACK: {
-          target: 'input',
-          actions: 'clearLoading',
-        },
+        BACK: [
+          {
+            target: 'input',
+            actions: 'clearLoading',
+            guard: ({ context }) => context.path === 'breakthrough',
+          },
+          {
+            target: 'strengths',
+            actions: 'clearLoading',
+            guard: ({ context }) => context.path !== 'breakthrough',
+          },
+        ],
       },
     },
     result: {
@@ -383,7 +391,7 @@ export const flowMachine = setup({
           actions: ['clearResults', 'clearLoading'],
         },
         BACK: {
-          target: 'loading',
+          target: 'strengths',
           actions: 'clearLoading',
         },
         RESET: { target: 'landing', actions: 'resetToInitial' },
@@ -396,7 +404,7 @@ export const flowMachine = setup({
           actions: ['clearResults', 'clearLoading'],
         },
         BACK: {
-          target: 'loading',
+          target: 'strengths',
           actions: 'clearLoading',
         },
         RESET: { target: 'landing', actions: 'resetToInitial' },

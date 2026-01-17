@@ -126,16 +126,16 @@ export default function OcrUploadWithTesseract({
   };
 
   return (
-    <div className="min-h-screen bg-white px-4 sm:px-6 py-8">
+    <div className="min-h-screen bg-warm-gradient px-4 sm:px-6 py-8">
       <div className="max-w-4xl mx-auto">
         {/* 返回按钮 */}
         <motion.button
           onClick={onBack}
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
-          className="mb-6 text-gray-600 hover:text-gray-900 flex items-center gap-2 transition-colors"
+          className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors duration-200 group bg-black/5 hover:bg-black/10 px-3 py-2 rounded-full mb-6"
         >
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-1">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           <span>返回</span>
@@ -147,10 +147,10 @@ export default function OcrUploadWithTesseract({
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <h1 className="text-2xl sm:text-3xl font-bold text-black mb-2 font-serif">
+          <h1 className="text-h2 font-serif text-text-primary mb-2">
             上传你的盖洛普报告
           </h1>
-          <p className="text-gray-500 text-sm">
+          <p className="text-body-lg text-text-secondary">
             AI 将自动识别你的 TOP5 优势（首次使用需下载 OCR 引擎约 20MB）
           </p>
         </motion.div>
@@ -168,10 +168,10 @@ export default function OcrUploadWithTesseract({
                 onDragLeave={handleDragLeave}
                 onClick={() => fileInputRef.current?.click()}
                 className={`
-                  relative border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all
+                  relative border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all shadow-card bg-white/60 backdrop-blur-md
                   ${isDragging
-                    ? 'border-[#5D4037] bg-[#5D4037]/5'
-                    : 'border-gray-200 hover:border-[#5D4037]/50 hover:bg-gray-50'
+                    ? 'border-brand bg-brand/10'
+                    : 'border-border-light hover:border-brand/50 hover:bg-white/70'
                   }
                   ${ocrStatus === 'downloading' || ocrStatus === 'recognizing' ? 'pointer-events-none opacity-60' : ''}
                 `}
@@ -187,11 +187,11 @@ export default function OcrUploadWithTesseract({
 
                 {/* 图标 */}
                 {(ocrStatus === 'downloading' || ocrStatus === 'recognizing') ? (
-                  <div className="w-16 h-16 mx-auto mb-4 text-[#5D4037]">
-                    <div className="w-full h-full border-4 border-[#5D4037] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-16 h-16 mx-auto mb-4 text-brand">
+                    <div className="w-full h-full border-4 border-brand border-t-transparent rounded-full animate-spin" />
                   </div>
                 ) : (
-                  <div className="w-16 h-16 mx-auto mb-4 text-gray-400">
+                  <div className="w-16 h-16 mx-auto mb-4 text-text-tertiary">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
@@ -204,31 +204,31 @@ export default function OcrUploadWithTesseract({
                 )}
 
                 {/* 提示文字 */}
-                <p className="text-black font-medium mb-2">
+                <p className="text-text-primary font-medium text-body mb-2">
                   {ocrStatus === 'idle' && '点击或拖拽上传报告图片'}
                   {(ocrStatus === 'downloading' || ocrStatus === 'recognizing') && '正在处理...'}
                 </p>
-                <p className="text-gray-400 text-sm">
+                <p className="text-text-secondary text-body-sm">
                   请确保图片清晰，包含 TOP5 优势列表
                 </p>
 
                 {/* 进度条 */}
                 {(ocrStatus === 'downloading' || ocrStatus === 'recognizing') && (
-                  <div className="mt-4">
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="mt-4 p-3 bg-white/40 rounded-lg border border-white/50 shadow-inner-soft">
+                    <div className="w-full bg-border-light rounded-full h-2 mb-2">
                       <div
-                        className="bg-[#5D4037] h-2 rounded-full transition-all duration-300"
+                        className="bg-brand h-2 rounded-full transition-all duration-300"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">{getStatusMessage()}</p>
+                    <p className="text-xs text-text-secondary mt-2 font-medium">{getStatusMessage()}</p>
                   </div>
                 )}
               </div>
             ) : (
               <div className="relative">
                 {/* 预览图片 */}
-                <div className="bg-gray-50 rounded-2xl p-4 mb-4">
+                <div className="bg-white/60 backdrop-blur-md rounded-2xl p-4 mb-4 border border-white/80 shadow-card">
                   <Image
                     src={uploadedImage}
                     alt="上传的报告"
@@ -243,7 +243,7 @@ export default function OcrUploadWithTesseract({
                 <button
                   onClick={handleRetry}
                   disabled={ocrStatus === 'downloading' || ocrStatus === 'recognizing'}
-                  className="w-full py-3 border-2 border-gray-200 rounded-xl text-black font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="w-full py-3 border border-border-light rounded-xl text-text-primary font-medium hover:bg-bg-secondary transition-colors disabled:opacity-50 shadow-soft"
                 >
                   重新上传
                 </button>
@@ -260,32 +260,32 @@ export default function OcrUploadWithTesseract({
                   className="mt-4"
                 >
                   <div className={`
-                    rounded-xl p-4
-                    ${ocrStatus === 'error' ? 'bg-red-50 border border-red-200' : ''}
-                    ${(ocrStatus === 'downloading' || ocrStatus === 'recognizing') ? 'bg-blue-50 border border-blue-200' : ''}
-                    ${ocrStatus === 'success' ? 'bg-green-50 border border-green-200' : ''}
+                    rounded-xl p-4 bg-white/60 backdrop-blur-md border shadow-card
+                    ${ocrStatus === 'error' ? 'bg-status-error/10 border-status-error/60' : ''}
+                    ${(ocrStatus === 'downloading' || ocrStatus === 'recognizing') ? 'bg-brand/10 border-brand/60' : ''}
+                    ${ocrStatus === 'success' ? 'bg-status-success/10 border-status-success/60' : ''}
                   `}>
                     <div className="flex items-center gap-3">
                       {(ocrStatus === 'downloading' || ocrStatus === 'recognizing') && (
                         <>
-                          <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                          <p className="text-sm text-blue-700">{getStatusMessage()}</p>
+                          <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+                          <p className="text-sm text-brand font-medium">{getStatusMessage()}</p>
                         </>
                       )}
                       {ocrStatus === 'success' && (
                         <>
-                          <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5 text-status-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
-                          <p className="text-sm text-green-700">{getStatusMessage()}</p>
+                          <p className="text-sm text-status-success font-medium">{getStatusMessage()}</p>
                         </>
                       )}
                       {ocrStatus === 'error' && (
                         <>
-                          <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5 text-status-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
-                          <p className="text-sm text-red-700">{errorMessage || getStatusMessage()}</p>
+                          <p className="text-sm text-status-error font-medium">{errorMessage || getStatusMessage()}</p>
                         </>
                       )}
                     </div>
@@ -301,16 +301,16 @@ export default function OcrUploadWithTesseract({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <div className="bg-gray-50 rounded-2xl p-6 h-full">
-              <h2 className="text-lg font-bold text-black mb-4">
+            <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 h-full border border-white/80 shadow-card">
+              <h2 className="text-h4 font-serif text-text-primary mb-4">
                 你的 TOP5 优势
               </h2>
-              <p className="text-sm text-gray-500 mb-4">
-                请选择 3-5 个优势（{selectedStrengths.length}/5）
+              <p className="text-body-sm text-text-secondary mb-4">
+                请选择 3-5 个优势（<span className="font-medium text-brand">{selectedStrengths.length}</span>/5）
               </p>
 
               {/* 优势列表 */}
-              <div className="flex flex-wrap gap-2 max-h-96 overflow-y-auto">
+              <div className="flex flex-wrap gap-2 max-h-96 overflow-y-auto pr-2 -mr-2">
                 {ALL_STRENGTHS.map((strength) => {
                   const isSelected = selectedStrengths.includes(strength.id);
                   const wasRecognized = ocrResult?.top5Ids.includes(strength.id);
@@ -321,19 +321,19 @@ export default function OcrUploadWithTesseract({
                       onClick={() => handleStrengthToggle(strength.id)}
                       disabled={!isSelected && selectedStrengths.length >= 5}
                       className={`
-                        px-3 py-2 rounded-lg text-sm font-medium transition-all
+                        px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 border shadow-soft
                         ${isSelected
-                          ? 'bg-[#5D4037] text-white'
+                          ? 'bg-brand text-white border-brand'
                           : wasRecognized
-                            ? 'bg-[#5D4037]/10 text-[#5D4037] border border-[#5D4037]/30'
-                            : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                            ? 'bg-brand/10 text-brand border-brand/30 hover:bg-brand/20'
+                            : 'bg-bg-card text-text-secondary border-border-light hover:border-border-dark hover:bg-bg-secondary'
                         }
                         ${!isSelected && selectedStrengths.length >= 5 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                       `}
                     >
                       {strength.name}
                       {wasRecognized && !isSelected && (
-                        <span className="ml-1 text-xs">(AI)</span>
+                        <span className="ml-1 text-caption text-brand/80">(AI)</span>
                       )}
                     </button>
                   );
@@ -345,11 +345,11 @@ export default function OcrUploadWithTesseract({
                 <button
                   onClick={handleContinue}
                   disabled={selectedStrengths.length < 3}
-                  className="w-full py-4 bg-[#5D4037] hover:bg-[#4A3A2F] text-white rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-4 bg-brand hover:bg-brand-dark text-white rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-glow hover:shadow-glow-lg"
                 >
                   {selectedStrengths.length < 3
                     ? '请至少选择 3 个优势'
-                    : '生成适合你的职业方向'
+                    : '生成报告解读'
                   }
                 </button>
               </div>

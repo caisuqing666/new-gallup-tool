@@ -16,10 +16,10 @@ function ExplainPage({ data }: { data: ExplainData }) {
     >
       {/* 页面标题 */}
       <div className="text-center mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-2">
+        <h1 className="text-h2 font-serif text-text-primary mb-2">
           理解发生了什么
         </h1>
-        <p className="text-text-secondary text-sm">
+        <p className="text-body-lg text-text-secondary text-sm">
           只描述，不判断
         </p>
       </div>
@@ -28,14 +28,14 @@ function ExplainPage({ data }: { data: ExplainData }) {
       <motion.section
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-bg-card rounded-2xl border border-border-light p-6"
+        className="bg-white/60 backdrop-blur-md rounded-2xl border border-white/80 p-6 shadow-card"
       >
-        <h2 className="text-lg font-semibold text-text-primary mb-4">你的优势在做什么</h2>
+        <h2 className="text-h4 font-serif text-text-primary mb-4">你的优势在做什么</h2>
         <div className="space-y-4">
           {data.strengthManifestations.map((item, index) => (
             <div key={index} className="bg-bg-secondary rounded-xl p-4">
-              <div className="text-brand font-medium mb-2">{item.strengthId}</div>
-              <p className="text-text-secondary leading-relaxed">{item.behaviors}</p>
+              <div className="text-brand font-medium text-body mb-2">{item.strengthId}</div>
+              <p className="text-text-secondary leading-relaxed text-body-sm">{item.behaviors}</p>
             </div>
           ))}
         </div>
@@ -46,10 +46,10 @@ function ExplainPage({ data }: { data: ExplainData }) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-bg-card rounded-2xl border border-border-light p-6"
+        className="bg-white/60 backdrop-blur-md rounded-2xl border border-white/80 p-6 shadow-card"
       >
-        <h2 className="text-lg font-semibold text-text-primary mb-4">优势之间在发生什么</h2>
-        <p className="text-text-secondary leading-relaxed">{data.strengthInteractions}</p>
+        <h2 className="text-h4 font-serif text-text-primary mb-4">优势之间在发生什么</h2>
+        <p className="text-text-secondary leading-relaxed text-body-sm">{data.strengthInteractions}</p>
       </motion.section>
 
       {/* 认知盲区 */}
@@ -57,10 +57,10 @@ function ExplainPage({ data }: { data: ExplainData }) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-status-warning/5 border border-status-warning/20 rounded-2xl p-6"
+        className="bg-white/60 backdrop-blur-md rounded-2xl border border-status-warning/60 p-6 shadow-card"
       >
-        <h2 className="text-lg font-semibold text-text-primary mb-4">你可能没意识到</h2>
-        <p className="text-text-secondary leading-relaxed">{data.blindspots}</p>
+        <h2 className="text-h4 font-serif text-status-warning mb-4">你可能没意识到</h2>
+        <p className="text-text-secondary leading-relaxed text-body-sm">{data.blindspots}</p>
       </motion.section>
 
       {/* 总结性说明 */}
@@ -68,9 +68,9 @@ function ExplainPage({ data }: { data: ExplainData }) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-brand/5 border-l-4 border-brand rounded-r-2xl p-6"
+        className="bg-brand/10 backdrop-blur-sm border-l-4 border-brand rounded-r-2xl p-6 shadow-card"
       >
-        <p className="text-text-primary font-medium text-lg">{data.summary}</p>
+        <p className="text-text-primary font-medium text-body leading-relaxed">{data.summary}</p>
       </motion.section>
     </motion.div>
   );
@@ -116,7 +116,6 @@ function DecidePage({ data }: { data: DecideData }) {
   };
 
   const reframedInsight = data.reframedInsight;
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -125,10 +124,10 @@ function DecidePage({ data }: { data: DecideData }) {
     >
       {/* 页面标题 */}
       <div className="text-center mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-2 font-serif">
+        <h1 className="text-h2 font-serif text-text-primary mb-2">
           现在该怎么做
         </h1>
-        <p className="text-text-secondary text-sm">
+        <p className="text-body-lg text-text-secondary text-sm">
           只判断，不解释
         </p>
       </div>
@@ -138,9 +137,9 @@ function DecidePage({ data }: { data: DecideData }) {
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-brand/10 border-l-4 border-brand rounded-2xl p-6"
+          className="bg-brand/10 backdrop-blur-sm border-l-4 border-brand rounded-2xl p-6 shadow-card mb-6"
         >
-          <p className="text-text-primary text-lg sm:text-xl font-semibold leading-relaxed">
+          <p className="text-text-primary text-body-lg font-semibold leading-relaxed">
             {reframedInsight}
           </p>
         </motion.section>
@@ -156,14 +155,14 @@ function DecidePage({ data }: { data: DecideData }) {
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative bg-text-primary text-white rounded-2xl p-6 sm:p-8 shadow-lg overflow-hidden"
+            className="relative bg-gradient-to-br from-text-primary to-text-primary/90 text-white rounded-2xl p-6 sm:p-8 shadow-elevated overflow-hidden border border-text-primary/70"
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E")`,
             }}
           >
             {/* 巨大水印 */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-5">
-              <span className="text-[12rem] font-serif font-bold select-none">
+              <span className="text-[12rem] sm:text-[15rem] font-serif font-bold select-none text-white/50 animate-pulse-soft">
                 {getVerdictChar()}
               </span>
             </div>
@@ -181,12 +180,12 @@ function DecidePage({ data }: { data: DecideData }) {
             </div>
 
             {/* 主标题：超大衬线体 */}
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-4 relative z-10 font-serif tracking-tight">
+            <h2 className="text-h1 font-serif leading-tight mb-4 relative z-10 text-white tracking-tight">
               {PATH_DECISION_LABELS[data.pathDecision]}
             </h2>
 
             {/* 副标题：能量态说明 */}
-            <p className="text-accent/90 text-base mb-6 relative z-10 font-mono text-sm">
+            <p className="text-accent/90 text-body-sm mb-6 relative z-10 font-mono">
               {PATH_DECISION_ENERGY_STATES[data.pathDecision]}
             </p>
 
@@ -198,7 +197,7 @@ function DecidePage({ data }: { data: DecideData }) {
                 </svg>
                 <div className="flex-1">
                   <p className="text-accent/90 text-sm font-medium mb-1">今日自检</p>
-                  <p className="text-white/80 text-sm">{data.checkRule}</p>
+                  <p className="text-white/80 text-body-sm">{data.checkRule}</p>
                 </div>
               </div>
             </div>
@@ -214,13 +213,13 @@ function DecidePage({ data }: { data: DecideData }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
-            className="bg-text-primary/5 backdrop-blur-sm border border-border-light rounded-2xl p-6 relative overflow-hidden"
+            className="bg-white/60 backdrop-blur-md border border-white/80 rounded-2xl p-6 relative overflow-hidden shadow-card"
           >
             {/* 背景磨砂玻璃效果 */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-white/5 pointer-events-none" />
 
-            <h3 className="text-base font-semibold text-text-primary mb-6 flex items-center gap-2 relative z-10 font-serif">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <h3 className="text-h4 font-serif text-text-primary mb-6 flex items-center gap-2 relative z-10">
+              <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
               路径推导链条
@@ -232,7 +231,7 @@ function DecidePage({ data }: { data: DecideData }) {
                 <div key={index} className="relative">
                   {/* 垂直连线（除了最后一个） */}
                   {index < logicSteps.length - 1 && (
-                    <div className="absolute left-3 top-8 bottom-0 w-0.5 bg-gradient-to-b from-border-dark to-transparent" />
+                    <div className="absolute left-3 top-8 bottom-0 w-0.5 bg-brand/30" />
                   )}
 
                   {/* 节点 + 内容 */}
@@ -240,12 +239,12 @@ function DecidePage({ data }: { data: DecideData }) {
                     {/* 节点：空心圆圈 */}
                     <div className="relative flex-shrink-0">
                       <div className="w-6 h-6 rounded-full border-2 border-brand bg-white flex items-center justify-center animate-circuit-power" style={{ animationDelay: `${index * 0.15}s` }}>
-                        <div className="w-2 h-2 rounded-full bg-brand" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-brand" />
                       </div>
                     </div>
 
                     {/* 步骤内容 */}
-                    <p className="text-text-secondary text-sm leading-relaxed flex-1 pt-0.5">{step}</p>
+                    <p className="text-text-secondary text-body-sm leading-relaxed flex-1 pt-0.5">{step}</p>
                   </div>
                 </div>
               ))}
@@ -258,10 +257,10 @@ function DecidePage({ data }: { data: DecideData }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-bg-card rounded-xl border border-border-light p-5"
+              className="bg-white/40 backdrop-blur-sm rounded-2xl border border-white/60 p-5 shadow-inner-soft"
             >
               <h3 className="text-sm font-medium text-text-muted mb-2">补充证据</h3>
-              <p className="text-text-secondary text-sm leading-relaxed">{data.pathReason}</p>
+              <p className="text-text-secondary text-body-sm leading-relaxed">{data.pathReason}</p>
             </motion.section>
           )}
         </div>
@@ -276,12 +275,12 @@ function DecidePage({ data }: { data: DecideData }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="relative bg-gradient-to-br from-accent/10 to-accent/5 rounded-2xl p-5 border-2 border-accent/30 overflow-hidden"
+              className="relative bg-white/60 backdrop-blur-md rounded-2xl p-5 border border-accent/60 overflow-hidden shadow-card"
             >
               {/* 渐变边框光效 */}
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-accent/20 via-transparent to-accent/20 opacity-50 pointer-events-none" />
 
-              <h3 className="text-base font-bold text-text-primary mb-4 flex items-center gap-2 relative z-10 font-serif">
+              <h3 className="text-h4 font-serif text-text-primary mb-4 flex items-center gap-2 relative z-10">
                 <svg className="w-5 h-5 text-accent" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
                 </svg>
@@ -289,10 +288,10 @@ function DecidePage({ data }: { data: DecideData }) {
               </h3>
               <div className="space-y-3 relative z-10">
                 {limitedDoMore.map((item, index) => (
-                  <div key={index} className="bg-white/80 backdrop-blur rounded-lg p-4 border border-accent/20 shadow-sm">
-                    <p className="text-text-primary font-medium mb-2">{item.action}</p>
-                    <p className="text-text-secondary text-xs mb-1 font-mono">⏰ {item.timing}</p>
-                    <p className="text-text-secondary text-xs">✓ {item.criteria}</p>
+                  <div key={index} className="bg-bg-secondary rounded-lg p-4 border border-accent/20 shadow-soft">
+                    <p className="text-text-primary font-medium text-body-sm mb-2">{item.action}</p>
+                    <p className="text-text-secondary text-caption mb-1 font-mono">⏰ {item.timing}</p>
+                    <p className="text-text-secondary text-caption">✓ {item.criteria}</p>
                   </div>
                 ))}
               </div>
@@ -305,12 +304,12 @@ function DecidePage({ data }: { data: DecideData }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="relative bg-gradient-to-br from-status-error/10 to-status-error/5 rounded-2xl p-5 border-2 border-status-error/30 overflow-hidden"
+              className="relative bg-white/60 backdrop-blur-md rounded-2xl p-5 border border-status-error/60 overflow-hidden shadow-card"
             >
               {/* 渐变边框光效 */}
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-status-error/20 via-transparent to-status-error/20 opacity-50 pointer-events-none" />
 
-              <h3 className="text-base font-bold text-text-primary mb-4 flex items-center gap-2 relative z-10 font-serif">
+              <h3 className="text-h4 font-serif text-text-primary mb-4 flex items-center gap-2 relative z-10">
                 <svg className="w-5 h-5 text-status-error" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
                 </svg>
@@ -318,13 +317,57 @@ function DecidePage({ data }: { data: DecideData }) {
               </h3>
               <div className="space-y-3 relative z-10">
                 {limitedDoLess.map((item, index) => (
-                  <div key={index} className="bg-white/80 backdrop-blur rounded-lg p-4 border border-status-error/20 shadow-sm relative overflow-hidden">
+                  <div key={index} className="bg-bg-secondary rounded-lg p-4 border border-status-error/20 shadow-soft relative overflow-hidden">
                     {/* 删除线动效 */}
                     <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-status-error/50 animate-strike-through" style={{ animationDelay: `${index * 0.1}s` }} />
 
-                    <p className="text-text-primary font-medium mb-1 line-through decoration-status-error/50 decoration-2">{item.action}</p>
-                    <p className="text-text-secondary text-xs relative z-10">→ {item.replacement}</p>
-                    <p className="text-text-muted text-xs mt-1 font-mono">从：{item.timing}</p>
+                    <p className="text-text-primary font-medium text-body-sm mb-1 line-through decoration-status-error/50 decoration-2">{item.action}</p>
+                    <p className="text-text-secondary text-caption relative z-10">→ {item.replacement}</p>
+                    <p className="text-text-muted text-caption mt-1 font-mono">从：{item.timing}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.section>
+          )}
+
+          {/* ═══════════════════════════════════════════════════════════
+              责任边界 - 天平对照表风格（不折叠、左右对照）
+          ═══════════════════════════════════════════════════════════ */}
+          {limitedBoundaries.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="bg-white/60 backdrop-blur-md rounded-2xl border border-white/80 p-6 shadow-card"
+            >
+              <h3 className="text-h4 font-serif text-text-primary mb-6 flex items-center gap-2">
+                <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                </svg>
+                责任边界
+              </h3>
+
+              {/* 天平对照表：左右布局 */}
+              <div className="space-y-4">
+                {limitedBoundaries.map((item, index) => (
+                  <div key={index} className="relative">
+                    {/* 中心分隔线 */}
+                    <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border" />
+
+                    {/* 左右对照 */}
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* 左侧：负责 */}
+                      <div className="bg-bg-secondary rounded-lg p-4 text-right pr-6 shadow-inner-soft">
+                        <p className="text-caption text-text-muted mb-2 font-mono uppercase tracking-wide">负责</p>
+                        <p className="text-text-primary text-body-sm font-medium">{item.responsibleFor}</p>
+                      </div>
+
+                      {/* 右侧：不负责 */}
+                      <div className="bg-bg-secondary rounded-lg p-4 text-left pl-6 shadow-inner-soft">
+                        <p className="text-caption text-text-muted mb-2 font-mono uppercase tracking-wide">不负责</p>
+                        <p className="text-text-primary text-body-sm font-medium">{item.notResponsibleFor}</p>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -332,50 +375,6 @@ function DecidePage({ data }: { data: DecideData }) {
           )}
         </div>
       </div>
-
-      {/* ═══════════════════════════════════════════════════════════
-          责任边界 - 天平对照表风格（不折叠、左右对照）
-      ═══════════════════════════════════════════════════════════ */}
-      {limitedBoundaries.length > 0 && (
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="bg-bg-card rounded-2xl border border-border-light p-6"
-        >
-          <h3 className="text-base font-semibold text-text-primary mb-6 flex items-center gap-2 font-serif">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-            </svg>
-            责任边界
-          </h3>
-
-          {/* 天平对照表：左右布局 */}
-          <div className="space-y-4">
-            {limitedBoundaries.map((item, index) => (
-              <div key={index} className="relative">
-                {/* 中心分隔线 */}
-                <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border-light" />
-
-                {/* 左右对照 */}
-                <div className="grid grid-cols-2 gap-4">
-                  {/* 左侧：负责 */}
-                  <div className="bg-bg-secondary rounded-lg p-4 text-right pr-6">
-                    <p className="text-xs text-text-muted mb-2 font-mono uppercase tracking-wide">负责</p>
-                    <p className="text-text-secondary text-sm font-medium">{item.responsibleFor}</p>
-                  </div>
-
-                  {/* 右侧：不负责 */}
-                  <div className="bg-bg-secondary rounded-lg p-4 text-left pl-6">
-                    <p className="text-xs text-text-muted mb-2 font-mono uppercase tracking-wide">不负责</p>
-                    <p className="text-text-secondary text-sm font-medium">{item.notResponsibleFor}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.section>
-      )}
     </motion.div>
   );
 }
@@ -432,7 +431,7 @@ export default function ResultPage({
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
+      <div className="min-h-screen bg-warm-gradient flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -442,7 +441,7 @@ export default function ResultPage({
     <>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <div className="min-h-screen bg-bg-primary px-4 sm:px-6 py-8">
+      <div className="min-h-screen bg-warm-gradient px-4 sm:px-6 py-8">
         <div className="max-w-3xl mx-auto">
           {/* 返回按钮 */}
           {onBack && (
@@ -450,9 +449,9 @@ export default function ResultPage({
               onClick={onBack}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="mb-6 text-text-secondary hover:text-text-primary flex items-center gap-2 transition-colors"
+              className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors duration-200 group bg-black/5 hover:bg-black/10 px-3 py-2 rounded-full mb-6"
             >
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+              <svg className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               <span>返回修改</span>
@@ -460,27 +459,27 @@ export default function ResultPage({
           )}
 
           {/* 页面切换标签 */}
-          <div className="flex gap-2 mb-8 bg-bg-card rounded-xl p-1.5 border border-border-light">
-            <button
-              onClick={() => setActiveTab('explain')}
-              className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
-                activeTab === 'explain'
-                  ? 'bg-brand text-white shadow-md'
-                  : 'text-text-secondary hover:text-text-primary'
-              }`}
-            >
-              理解发生了什么
-            </button>
-            <button
-              onClick={() => setActiveTab('decide')}
-              className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
-                activeTab === 'decide'
-                  ? 'bg-brand text-white shadow-md'
-                  : 'text-text-secondary hover:text-text-primary'
-              }`}
-            >
-              现在该怎么做
-            </button>
+          <div className="relative flex gap-2 mb-8 bg-white/60 backdrop-blur-md rounded-xl p-1.5 border border-white/80 shadow-soft">
+            {['explain', 'decide'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab as 'explain' | 'decide')}
+                className={`relative flex-1 py-3 px-4 rounded-lg font-medium transition-colors duration-300
+                  ${activeTab === tab ? 'text-white' : 'text-text-secondary hover:text-text-primary'}
+                `}
+              >
+                {activeTab === tab && (
+                  <motion.div
+                    layoutId="active-tab-indicator"
+                    className="absolute inset-0 bg-brand rounded-lg shadow-md"
+                    style={{ zIndex: -1 }}
+                  />
+                )}
+                <span className="relative z-10">
+                  {tab === 'explain' ? '理解发生了什么' : '现在该怎么做'}
+                </span>
+              </button>
+            ))}
           </div>
 
           {/* 内容区域 - 添加 ref 用于导出 */}
@@ -511,11 +510,11 @@ export default function ResultPage({
           </div>
 
           {/* 底部操作按钮 */}
-          <div className="mt-8 flex gap-4 justify-center">
+          <div className="mt-8 flex gap-4 justify-center p-4 bg-white/60 backdrop-blur-md rounded-2xl shadow-elevated border border-white/80">
             {onRegenerate && (
               <button
                 onClick={onRegenerate}
-                className="px-6 py-3 border-2 border-border-light rounded-xl text-text-primary font-medium hover:bg-bg-card transition-colors"
+                className="w-full px-6 py-3 border-2 border-border-light rounded-xl text-text-primary font-semibold hover:bg-bg-card transition-colors"
               >
                 重新生成
               </button>
@@ -523,9 +522,9 @@ export default function ResultPage({
             <button
               onClick={handleSaveAsImage}
               disabled={isSaving}
-              className="px-6 py-3 bg-brand text-white rounded-xl font-medium hover:bg-brand/90 transition-colors disabled:opacity-50"
+              className="w-full px-6 py-3 bg-brand text-white rounded-xl font-semibold hover:bg-brand-dark transition-colors disabled:opacity-50 shadow-glow hover:shadow-glow-lg"
             >
-              {isSaving ? '保存中...' : `保存${activeTab === 'explain' ? '解释页' : '判定页'}`}
+              {isSaving ? '保存中...' : `保存${activeTab === 'explain' ? '理解页' : '决策页'}`}
             </button>
           </div>
         </div>

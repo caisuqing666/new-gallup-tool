@@ -19,7 +19,7 @@
 // ============================================================
 
 import { ProblemType, PROBLEM_TYPE_LABELS, PROBLEM_TYPE_DESCRIPTIONS, PathDecision } from './types';
-import { StrengthId } from './gallup-strengths';
+import { StrengthId, getStrengthById, DOMAIN_NAMES } from './gallup-strengths';
 import { getStrengthProfiles, STRENGTH_PROFILES } from './strength-profiles';
 import { getComboEffect } from './combo-rules';
 import { parseConfusion } from './confusion-parser';
@@ -1649,7 +1649,7 @@ export function buildPrompt(config: PromptConfig): PromptResult {
 
       return {
         systemPrompt: buildReportInterpretPrompt(p.strengths, p.ocrText),
-        userPrompt: '请根据识别的优势生成完整的解读报告。',
+        userPrompt: '只返回符合要求的 JSON 对象，不要包含任何多余文字。',
       };
     }
 
@@ -1841,6 +1841,11 @@ function buildUnderstandingUserPrompt(confusion: string, scenarioTitle?: string)
  */
 function buildReportInterpretPrompt(strengths: StrengthId[], ocrText?: string): string {
   const strengthNames = strengths.join('、');
+  const top5Strengths = strengths.map((id, index) => {
+    const info = getStrengthById(id);
+    const domainName = info ? DOMAIN_NAMES[info.domain] : '未知领域';
+    return `    { "rank": ${index + 1}, "name": "${info?.name || id}", "domain": "${domainName}" }`;
+  }).join(',\n');
 
   return `你是资深的盖洛普认证教练，擅长解读盖洛普优势报告。
 
@@ -1854,12 +1859,18 @@ ${ocrText ? `## OCR 识别文本\n${ocrText}\n` : ''}
 
 请基于用户的 TOP5 优势，生成一份通俗易懂、温暖有深度的个性化解读报告。
 
-## 解读结构要求
+## 输出格式要求（必须严格遵守）
 
-请按照以下结构生成解读（JSON 格式）：
+- 只输出 **JSON 对象**，不要包含 Markdown、代码块、解释文字或多余内容。
+- 必须包含所有字段，字段名与层级不得改动。
+- 字段内容为空时使用空字符串或空数组，不要省略字段。
 
-\`\`\`json
+## 解读结构要求（JSON）
+
 {
+  "top5Strengths": [
+${top5Strengths}
+  ],
   "personalLabel": {
     "label": "个人化标签（如\"执行力优势者\"）",
     "description": "对标签的解释（2-3句话）",
@@ -1897,69 +1908,32 @@ ${ocrText ? `## OCR 识别文本\n${ocrText}\n` : ''}
     "洞察2",
     ...
   ],
+  "suggestedPaths": [
+    {
+      "path": "breakthrough",
+      "title": "适合继续深入困惑",
+      "reason": "用优势来拆解当前处境"
+    },
+    {
+      "path": "career-match",
+      "title": "探索职业匹配方向",
+      "reason": "用优势匹配更合适的路径"
+    },
+    {
+      "path": "strength-guide",
+      "title": "获得优势发挥指南",
+      "reason": "把优势转化为可执行的行动"
+    }
+  ],
   "personalizedAdvice": "个性化建议（100-150字）"
 }
-\`\`\`
 
-## 内容要求
+## 内容要求（简洁版）
 
-### 1. 个人化标签
-- 基于优势分布给出一个标签
-- 说明这个标签的含义
-- 列出支撑这个标签的优势
-
-### 2. 一句话总结
-- 用温暖的语言概括用户的优势组合
-- 50-80 字
-- 体现优势组合的独特性
-
-### 3. 每个优势的解读
-对于每个优势，包含：
-- **whatItIs**: 通俗解释这是什么优势
-- **yourStrength**: 用"你会..."句式描述优势表现
-- **watchOut**: 说明地下室状态（优势被误用时的表现）
-- **bestWhen**: 3-4 个最佳使用场景
-- **pairWith**: 2-3 个搭配优势
-- **avoid**: 2-3 个避免搭配的优势
-
-### 4. 优势组合解读
-- **coreDrive**: 描述这组优势的核心驱动力
-- **potentialTraps**: 2-3 个潜在陷阱
-- **synergies**: 2-3 个协同效应
-
-### 5. 领域分布分析
-- 列出用户的领域分布
-- 计算百分比
-- 列出每个领域的特征
-
-### 6. 关键洞察
-- 3-5 个关键洞察
-- 用"你的..."句式
-- 体现深度和个性化
-
-### 7. 个性化建议
-- 100-150 字的个性化建议
-- 包含如何使用优势
-- 提醒注意地下室状态
-
-## 语言风格要求
-
-- **温暖有深度**：既要让用户感到被理解，又要提供有价值的信息
-- **通俗易懂**：避免术语，用简单直白的语言
-- **避免说教**：不要用"你应该/必须"等说教式语言
-- **个性化**：针对用户的具体优势组合，不是通用模板
-- **正面引导**：强调优势的价值，而不是批评"短板"
-
-## 质量检查清单
-
-生成结果后，请检查：
-- [ ] 每个优势都有"你会..."的具体描述
-- [ ] 包含了地下室状态的警告
-- [ ] 给出了搭配建议和避免建议
-- [ ] 个人化标签准确反映优势组合特征
-- [ ] 领域分布计算正确
-- [ ] 关键洞察针对性强，不是泛泛而谈
-- [ ] 个性化建议具体可操作
+- 输出为完整 JSON，字段不可缺失。
+- 语言温暖、简洁、具体，避免说教。
+- 每个优势的文字尽量控制在 2-3 句话。
+- keyInsights 3 条以内，personalizedAdvice 80-120 字。
 
 请生成完整的解读报告（JSON 格式）。`;
 }

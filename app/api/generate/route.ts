@@ -8,7 +8,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { generateActionPlan, ProviderConfig } from '@/lib/services/action-plan';
+import { runDiagnosis } from '@/lib/diagnosis/runner';
+import type { ProviderConfig } from '@/lib/services/action-plan';
 import { ScenarioId, StrengthId, ProblemType, isValidProblemFocus } from '@/lib/types';
 import { isValidScenarioId } from '@/lib/scenarios';
 import { VALID_STRENGTH_IDS } from '@/lib/gallup-strengths';
@@ -111,7 +112,7 @@ function validateProvider(provider: unknown): ValidationResult {
   if (!['mock', 'ai'].includes(p.type)) {
     return { valid: false, error: 'provider.type 必须是 "mock" 或 "ai"' };
   }
-  if (p.provider && !['anthropic', 'openai', 'zhipu'].includes(p.provider)) {
+  if (p.provider && !['anthropic', 'openai', 'zhipu', 'minimax'].includes(p.provider)) {
     return { valid: false, error: '无效的 AI provider' };
   }
   return { valid: true };
@@ -144,7 +145,8 @@ export async function POST(request: NextRequest) {
     }
 
     // 调用 Service 生成结果
-    const result = await generateActionPlan({
+    const result = await runDiagnosis({
+      path: 'breakthrough',
       scenario: body.scenario as ScenarioId,
       strengths: body.strengths as StrengthId[],
       confusion: (body.confusion as string).trim(),

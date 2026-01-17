@@ -26,8 +26,8 @@ import {
 // Feature flag：控制是否使用 AI（默认为 false，使用 Mock）
 export const ENABLE_AI = process.env.ENABLE_AI === 'true' || process.env.NEXT_PUBLIC_ENABLE_AI === 'true';
 
-// AI 提供商选择（anthropic 或 openai）
-const AI_PROVIDER = (process.env.AI_PROVIDER || 'anthropic') as 'anthropic' | 'openai';
+// AI 提供商选择（anthropic、openai、zhipu 或 minimax）
+const AI_PROVIDER = (process.env.AI_PROVIDER || 'anthropic') as 'anthropic' | 'openai' | 'zhipu' | 'minimax';
 
 // AI API 配置
 const getAIConfig = () => {
@@ -44,6 +44,39 @@ const getAIConfig = () => {
       model: process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022',
       apiKey,
       provider: 'anthropic' as const,
+    };
+  }
+
+  if (provider === 'zhipu') {
+    const apiKey = process.env.ZHIPU_API_KEY || process.env.GLMS_API_KEY;
+    if (!apiKey) {
+      throw new Error('ZHIPU_API_KEY 未配置。请在 .env.local 中设置 ZHIPU_API_KEY，或设置 ENABLE_AI=false 使用 Mock 数据');
+    }
+
+    return {
+      endpoint: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+      model: process.env.ZHIPU_MODEL || 'glm-4-plus',
+      apiKey,
+      provider: 'zhipu' as const,
+    };
+  }
+
+  if (provider === 'minimax') {
+    const apiKey = process.env.MINIMAX_API_KEY;
+    const groupId = process.env.MINIMAX_GROUP_ID;
+    if (!apiKey) {
+      throw new Error('MINIMAX_API_KEY 未配置。请在 .env.local 中设置 MINIMAX_API_KEY，或设置 ENABLE_AI=false 使用 Mock 数据');
+    }
+    if (!groupId) {
+      throw new Error('MINIMAX_GROUP_ID 未配置。请在 .env.local 中设置 MINIMAX_GROUP_ID');
+    }
+
+    return {
+      endpoint: process.env.MINIMAX_ENDPOINT || 'https://api.minimax.chat/v1/text/chatcompletion_v2',
+      model: process.env.MINIMAX_MODEL || 'abab6.5-chat',
+      apiKey,
+      groupId,
+      provider: 'minimax' as const,
     };
   }
 
@@ -309,6 +342,204 @@ function parseDecideResponse(content: string): DecideOutput {
 }
 
 // ========================================
+// AI 生成函数 - Zhipu（智谱）
+// ========================================
+
+async function generateExplainWithZhipu(
+  systemPrompt: string,
+  userPrompt: string
+): Promise<ExplainData> {
+  const config = getAIConfig();
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+  try {
+    const response = await fetch(config.endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.7,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Zhipu API 错误 (${response.status}): ${error}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+
+    return parseExplainResponse(content);
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`AI 请求超时（${API_TIMEOUT}ms），请稍后重试`);
+    }
+    throw error;
+  }
+}
+
+async function generateDecideWithZhipu(
+  systemPrompt: string,
+  userPrompt: string
+): Promise<DecideOutput> {
+  const config = getAIConfig();
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+  try {
+    const response = await fetch(config.endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.7,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Zhipu API 错误 (${response.status}): ${error}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+
+    return parseDecideResponse(content);
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`AI 请求超时（${API_TIMEOUT}ms），请稍后重试`);
+    }
+    throw error;
+  }
+}
+
+// ========================================
+// AI 生成函数 - Minimax
+// ========================================
+
+async function generateExplainWithMinimax(
+  systemPrompt: string,
+  userPrompt: string
+): Promise<ExplainData> {
+  const config = getAIConfig();
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+  // 构建带 GroupId 的完整 URL
+  const fullUrl = `${config.endpoint}?GroupId=${(config as any).groupId}`;
+
+  try {
+    const response = await fetch(fullUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.7,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Minimax API 错误 (${response.status}): ${error}`);
+    }
+
+    const data = await response.json();
+    const content = data?.choices?.[0]?.message?.content ?? '';
+
+    return parseExplainResponse(content);
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`AI 请求超时（${API_TIMEOUT}ms），请稍后重试`);
+    }
+    throw error;
+  }
+}
+
+async function generateDecideWithMinimax(
+  systemPrompt: string,
+  userPrompt: string
+): Promise<DecideOutput> {
+  const config = getAIConfig();
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+  // 构建带 GroupId 的完整 URL
+  const fullUrl = `${config.endpoint}?GroupId=${(config as any).groupId}`;
+
+  try {
+    const response = await fetch(fullUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.7,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Minimax API 错误 (${response.status}): ${error}`);
+    }
+
+    const data = await response.json();
+    const content = data?.choices?.[0]?.message?.content ?? '';
+
+    return parseDecideResponse(content);
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`AI 请求超时（${API_TIMEOUT}ms），请稍后重试`);
+    }
+    throw error;
+  }
+}
+
+// ========================================
 // 问题锁定
 // ========================================
 
@@ -552,6 +783,10 @@ export async function generateResult(
             }
             throw claudeError;
           }
+        } else if (config.provider === 'zhipu') {
+          return await generateExplainWithZhipu(explainPrompt.systemPrompt, explainPrompt.userPrompt);
+        } else if (config.provider === 'minimax') {
+          return await generateExplainWithMinimax(explainPrompt.systemPrompt, explainPrompt.userPrompt);
         } else {
           return await generateExplainWithOpenAI(explainPrompt.systemPrompt, explainPrompt.userPrompt);
         }
@@ -570,6 +805,10 @@ export async function generateResult(
             }
             throw claudeError;
           }
+        } else if (config.provider === 'zhipu') {
+          return await generateDecideWithZhipu(decidePrompt.systemPrompt, decidePrompt.userPrompt);
+        } else if (config.provider === 'minimax') {
+          return await generateDecideWithMinimax(decidePrompt.systemPrompt, decidePrompt.userPrompt);
         } else {
           return await generateDecideWithOpenAI(decidePrompt.systemPrompt, decidePrompt.userPrompt);
         }

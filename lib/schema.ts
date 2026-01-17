@@ -188,6 +188,46 @@ export function isValidResultData(data: unknown): data is ResultData {
   return true;
 }
 
+export function isValidGuideResultData(data: unknown): data is GuideResultData {
+  if (!data || typeof data !== 'object') return false;
+  const result = data as Record<string, unknown>;
+  const personalLabel = result.personalLabel as Record<string, unknown>;
+  if (!personalLabel || typeof personalLabel !== 'object' || typeof personalLabel.label !== 'string') return false;
+  if (typeof result.oneLiner !== 'string') return false;
+  if (!Array.isArray(result.strengthGuides)) return false;
+  if (!result.comboGuide || typeof result.comboGuide !== 'object') return false;
+  if (!Array.isArray(result.weeklyActions)) return false;
+  return true;
+}
+
+export function isValidCareerResultData(data: unknown): data is CareerResultData {
+  if (!data || typeof data !== 'object') return false;
+  const result = data as Record<string, unknown>;
+  if (!Array.isArray(result.topMatches)) return false;
+  const generalAdvice = result.generalAdvice as Record<string, unknown>;
+  if (!generalAdvice || typeof generalAdvice !== 'object') return false;
+  if (typeof generalAdvice.coreStrengthToUse !== 'string') return false;
+  if (typeof generalAdvice.energyManagement !== 'string') return false;
+  if (typeof generalAdvice.growthDirection !== 'string') return false;
+  return true;
+}
+
+export function isValidReportResultData(data: unknown): data is ReportResultData {
+  if (!data || typeof data !== 'object') return false;
+  const result = data as Record<string, unknown>;
+  if (!Array.isArray(result.top5Strengths)) return false;
+  const personalLabel = result.personalLabel as Record<string, unknown> | undefined;
+  if (personalLabel && (typeof personalLabel !== 'object' || typeof personalLabel.label !== 'string')) return false;
+  if (result.summary !== undefined && typeof result.summary !== 'string') return false;
+  if (!Array.isArray(result.strengthInterpretations)) return false;
+  if (result.comboInterpretation !== undefined && typeof result.comboInterpretation !== 'object') return false;
+  if (result.domainAnalysis !== undefined && !Array.isArray(result.domainAnalysis)) return false;
+  if (result.keyInsights !== undefined && !Array.isArray(result.keyInsights)) return false;
+  if (result.suggestedPaths !== undefined && !Array.isArray(result.suggestedPaths)) return false;
+  if (result.personalizedAdvice !== undefined && typeof result.personalizedAdvice !== 'string') return false;
+  return true;
+}
+
 export function extractResultData(data: unknown): ResultData | null {
   if (isValidResultData(data)) {
     return data;

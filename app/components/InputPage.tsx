@@ -53,21 +53,25 @@ export default function InputPage({
   }, []);
 
   if (!mounted) {
-    return <div className="page-container"><div className="page-content" /></div>;
+    return (
+      <div className="min-h-screen bg-warm-gradient flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-paper-subtle bg-fixed px-4 sm:px-6 py-8 sm:py-12">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-warm-gradient px-4 sm:px-6 py-8 sm:py-12">
+      <div className="max-w-3xl mx-auto">
         {/* 返回按钮 */}
         {onBack && (
           <motion.button
             onClick={onBack}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            className="back-button mb-10"
+            className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors duration-200 group bg-black/5 hover:bg-black/10 px-3 py-2 rounded-full mb-10"
           >
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             <span>返回</span>
@@ -79,12 +83,12 @@ export default function InputPage({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="step-indicator mb-12"
+          className="flex items-center gap-2 mb-12 p-2 bg-white/60 backdrop-blur-md rounded-full border border-white/80 shadow-soft w-fit"
         >
-          <div className="step-dot-completed" />
-          <div className="step-dot-completed" />
-          <div className="step-dot-active rounded-full" />
-          <span className="text-sm text-text-muted ml-3">步骤 3 / 3</span>
+          <div className="w-3 h-3 rounded-full bg-brand" />
+          <div className="w-3 h-3 rounded-full bg-brand" />
+          <div className="w-3 h-3 rounded-full bg-brand" />
+          <span className="text-sm text-text-secondary ml-1">步骤 3 / 3</span>
         </motion.div>
 
         {/* 标题区 */}
@@ -94,10 +98,10 @@ export default function InputPage({
           transition={{ delay: 0.15, duration: 0.6 }}
           className="text-center mb-10"
         >
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-text-primary mb-3 sm:mb-4 px-2">
-            用一句话说清楚，你现在<span className="text-gradient">卡在哪</span>？
+          <h1 className="text-h2 font-serif text-text-primary mb-3 sm:mb-4 px-2">
+            用一句话说清楚，你现在<span className="bg-gradient-to-r from-brand to-accent text-transparent bg-clip-text">卡在哪</span>？
           </h1>
-          <p className="text-base sm:text-lg text-text-tertiary px-2">
+          <p className="text-body-lg text-text-secondary px-2 max-w-2xl mx-auto">
             结合你的「{selectedStrengthNames}」优势，描述当前的困惑或挑战
           </p>
         </motion.div>
@@ -108,17 +112,17 @@ export default function InputPage({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-accent/5 border border-accent/20 rounded-xl p-4 mb-6"
+            className="bg-white/60 backdrop-blur-md border border-white/80 rounded-2xl p-4 mb-6 shadow-card"
           >
             <div className="flex items-start gap-3">
-              <span className="text-accent text-lg flex-shrink-0">💡</span>
+              <span className="text-brand text-lg flex-shrink-0">💡</span>
               <AnimatePresence mode="wait">
                 <motion.p
                   key={currentTipIndex}
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -5 }}
-                  className="text-sm text-accent-dark leading-relaxed"
+                  className="text-body-sm text-text-secondary leading-relaxed"
                 >
                   {TEMPLATE_TIPS[currentTipIndex]}
                 </motion.p>
@@ -135,8 +139,8 @@ export default function InputPage({
           className="relative mb-8"
         >
           <div className={`
-            relative rounded-2xl transition-all duration-300
-            ${isFocused ? 'ring-2 ring-brand/30' : ''}
+            relative rounded-2xl transition-all duration-300 bg-white/60 backdrop-blur-md shadow-card border border-white/80
+            ${isFocused ? 'ring-2 ring-brand/50 ring-offset-2 ring-offset-bg-warm-gradient' : ''}
           `}>
             <textarea
               value={confusion}
@@ -148,19 +152,19 @@ export default function InputPage({
               onBlur={() => setIsFocused(false)}
               maxLength={maxChars}
               placeholder="比如：我明明很有「责任」感，但现在同时负责三个项目，每个都想做好，结果哪个都推进不动，感觉自己被困住了..."
-              className="textarea min-h-[200px] sm:min-h-[240px] text-base px-4 py-3 sm:px-4 sm:py-3"
+              className="w-full min-h-[200px] sm:min-h-[240px] text-body bg-transparent outline-none resize-none px-4 py-3 sm:px-4 sm:py-3 text-text-primary placeholder-text-tertiary"
             />
 
             {/* 底部信息栏 */}
-            <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 bg-bg-card/80 backdrop-blur-sm rounded-b-2xl p-2 sm:p-0 sm:bg-transparent">
-              <p className="text-xs text-text-muted hidden sm:block">
+            <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 p-2 sm:p-0">
+              <p className="text-caption text-text-secondary hidden sm:block">
                 描述具体场景和感受，便于系统精准诊断
               </p>
               <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                <span className={`text-xs sm:text-sm font-medium transition-colors ${charCount > maxChars * 0.9
-                    ? 'text-status-warning'
+                <span className={`text-sm font-medium transition-colors ${charCount > maxChars * 0.9
+                    ? 'text-status-error'
                     : charCount > maxChars * 0.7
-                      ? 'text-text-tertiary'
+                      ? 'text-status-warning'
                       : 'text-text-muted'
                   }`}>
                   {charCount}/{maxChars}
@@ -168,8 +172,10 @@ export default function InputPage({
                 <div className="w-20 sm:w-16 h-1.5 sm:h-2 bg-border-light rounded-full overflow-hidden">
                   <motion.div
                     className={`h-full rounded-full transition-colors ${charCount > maxChars * 0.9
-                        ? 'bg-status-warning'
-                        : 'bg-brand'
+                        ? 'bg-status-error'
+                        : charCount > maxChars * 0.7
+                          ? 'bg-status-warning'
+                          : 'bg-brand'
                       }`}
                     animate={{ width: `${Math.min((charCount / maxChars) * 100, 100)}%` }}
                   />
@@ -184,22 +190,22 @@ export default function InputPage({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          className="text-center"
+          className="text-center flex flex-col items-center gap-6 p-4 sm:p-6 bg-white/60 backdrop-blur-md rounded-2xl shadow-elevated border border-white/80"
         >
           <motion.button
             onClick={onSubmit}
             disabled={!canSubmit}
-            whileHover={canSubmit ? { scale: 1.02 } : {}}
+            whileHover={canSubmit ? { scale: 1.02, y: -1 } : {}}
             whileTap={canSubmit ? { scale: 0.98 } : {}}
-            className="btn-primary w-full sm:w-auto text-base sm:text-lg px-8 sm:px-12 py-3 sm:py-4 shadow-glow hover:shadow-glow-lg min-h-[48px] touch-manipulation"
+            className="w-full sm:w-auto px-8 sm:px-12 py-3 sm:py-4 rounded-lg text-white font-semibold transition-all duration-300 shadow-glow hover:shadow-glow-lg disabled:shadow-none disabled:bg-gray-300 disabled:cursor-not-allowed bg-brand hover:bg-brand-dark flex items-center justify-center min-h-[48px]"
           >
             生成专属行动方案
           </motion.button>
 
-          <p className="mt-6 text-sm text-text-muted">
+          <p className="text-body-sm text-text-secondary">
             {canSubmit
               ? '点击按钮，系统将基于你的优势组合生成执行指令'
-              : '请至少输入 10 个字符描述你的困惑'
+              : <span className="text-status-warning">请至少输入 10 个字符描述你的困惑</span>
             }
           </p>
         </motion.div>
