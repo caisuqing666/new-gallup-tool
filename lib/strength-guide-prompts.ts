@@ -198,6 +198,11 @@ export function parseStrengthGuideResponse(content: string): StrengthGuideResult
     try {
       return JSON.parse(repairedText) as StrengthGuideResult;
     } catch (repairError) {
+      const previewLimit = 1200;
+      const jsonPreview = jsonText.slice(0, previewLimit);
+      const repairedPreview = repairedText.slice(0, previewLimit);
+      console.warn('优势指南 JSON 解析失败原文预览:', jsonPreview);
+      console.warn('优势指南 JSON 修复后预览:', repairedPreview);
       const errorMessage = error instanceof Error ? error.message : String(error);
       const repairMessage = repairError instanceof Error ? repairError.message : String(repairError);
       throw new Error(`优势指南 JSON 解析失败: ${errorMessage}; 修复后仍失败: ${repairMessage}`);
