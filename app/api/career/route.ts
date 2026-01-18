@@ -5,6 +5,209 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateMockCareerResult } from '@/lib/mock-career';
 import { isValidCareerResultData } from '@/lib/schema';
 import { validateConfig } from '@/lib/config-validator';
+import { CareerMatchResult, StrengthId } from '@/lib/types';
+import {
+  buildCareerMatchPrompt,
+  parseCareerMatchResponse,
+  isValidCareerMatchResult,
+} from '@/lib/career-prompts';
+
+type AIProvider = 'anthropic' | 'openai' | 'zhipu' | 'minimax';
+
+interface AIConfig {
+  endpoint: string;
+  model: string;
+  apiKey: string;
+  provider: AIProvider;
+  groupId?: string;
+}
+
+function getAIConfig(provider: AIProvider): AIConfig {
+  if (provider === 'zhipu') {
+    const apiKey = process.env.ZHIPU_API_KEY || process.env.GLMS_API_KEY;
+    if (!apiKey) {
+      throw new Error('ZHIPU_API_KEY 未配置');
+    }
+    return {
+      endpoint: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+      model: process.env.ZHIPU_MODEL || 'glm-4-plus',
+      apiKey,
+      provider: 'zhipu',
+    };
+  }
+
+  if (provider === 'minimax') {
+    const apiKey = process.env.MINIMAX_API_KEY;
+    const groupId = process.env.MINIMAX_GROUP_ID;
+    if (!apiKey) {
+      throw new Error('MINIMAX_API_KEY 未配置');
+    }
+    if (!groupId) {
+      throw new Error('MINIMAX_GROUP_ID 未配置');
+    }
+    return {
+      endpoint: process.env.MINIMAX_ENDPOINT || 'https://api.minimax.chat/v1/text/chatcompletion_v2',
+      model: process.env.MINIMAX_MODEL || 'abab6.5-chat',
+      apiKey,
+      groupId,
+      provider: 'minimax',
+    };
+  }
+
+  if (provider === 'openai') {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY 未配置');
+    }
+    return {
+      endpoint: 'https://api.openai.com/v1/chat/completions',
+      model: process.env.OPENAI_MODEL || 'gpt-4o',
+      apiKey,
+      provider: 'openai',
+    };
+  }
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY 未配置');
+  }
+  return {
+    endpoint: 'https://api.anthropic.com/v1/messages',
+    model: process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022',
+    apiKey,
+    provider: 'anthropic',
+  };
+}
+
+const API_TIMEOUT = 120000;
+
+async function generateCareerWithAI(
+  strengths: StrengthId[],
+  provider: AIProvider
+): Promise<CareerMatchResult> {
+  const { systemPrompt, userPrompt } = buildCareerMatchPrompt(strengths);
+  const config = getAIConfig(provider);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+  try {
+    if (config.provider === 'zhipu') {
+      const response = await fetch(config.endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: config.model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          max_tokens: 2000,
+          temperature: 0.7,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`智谱 API 错误 (${response.status}): ${error}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || '';
+      return parseCareerMatchResponse(content);
+    }
+
+    if (config.provider === 'minimax') {
+      const fullUrl = `${config.endpoint}?GroupId=${config.groupId}`;
+      const response = await fetch(fullUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: config.model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          max_tokens: 2000,
+          temperature: 0.7,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Minimax API 错误 (${response.status}): ${error}`);
+      }
+
+      const data = await response.json();
+      const content = data?.choices?.[0]?.message?.content || '';
+      return parseCareerMatchResponse(content);
+    }
+
+    if (config.provider === 'openai') {
+      const response = await fetch(config.endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: config.model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          max_tokens: 2000,
+          temperature: 0.7,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`OpenAI API 错误 (${response.status}): ${error}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || '';
+      return parseCareerMatchResponse(content);
+    }
+
+    // Anthropic Claude
+    const response = await fetch(config.endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': config.apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: config.model,
+        max_tokens: 2000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Claude API 错误 (${response.status}): ${error}`);
+    }
+
+    const data = await response.json();
+    const content = data.content?.[0]?.text || '';
+    return parseCareerMatchResponse(content);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,13 +230,41 @@ export async function POST(request: NextRequest) {
     }
 
     // 检查是否启用 AI
+    const startTime = Date.now();
     const config = validateConfig();
-    const aiEnabled = config.config.aiEnabled;
+    const aiEnabled = config.config.aiEnabled && config.valid;
+    const strengthIds = strengths as StrengthId[];
+
+    if (config.config.aiEnabled && !config.valid) {
+      console.warn('AI 配置无效，职业匹配降级为 Mock', config.errors);
+    }
 
     if (aiEnabled) {
-      // TODO: 这里可以接入真实的 AI API 生成个性化的职业匹配
-      // 目前先使用 Mock 数据
-      console.log('AI 已启用，但职业匹配功能暂未接入 AI，使用 Mock 数据');
+      try {
+        const provider = (config.config.aiProvider as AIProvider) || 'zhipu';
+        console.info('🤖 调用 AI 生成职业匹配...', {
+          provider,
+          strengths: strengthIds.join(', '),
+        });
+
+        const careerData = await generateCareerWithAI(strengthIds, provider);
+
+        if (!isValidCareerMatchResult(careerData)) {
+          throw new Error('职业匹配结果未通过校验');
+        }
+
+        return NextResponse.json({
+          success: true,
+          data: careerData,
+          metadata: {
+            usedMockFallback: false,
+            processingTimeMs: Date.now() - startTime,
+            version: '1.0.0',
+          },
+        });
+      } catch (error) {
+        console.warn('职业匹配 AI 生成失败，降级为 Mock:', error);
+      }
     }
 
     // 生成 Mock 数据
@@ -45,7 +276,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-    const startTime = Date.now();
 
     return NextResponse.json({
       success: true,
