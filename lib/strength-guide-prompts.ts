@@ -120,7 +120,87 @@ function extractJsonBlock(content: string): string {
   return content.trim();
 }
 
+function repairJsonText(input: string): string {
+  const text = input.replace(/^\uFEFF/, '');
+  let output = '';
+  let inString = false;
+  let escaped = false;
+  let i = 0;
+
+  while (i < text.length) {
+    const char = text[i];
+    const next = text[i + 1];
+
+    if (!inString && char === '/' && next === '/') {
+      i += 2;
+      while (i < text.length && text[i] !== '\n') {
+        i += 1;
+      }
+      continue;
+    }
+
+    if (!inString && char === '/' && next === '*') {
+      i += 2;
+      while (i < text.length && !(text[i] === '*' && text[i + 1] === '/')) {
+        i += 1;
+      }
+      i += 2;
+      continue;
+    }
+
+    if (!inString && (char === '，' || char === '、')) {
+      output += ',';
+      i += 1;
+      continue;
+    }
+
+    if (!inString && (char === '：' || char === '；')) {
+      output += char === '：' ? ':' : ',';
+      i += 1;
+      continue;
+    }
+
+    if (!inString && char === ',') {
+      let j = i + 1;
+      while (j < text.length && /\s/.test(text[j])) {
+        j += 1;
+      }
+      if (text[j] === '}' || text[j] === ']') {
+        i += 1;
+        continue;
+      }
+    }
+
+    output += char;
+
+    if (char === '"' && !escaped) {
+      inString = !inString;
+    }
+
+    if (char === '\\' && !escaped) {
+      escaped = true;
+    } else {
+      escaped = false;
+    }
+
+    i += 1;
+  }
+
+  return output.trim();
+}
+
 export function parseStrengthGuideResponse(content: string): StrengthGuideResult {
   const jsonText = extractJsonBlock(content);
-  return JSON.parse(jsonText) as StrengthGuideResult;
+  try {
+    return JSON.parse(jsonText) as StrengthGuideResult;
+  } catch (error) {
+    const repairedText = repairJsonText(jsonText);
+    try {
+      return JSON.parse(repairedText) as StrengthGuideResult;
+    } catch (repairError) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const repairMessage = repairError instanceof Error ? repairError.message : String(repairError);
+      throw new Error(`优势指南 JSON 解析失败: ${errorMessage}; 修复后仍失败: ${repairMessage}`);
+    }
+  }
 }
