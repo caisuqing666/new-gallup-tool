@@ -60,7 +60,7 @@ ${strengthList}
       "strengthId": "strength-id",
       "strengthName": "优势名称",
       "domain": "executing|influencing|relationship|strategic",
-      "whatItMeans": "用"你会..."句式，结合该优势的驱动力描述",
+      "whatItMeans": "用 你会... 句式，结合该优势的驱动力描述",
       "bestScenarios": ["场景1（具体）", "场景2（具体）", "场景3（具体）"],
       "dailyPractice": {
         "morning": "早晨如何启动该优势（具体行动）",
