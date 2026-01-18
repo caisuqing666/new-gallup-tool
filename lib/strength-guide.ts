@@ -969,6 +969,7 @@ export function generateMockGuideResult(strengthIds: string[]): StrengthGuideRes
     return {
       strengthId: id,
       strengthName: strength?.name ?? id,
+      domain: strength?.domain ?? 'executing',
       whatItMeans: content.whatItMeans,
       bestScenarios: content.bestScenarios,
       dailyPractice: content.dailyPractice,

@@ -39,7 +39,8 @@ ${strengthList}
     {
       "strengthId": "strength-id",
       "strengthName": "优势名称",
-      "whatItMeans": "用“你会...”句式",
+      "domain": "executing|influencing|relationship|strategic",
+      "whatItMeans": "用"你会..."句式",
       "bestScenarios": ["场景1", "场景2", "场景3"],
       "dailyPractice": {
         "morning": "早晨建议",
@@ -78,6 +79,7 @@ ${strengthList}
 要求：
 - strengthGuides 的条目数量等于输入优势数量，顺序一致。
 - strengthId 必须使用输入中的 id。
+- domain 必须是输入中对应优势的领域（executing/influencing/relationship/strategic）。
 - 文本具体、可执行，避免空泛。
 - weeklyActions 5-7 条，覆盖一周的节奏即可。`;
 

@@ -398,6 +398,8 @@ export interface StrengthGuide {
   strengthId: string;
   /** 优势名称 */
   strengthName: string;
+  /** 优势所属领域 */
+  domain: 'executing' | 'influencing' | 'relationship' | 'strategic';
   /** 这个优势意味着什么（用"你会..."句式） */
   whatItMeans: string;
   /** 最佳发挥场景 */
