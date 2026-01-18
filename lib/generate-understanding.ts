@@ -292,7 +292,7 @@ export async function generateUnderstanding(
     });
 
     return result;
-  } catch {
+  } catch (error) {
     console.error('理解层转译生成失败:', error);
     throw error;
   }
