@@ -235,8 +235,22 @@ export async function POST(request: NextRequest) {
     const aiEnabled = config.config.aiEnabled && config.valid;
     const strengthIds = strengths as StrengthId[];
 
+    // 详细日志：帮助诊断 AI 配置状态
+    console.info('📊 职业匹配 AI 配置状态:', {
+      aiEnabled: config.config.aiEnabled,
+      configValid: config.valid,
+      provider: config.config.aiProvider,
+      hasApiKey: config.config.hasApiKey,
+      errors: config.errors,
+      warnings: config.warnings,
+    });
+
     if (config.config.aiEnabled && !config.valid) {
-      console.warn('AI 配置无效，职业匹配降级为 Mock', config.errors);
+      console.warn('❌ AI 配置无效，职业匹配降级为 Mock', config.errors);
+    }
+
+    if (!config.config.aiEnabled) {
+      console.info('ℹ️ AI 未启用 (ENABLE_AI != true)，使用 Mock 数据');
     }
 
     if (aiEnabled) {
@@ -263,11 +277,12 @@ export async function POST(request: NextRequest) {
           },
         });
       } catch (error) {
-        console.warn('职业匹配 AI 生成失败，降级为 Mock:', error);
+        console.error('❌ 职业匹配 AI 生成失败，降级为 Mock:', error);
       }
     }
 
     // 生成 Mock 数据
+    console.info('📝 使用 Mock 数据生成职业匹配结果');
     const careerData = generateMockCareerResult(strengths);
     if (!isValidCareerResultData(careerData)) {
       console.error('职业匹配结果未通过 schema 校验');
