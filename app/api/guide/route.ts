@@ -8,16 +8,48 @@ import { StrengthGuideResult, StrengthId } from '@/lib/types';
 import { buildStrengthGuidePrompt, parseStrengthGuideResponse } from '@/lib/strength-guide-prompts';
 import { validateConfig } from '@/lib/config-validator';
 
-type AIProvider = 'anthropic' | 'openai';
+type AIProvider = 'anthropic' | 'openai' | 'zhipu' | 'minimax';
 
 interface AIConfig {
   endpoint: string;
   model: string;
   apiKey: string;
   provider: AIProvider;
+  groupId?: string;
 }
 
 function getAIConfig(provider: AIProvider): AIConfig {
+  if (provider === 'zhipu') {
+    const apiKey = process.env.ZHIPU_API_KEY || process.env.GLMS_API_KEY;
+    if (!apiKey) {
+      throw new Error('ZHIPU_API_KEY 未配置');
+    }
+    return {
+      endpoint: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+      model: process.env.ZHIPU_MODEL || 'glm-4-plus',
+      apiKey,
+      provider: 'zhipu',
+    };
+  }
+
+  if (provider === 'minimax') {
+    const apiKey = process.env.MINIMAX_API_KEY;
+    const groupId = process.env.MINIMAX_GROUP_ID;
+    if (!apiKey) {
+      throw new Error('MINIMAX_API_KEY 未配置');
+    }
+    if (!groupId) {
+      throw new Error('MINIMAX_GROUP_ID 未配置');
+    }
+    return {
+      endpoint: process.env.MINIMAX_ENDPOINT || 'https://api.minimax.chat/v1/text/chatcompletion_v2',
+      model: process.env.MINIMAX_MODEL || 'abab6.5-chat',
+      apiKey,
+      groupId,
+      provider: 'minimax',
+    };
+  }
+
   if (provider === 'openai') {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -55,6 +87,65 @@ async function generateGuideWithAI(
   const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
 
   try {
+    if (config.provider === 'zhipu') {
+      const response = await fetch(config.endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: config.model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          max_tokens: 1800,
+          temperature: 0.7,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`智谱 API 错误 (${response.status}): ${error}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || '';
+      return parseStrengthGuideResponse(content);
+    }
+
+    if (config.provider === 'minimax') {
+      const fullUrl = `${config.endpoint}?GroupId=${config.groupId}`;
+      const response = await fetch(fullUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: config.model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          max_tokens: 1800,
+          temperature: 0.7,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Minimax API 错误 (${response.status}): ${error}`);
+      }
+
+      const data = await response.json();
+      const content = data?.choices?.[0]?.message?.content || '';
+      return parseStrengthGuideResponse(content);
+    }
+
     if (config.provider === 'openai') {
       const response = await fetch(config.endpoint, {
         method: 'POST',
@@ -145,7 +236,7 @@ export async function POST(request: NextRequest) {
 
     if (aiEnabled) {
       try {
-        const provider = (config.config.aiProvider as AIProvider) || 'anthropic';
+        const provider = (config.config.aiProvider as AIProvider) || 'zhipu';
         const guideData = await generateGuideWithAI(strengthIds, provider);
 
         if (!isValidGuideResultData(guideData)) {

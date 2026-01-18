@@ -31,7 +31,24 @@ ENABLE_AI=false
 
 #### 选择 AI 提供商
 
-**方式 1: Anthropic Claude（推荐）**
+**方式 1: 智谱 GLM**
+```bash
+AI_PROVIDER=zhipu
+ZHIPU_API_KEY=your_zhipu_api_key_here
+```
+
+获取 API Key：https://open.bigmodel.cn/usercenter/apikeys
+
+**方式 2: MiniMax**
+```bash
+AI_PROVIDER=minimax
+MINIMAX_API_KEY=your_minimax_api_key_here
+MINIMAX_GROUP_ID=your_minimax_group_id_here
+```
+
+获取 API Key：https://platform.minimax.chat/
+
+**方式 3: Anthropic Claude**
 ```bash
 AI_PROVIDER=anthropic
 ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxxx
@@ -39,7 +56,7 @@ ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxxx
 
 获取 API Key：https://console.anthropic.com/
 
-**方式 2: OpenAI**
+**方式 4: OpenAI**
 ```bash
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxx
@@ -70,6 +87,23 @@ OPENAI_MODEL=gpt-4o
 OPENAI_MODEL=gpt-3.5-turbo
 ```
 
+**智谱模型**
+```bash
+# 默认（推荐）
+ZHIPU_MODEL=glm-4-plus
+
+# 其他可选
+ZHIPU_MODEL=glm-4
+ZHIPU_MODEL=glm-4-air
+ZHIPU_MODEL=glm-4-flash
+```
+
+**MiniMax 模型**
+```bash
+# 默认（推荐）
+MINIMAX_MODEL=abab6.5-chat
+```
+
 ---
 
 ## 配置验证
@@ -95,7 +129,7 @@ A: 设置 `ENABLE_AI=false`（或不设置此变量）
 A: 系统会自动降级到 Mock 数据，确保功能正常
 
 ### Q: 如何切换 AI 提供商？
-A: 修改 `AI_PROVIDER` 为 `anthropic` 或 `openai`
+A: 修改 `AI_PROVIDER` 为 `zhipu`、`minimax`、`anthropic` 或 `openai`
 
 ### Q: API Key 会泄露吗？
 A: `.env.local` 文件已在 `.gitignore` 中，不会被提交到 Git

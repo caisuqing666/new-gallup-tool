@@ -22,47 +22,85 @@ export function validateConfig(): ValidationResult {
 
   // 检查 AI 配置
   const aiEnabled = process.env.ENABLE_AI === 'true' || process.env.NEXT_PUBLIC_ENABLE_AI === 'true';
-  const aiProvider = process.env.AI_PROVIDER || 'anthropic';
+  const aiProvider = process.env.AI_PROVIDER || 'zhipu';
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const openaiKey = process.env.OPENAI_API_KEY;
+  const zhipuKey = process.env.ZHIPU_API_KEY || process.env.GLMS_API_KEY;
+  const minimaxKey = process.env.MINIMAX_API_KEY;
+  const minimaxGroupId = process.env.MINIMAX_GROUP_ID;
 
   if (aiEnabled) {
     // AI 启用时，必须有至少一个 API Key
-    if (!anthropicKey && !openaiKey) {
+    if (!anthropicKey && !openaiKey && !zhipuKey && !minimaxKey) {
       errors.push(
         'AI 已启用（ENABLE_AI=true），但未配置 API Key。' +
-        '请在 .env.local 中设置 ANTHROPIC_API_KEY 或 OPENAI_API_KEY，' +
+        '请在 .env.local 中设置 ZHIPU_API_KEY、ANTHROPIC_API_KEY、OPENAI_API_KEY 或 MINIMAX_API_KEY，' +
         '或设置 ENABLE_AI=false 使用 Mock 数据'
       );
     }
 
     // 检查指定的提供商是否有 API Key
     if (aiProvider === 'anthropic' && !anthropicKey) {
-      if (openaiKey) {
+      if (openaiKey || zhipuKey || minimaxKey) {
         warnings.push(
           '指定了 AI_PROVIDER=anthropic，但未设置 ANTHROPIC_API_KEY。' +
-          '将使用 OpenAI 作为备用方案。'
+          '将使用其他已配置的提供商作为备用方案。'
         );
       } else {
         errors.push(
           '指定了 AI_PROVIDER=anthropic，但未设置 ANTHROPIC_API_KEY。' +
-          '请在 .env.local 中设置 ANTHROPIC_API_KEY，或切换到 openai 提供商。'
+          '请在 .env.local 中设置 ANTHROPIC_API_KEY，或切换到其他提供商。'
         );
       }
     }
 
     if (aiProvider === 'openai' && !openaiKey) {
-      if (anthropicKey) {
+      if (anthropicKey || zhipuKey || minimaxKey) {
         warnings.push(
           '指定了 AI_PROVIDER=openai，但未设置 OPENAI_API_KEY。' +
-          '将使用 Anthropic Claude 作为备用方案。'
+          '将使用其他已配置的提供商作为备用方案。'
         );
       } else {
         errors.push(
           '指定了 AI_PROVIDER=openai，但未设置 OPENAI_API_KEY。' +
-          '请在 .env.local 中设置 OPENAI_API_KEY，或切换到 anthropic 提供商。'
+          '请在 .env.local 中设置 OPENAI_API_KEY，或切换到其他提供商。'
         );
       }
+    }
+
+    if (aiProvider === 'zhipu' && !zhipuKey) {
+      if (anthropicKey || openaiKey || minimaxKey) {
+        warnings.push(
+          '指定了 AI_PROVIDER=zhipu，但未设置 ZHIPU_API_KEY。' +
+          '将使用其他已配置的提供商作为备用方案。'
+        );
+      } else {
+        errors.push(
+          '指定了 AI_PROVIDER=zhipu，但未设置 ZHIPU_API_KEY。' +
+          '请在 .env.local 中设置 ZHIPU_API_KEY，或切换到其他提供商。'
+        );
+      }
+    }
+
+    if (aiProvider === 'minimax' && !minimaxKey) {
+      if (anthropicKey || openaiKey || zhipuKey) {
+        warnings.push(
+          '指定了 AI_PROVIDER=minimax，但未设置 MINIMAX_API_KEY。' +
+          '将使用其他已配置的提供商作为备用方案。'
+        );
+      } else {
+        errors.push(
+          '指定了 AI_PROVIDER=minimax，但未设置 MINIMAX_API_KEY。' +
+          '请在 .env.local 中设置 MINIMAX_API_KEY，或切换到其他提供商。'
+        );
+      }
+    }
+
+    if (aiProvider === 'minimax' && minimaxKey && !minimaxGroupId) {
+      errors.push(
+        '指定了 AI_PROVIDER=minimax，但未设置 MINIMAX_GROUP_ID。' +
+        '请在 .env.local 中设置 MINIMAX_GROUP_ID。'
+      );
     }
 
     // 检查模型配置
@@ -91,6 +129,28 @@ export function validateConfig(): ValidationResult {
         );
       }
     }
+
+    if (aiProvider === 'zhipu' && zhipuKey) {
+      const model = process.env.ZHIPU_MODEL;
+      const validModels = ['glm-4-plus', 'glm-4', 'glm-4-air', 'glm-4-flash'];
+      if (model && !validModels.includes(model)) {
+        warnings.push(
+          `ZHIPU_MODEL="${model}" 不是有效值。` +
+          `有效值: ${validModels.join(', ')}。将使用默认模型。`
+        );
+      }
+    }
+
+    if (aiProvider === 'minimax' && minimaxKey) {
+      const model = process.env.MINIMAX_MODEL;
+      const validModels = ['abab6.5-chat'];
+      if (model && !validModels.includes(model)) {
+        warnings.push(
+          `MINIMAX_MODEL="${model}" 不是有效值。` +
+          `有效值: ${validModels.join(', ')}。将使用默认模型。`
+        );
+      }
+    }
   }
 
   // 检查应用 URL
@@ -108,10 +168,14 @@ export function validateConfig(): ValidationResult {
     config: {
       aiEnabled,
       aiProvider: aiEnabled ? aiProvider : undefined,
-      hasApiKey: aiEnabled ? !!(anthropicKey || openaiKey) : undefined,
+      hasApiKey: aiEnabled ? !!(anthropicKey || openaiKey || zhipuKey || minimaxKey) : undefined,
       model: aiProvider === 'anthropic'
         ? process.env.ANTHROPIC_MODEL
-        : process.env.OPENAI_MODEL,
+        : aiProvider === 'openai'
+          ? process.env.OPENAI_MODEL
+          : aiProvider === 'zhipu'
+            ? process.env.ZHIPU_MODEL
+            : process.env.MINIMAX_MODEL,
     },
   };
 }
