@@ -203,7 +203,7 @@ export function parseUnderstandingResponse(content: string): ConfusionUnderstand
     }
 
     return rawResult;
-  } catch (e) {
+  } catch {
     // 尝试提取 JSON
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {

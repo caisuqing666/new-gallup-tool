@@ -236,7 +236,7 @@ export async function stage3_mergeDiagnosis(
   let parsed: unknown;
   try {
     parsed = JSON.parse(rawResponse);
-  } catch (e) {
+  } catch {
     const match = rawResponse.match(/\{[\s\S]*\}/);
     if (match) {
       parsed = JSON.parse(match[0]);

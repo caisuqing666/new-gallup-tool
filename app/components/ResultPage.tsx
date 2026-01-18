@@ -422,7 +422,7 @@ export default function ResultPage({
       if (onSave) {
         onSave({ explain: explainData, decide: decideData });
       }
-    } catch (e) {
+    } catch {
       setToast({ message: '保存失败', type: 'error' });
     } finally {
       setIsSaving(false);

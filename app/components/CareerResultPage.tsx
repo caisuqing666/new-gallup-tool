@@ -217,7 +217,7 @@ export default function CareerResultPage({
       });
 
       setToast({ message: '已保存到本地', type: 'success' });
-    } catch (e) {
+    } catch {
       setToast({ message: '保存失败', type: 'error' });
     } finally {
       setIsSaving(false);

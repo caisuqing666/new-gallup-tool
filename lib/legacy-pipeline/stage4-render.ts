@@ -359,7 +359,7 @@ export async function stage4_render(
     let parsed: unknown;
     try {
       parsed = JSON.parse(rawResponse);
-    } catch (e) {
+    } catch {
       // 尝试提取 JSON 片段
       const match = rawResponse.match(/\{[\s\S]*\}/);
       if (match) {

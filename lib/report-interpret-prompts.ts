@@ -185,7 +185,7 @@ function safeJsonParse(content: string): unknown {
 
   try {
     return JSON.parse(jsonString);
-  } catch (error) {
+  } catch {
     try {
       const repaired = jsonString
         .replace(/,\s*([}\]])/g, '$1')

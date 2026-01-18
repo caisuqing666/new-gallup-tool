@@ -138,7 +138,7 @@ async function generateWithZhipu(
     const content = data.choices[0].message.content;
 
     return parseUnderstandingResponse(content);
-  } catch (error) {
+  } catch {
     if (error instanceof Error && error.name === 'AbortError') {
       throw new Error(`AI 请求超时（${API_TIMEOUT}ms），请稍后重试`);
     }
@@ -186,7 +186,7 @@ async function generateWithClaude(
     const content = data.content[0].text;
 
     return parseUnderstandingResponse(content);
-  } catch (error) {
+  } catch {
     if (error instanceof Error && error.name === 'AbortError') {
       throw new Error(`AI 请求超时（${API_TIMEOUT}ms），请稍后重试`);
     }
@@ -237,7 +237,7 @@ async function generateWithOpenAI(
     const content = data.choices[0].message.content;
 
     return parseUnderstandingResponse(content);
-  } catch (error) {
+  } catch {
     if (error instanceof Error && error.name === 'AbortError') {
       throw new Error(`AI 请求超时（${API_TIMEOUT}ms），请稍后重试`);
     }
@@ -292,7 +292,7 @@ export async function generateUnderstanding(
     });
 
     return result;
-  } catch (error) {
+  } catch {
     console.error('理解层转译生成失败:', error);
     throw error;
   }
@@ -368,7 +368,7 @@ export function checkUnderstandingAIConfig(provider: AIProvider = 'zhipu'): {
       hasApiKey: !!config.apiKey,
       model: config.model,
     };
-  } catch (error) {
+  } catch {
     return {
       enabled: false,
       provider,

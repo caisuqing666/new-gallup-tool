@@ -170,7 +170,7 @@ export async function stage2_extractChunk(
   let parsed: any;
   try {
     parsed = JSON.parse(rawResponse);
-  } catch (e) {
+  } catch {
     const match = rawResponse.match(/\{[\s\S]*\}/);
     if (match) {
       parsed = JSON.parse(match[0]);

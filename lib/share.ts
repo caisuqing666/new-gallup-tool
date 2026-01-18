@@ -17,7 +17,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
       document.execCommand('copy');
       document.body.removeChild(textarea);
       return true;
-    } catch (err) {
+    } catch {
       document.body.removeChild(textarea);
       return false;
     }
@@ -26,7 +26,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text);
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 }
@@ -60,7 +60,7 @@ export async function shareToWeb(options: ShareOptions): Promise<boolean> {
       url: options.url || window.location.href,
     });
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 }

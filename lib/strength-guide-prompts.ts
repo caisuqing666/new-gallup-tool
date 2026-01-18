@@ -121,7 +121,10 @@ function extractJsonBlock(content: string): string {
 }
 
 function repairJsonText(input: string): string {
-  const text = input.replace(/^\uFEFF/, '');
+  const text = input
+    .replace(/^\uFEFF/, '')
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'");
   let output = '';
   let inString = false;
   let escaped = false;
@@ -130,6 +133,16 @@ function repairJsonText(input: string): string {
   while (i < text.length) {
     const char = text[i];
     const next = text[i + 1];
+
+    if (inString && (char === '\n' || char === '\r')) {
+      output += '\\n';
+      if (char === '\r' && next === '\n') {
+        i += 2;
+      } else {
+        i += 1;
+      }
+      continue;
+    }
 
     if (!inString && char === '/' && next === '/') {
       i += 2;
@@ -201,9 +214,19 @@ export function parseStrengthGuideResponse(content: string): StrengthGuideResult
       const previewLimit = 1200;
       const jsonPreview = jsonText.slice(0, previewLimit);
       const repairedPreview = repairedText.slice(0, previewLimit);
+      const baseMessage = error instanceof Error ? error.message : String(error);
+      const positionMatch = baseMessage.match(/position\s+(\d+)/i);
+      if (positionMatch) {
+        const position = Number(positionMatch[1]);
+        const windowSize = 120;
+        const start = Math.max(0, position - windowSize);
+        const end = Math.min(jsonText.length, position + windowSize);
+        console.warn('优势指南 JSON 解析失败位置原文片段:', jsonText.slice(start, end));
+        console.warn('优势指南 JSON 修复后位置片段:', repairedText.slice(start, end));
+      }
       console.warn('优势指南 JSON 解析失败原文预览:', jsonPreview);
       console.warn('优势指南 JSON 修复后预览:', repairedPreview);
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = baseMessage;
       const repairMessage = repairError instanceof Error ? repairError.message : String(repairError);
       throw new Error(`优势指南 JSON 解析失败: ${errorMessage}; 修复后仍失败: ${repairMessage}`);
     }

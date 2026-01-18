@@ -209,7 +209,7 @@ function parseExplainResponse(content: string): ExplainData {
   try {
     const rawResult = JSON.parse(content) as ExplainOutput;
     return rawResult;
-  } catch (e) {
+  } catch {
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const rawResult = JSON.parse(jsonMatch[0]) as ExplainOutput;
@@ -331,7 +331,7 @@ function parseDecideResponse(content: string): DecideOutput {
   try {
     const rawResult = JSON.parse(content) as DecideOutput;
     return rawResult;
-  } catch (e) {
+  } catch {
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const rawResult = JSON.parse(jsonMatch[0]) as DecideOutput;
