@@ -138,7 +138,7 @@ async function generateWithZhipu(
     const content = data.choices[0].message.content;
 
     return parseUnderstandingResponse(content);
-  } catch {
+  } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
       throw new Error(`AI 请求超时（${API_TIMEOUT}ms），请稍后重试`);
     }
