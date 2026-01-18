@@ -13,7 +13,8 @@
     "check-config": "node --no-warnings scripts/check-config.mjs",
     "config:info": "node --no-warnings scripts/check-config.mjs",
     "check-legacy": "node scripts/check-legacy-usage.mjs",
-    "pipeline:example": "tsx scripts/example-pipeline.mjs"
+    "pipeline:example": "tsx scripts/example-pipeline.mjs",
+    "knowledge:index": "node scripts/knowledge-index.mjs"
   },
   "dependencies": {
     "@xstate/react": "^6.0.0",

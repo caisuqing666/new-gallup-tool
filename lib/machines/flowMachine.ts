@@ -312,11 +312,24 @@ export const flowMachine = setup({
         DESELECT_STRENGTH: { actions: 'removeStrength' },
         MOVE_STRENGTH_UP: { actions: 'moveStrengthUp' },
         MOVE_STRENGTH_DOWN: { actions: 'moveStrengthDown' },
-        NEXT: {
-          target: 'loading',
-          actions: 'setLoading',
-          guard: 'canGoToInput',
-        },
+        NEXT: [
+          {
+            target: 'input',
+            actions: 'clearResults',
+            guard: ({ context }) => {
+              const strengths = context.formData.strengths || [];
+              return context.path === 'breakthrough' && strengths.length >= 3 && strengths.length <= 5;
+            },
+          },
+          {
+            target: 'loading',
+            actions: ['clearResults', 'setLoading'],
+            guard: ({ context }) => {
+              const strengths = context.formData.strengths || [];
+              return context.path !== 'breakthrough' && strengths.length >= 3 && strengths.length <= 5;
+            },
+          },
+        ],
         BACK: [
           { target: 'scenario', guard: ({ context }) => context.path === 'breakthrough' },
           { target: 'path-selection' },
@@ -328,7 +341,7 @@ export const flowMachine = setup({
         UPDATE_CONFUSION: { actions: 'updateConfusion' },
         SUBMIT: {
           target: 'loading',
-          actions: 'setLoading',
+          actions: ['clearResults', 'setLoading'],
           guard: 'canSubmit',
         },
         BACK: { target: 'strengths' },

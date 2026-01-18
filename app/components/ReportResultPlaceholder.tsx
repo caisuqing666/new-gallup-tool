@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ReportInterpretResult } from '@/lib/types';
 import { DOMAIN_COLORS } from '@/lib/gallup-strengths';
+import { exportToImage } from '@/lib/export';
+import Toast, { type ToastType } from './Toast';
 
 interface ReportResultPlaceholderProps {
   reportData: ReportInterpretResult;
@@ -15,10 +17,31 @@ export default function ReportResultPlaceholder({
   onBack,
 }: ReportResultPlaceholderProps) {
   const [mounted, setMounted] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  useState(() => {
+  useEffect(() => {
     setMounted(true);
-  });
+  }, []);
+
+  const handleSaveAsImage = async () => {
+    if (isSaving || !contentRef.current) return;
+    setIsSaving(true);
+    try {
+      await exportToImage(contentRef.current, {
+        filename: `report_interpret_${Date.now()}`,
+        format: 'png',
+        scale: 2,
+      });
+      setToast({ message: '已保存到本地', type: 'success' });
+    } catch (error) {
+      console.error('保存失败:', error);
+      setToast({ message: '保存失败', type: 'error' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (!mounted) {
     return (
@@ -29,8 +52,10 @@ export default function ReportResultPlaceholder({
   }
 
   return (
-    <div className="min-h-screen bg-warm-gradient px-4 sm:px-6 py-8">
-      <div className="max-w-4xl mx-auto">
+    <>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+      <div className="min-h-screen bg-warm-gradient px-4 sm:px-6 py-8">
+        <div className="max-w-4xl mx-auto" ref={contentRef}>
         {/* 返回按钮 */}
         <motion.button
           onClick={onBack}
@@ -357,7 +382,18 @@ export default function ReportResultPlaceholder({
             <p className="text-text-secondary leading-relaxed text-body-sm whitespace-pre-line">{reportData.personalizedAdvice}</p>
           </div>
         </motion.section>
+        </div>
+
+        <div className="mt-8 flex gap-4 justify-center p-4 bg-white/60 backdrop-blur-md rounded-2xl shadow-elevated border border-white/80 max-w-4xl mx-auto">
+          <button
+            onClick={handleSaveAsImage}
+            disabled={isSaving}
+            className="w-full px-6 py-3 bg-brand text-white rounded-xl font-semibold hover:bg-brand-dark transition-colors disabled:opacity-50 shadow-glow hover:shadow-glow-lg"
+          >
+            {isSaving ? '保存中...' : '保存报告'}
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

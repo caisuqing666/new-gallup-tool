@@ -1,5 +1,9 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# ===================
+# Node.js / Next.js
+# ===================
+
 # dependencies
 /node_modules
 /.pnp
@@ -15,23 +19,121 @@
 # production
 /build
 
-# misc
-.DS_Store
-*.pem
-
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# local env files
-.env
-.env*.local
 
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts.env*
 next-env.d.ts
+
+# ===================
+# Python
+# ===================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env.py/
+ENV/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# mypy
+.mypy_cache/
+
+# ===================
+# MiniMax / AI 相关
+# ===================
+
+# API 响应缓存
+*.cache
+.minimax_cache/
+
+# 模型文件（如果有本地模型）
+*.bin
+*.pt
+*.pth
+*.onnx
+models/
+
+# ===================
+# 环境变量文件
+# ===================
+
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+!.env.local.example
+
+# ===================
+# IDE / 编辑器
+# ===================
+
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# ===================
+# 系统文件
+# ===================
+
+.DS_Store
+Thumbs.db
+*.pem
+
+# ===================
+# 日志文件
+# ===================
+
+logs/
+*.log
+
+# ===================
+# 临时文件
+# ===================
+
+tmp/
+temp/
+*.tmp

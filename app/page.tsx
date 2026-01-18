@@ -204,7 +204,13 @@ export default function Home() {
       return (
         <StrengthsPage
           selectedStrengths={state.formData.strengths}
-          onSelectStrength={actions.selectStrength}
+          onSelectStrength={(strengthId) => {
+            if (state.formData.strengths.includes(strengthId)) {
+              actions.deselectStrength(strengthId);
+            } else {
+              actions.selectStrength(strengthId);
+            }
+          }}
           onMoveUp={actions.moveStrengthUp}
           onMoveDown={actions.moveStrengthDown}
           onNext={handleNext}

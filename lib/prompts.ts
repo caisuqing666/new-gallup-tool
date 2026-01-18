@@ -25,6 +25,20 @@ import { getComboEffect } from './combo-rules';
 import { parseConfusion } from './confusion-parser';
 import type { ConfusionUnderstanding } from './understanding-layer';
 
+function buildKnowledgeContextSafe(query: import('./knowledge').KnowledgeQuery): string {
+  if (typeof window !== 'undefined') {
+    return '';
+  }
+  try {
+    const req = eval('require') as NodeRequire;
+    const mod = req('./knowledge') as typeof import('./knowledge');
+    return mod.buildKnowledgeContext(query);
+  } catch (error) {
+    console.warn('Failed to load knowledge context:', error);
+    return '';
+  }
+}
+
 // ============================================================
 // Prompt 路径类型
 // ============================================================
@@ -792,7 +806,8 @@ reframedInsight 是“懂我”的起点，必须满足：
 export function buildExplainSystemPrompt(
   problemType: ProblemType, 
   problemFocus: string,
-  contextPack?: ContextPack
+  contextPack?: ContextPack,
+  knowledgeContext?: string
 ): string {
   const problemTypeName = PROBLEM_TYPE_LABELS[problemType];
   const problemTypeDesc = PROBLEM_TYPE_DESCRIPTIONS[problemType];
@@ -802,7 +817,11 @@ export function buildExplainSystemPrompt(
     ? formatContextPackForPrompt(contextPack) + '\n\n---\n\n'
     : '';
 
-  return `${contextPackSection}## 【当前问题类型】${problemTypeName}（${problemType}）
+  const knowledgeSection = knowledgeContext
+    ? `${knowledgeContext}\n\n---\n\n`
+    : '';
+
+  return `${contextPackSection}${knowledgeSection}## 【当前问题类型】${problemTypeName}（${problemType}）
 
 ### 问题类型定义
 ${problemTypeDesc}
@@ -868,7 +887,8 @@ export function buildDecideSystemPrompt(
   problemType: ProblemType, 
   problemFocus: string,
   contextPack?: ContextPack,
-  understanding?: ConfusionUnderstanding
+  understanding?: ConfusionUnderstanding,
+  knowledgeContext?: string
 ): string {
   const problemTypeName = PROBLEM_TYPE_LABELS[problemType];
   const problemTypeDesc = PROBLEM_TYPE_DESCRIPTIONS[problemType];
@@ -876,6 +896,10 @@ export function buildDecideSystemPrompt(
   // 如果有 Context Pack，放在最前面
   const contextPackSection = contextPack 
     ? formatContextPackForPrompt(contextPack) + '\n\n---\n\n'
+    : '';
+
+  const knowledgeSection = knowledgeContext
+    ? `${knowledgeContext}\n\n---\n\n`
     : '';
 
   const understandingSection = understanding
@@ -897,7 +921,7 @@ export function buildDecideSystemPrompt(
 `
     : '';
 
-  return `${contextPackSection}## 【当前问题类型】${problemTypeName}（${problemType}）
+  return `${contextPackSection}${knowledgeSection}## 【当前问题类型】${problemTypeName}（${problemType}）
 
 ### 问题类型定义
 ${problemTypeDesc}
@@ -1578,9 +1602,19 @@ export function buildPrompt(config: PromptConfig): PromptResult {
 
       // 如果没有提供 contextPack，自动构建
       const contextPack = p.contextPack || buildContextPack(p.strengths, p.confusion);
+      const knowledgeContext = buildKnowledgeContextSafe({
+        strengths: p.strengths,
+        confusion: p.confusion,
+        problemFocus: p.problemFocus,
+      });
 
       return {
-        systemPrompt: buildExplainSystemPrompt(p.problemType, p.problemFocus, contextPack),
+        systemPrompt: buildExplainSystemPrompt(
+          p.problemType,
+          p.problemFocus,
+          contextPack,
+          knowledgeContext
+        ),
         userPrompt: buildUserPrompt(
           p.strengths.map(id => {
             const strength = STRENGTH_PROFILES[id];
@@ -1598,13 +1632,19 @@ export function buildPrompt(config: PromptConfig): PromptResult {
 
       // 如果没有提供 contextPack，自动构建
       const contextPack = p.contextPack || buildContextPack(p.strengths, p.confusion);
+      const knowledgeContext = buildKnowledgeContextSafe({
+        strengths: p.strengths,
+        confusion: p.confusion,
+        problemFocus: p.problemFocus,
+      });
 
       return {
         systemPrompt: buildDecideSystemPrompt(
           p.problemType,
           p.problemFocus,
           contextPack,
-          p.understanding
+          p.understanding,
+          knowledgeContext
         ),
         userPrompt: buildUserPrompt(
           p.strengths.map(id => {
@@ -1646,9 +1686,13 @@ export function buildPrompt(config: PromptConfig): PromptResult {
 
     case 'report-interpret': {
       const p = params as ReportInterpretParams;
+      const knowledgeContext = buildKnowledgeContextSafe({
+        strengths: p.strengths,
+        ocrText: p.ocrText,
+      });
 
       return {
-        systemPrompt: buildReportInterpretPrompt(p.strengths, p.ocrText),
+        systemPrompt: buildReportInterpretPrompt(p.strengths, p.ocrText, knowledgeContext),
         userPrompt: '只返回符合要求的 JSON 对象，不要包含任何多余文字。',
       };
     }
@@ -1839,7 +1883,11 @@ function buildUnderstandingUserPrompt(confusion: string, scenarioTitle?: string)
  * 构建报告解读的系统 Prompt
  * （从 report-interpret-prompts.ts 迁移过来）
  */
-function buildReportInterpretPrompt(strengths: StrengthId[], ocrText?: string): string {
+function buildReportInterpretPrompt(
+  strengths: StrengthId[],
+  ocrText?: string,
+  knowledgeContext?: string
+): string {
   const strengthNames = strengths.join('、');
   const top5Strengths = strengths.map((id, index) => {
     const info = getStrengthById(id);
@@ -1847,9 +1895,13 @@ function buildReportInterpretPrompt(strengths: StrengthId[], ocrText?: string): 
     return `    { "rank": ${index + 1}, "name": "${info?.name || id}", "domain": "${domainName}" }`;
   }).join(',\n');
 
+  const knowledgeSection = knowledgeContext
+    ? `${knowledgeContext}\n\n---\n\n`
+    : '';
+
   return `你是资深的盖洛普认证教练，擅长解读盖洛普优势报告。
 
-## 用户优势识别结果
+${knowledgeSection}## 用户优势识别结果
 
 用户的 TOP5 优势是：${strengthNames}
 

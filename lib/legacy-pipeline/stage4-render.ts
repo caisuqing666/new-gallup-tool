@@ -5,6 +5,7 @@
 
 import type { Stage3Output, Stage4Output, RenderTone } from './types';
 import type { AIProviderConfig } from './types';
+import { applyRules } from '../coach_rules/applyRules';
 
 // ========== Prompt 模板 ==========
 
@@ -17,7 +18,8 @@ const STAGE4_SYSTEM_PROMPTS: Record<RenderTone['style'], string> = {
 
 function buildStage4UserPrompt(
   diagnosis: Stage3Output,
-  tone: RenderTone
+  tone: RenderTone,
+  ruleBlock?: string
 ): string {
   const detailLimit = {
     concise: 30,
@@ -35,7 +37,9 @@ function buildStage4UserPrompt(
     habits: diagnosis.micro_habits_7d.slice(0, 3),
   };
   
-  return `Diagnosis: ${JSON.stringify(summary)}
+  const ruleSection = ruleBlock ? `${ruleBlock}\n\n---\n\n` : '';
+
+  return `${ruleSection}Diagnosis: ${JSON.stringify(summary)}
 Tone: ${tone.style}, max ${detailLimit} chars/field
 
 Output:
@@ -347,7 +351,8 @@ export async function stage4_render(
 
   try {
     const systemPrompt = STAGE4_SYSTEM_PROMPTS[tone.style];
-    const userPrompt = buildStage4UserPrompt(diagnosis, tone);
+    const { promptBlock } = applyRules(diagnosis);
+    const userPrompt = buildStage4UserPrompt(diagnosis, tone, promptBlock);
 
     const rawResponse = await callAI(config, systemPrompt, userPrompt, temperature);
 
