@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
+import LanguageSwitcher from './LanguageSwitcher';
 
 interface LandingPageProps {
   onStart: () => void;
 }
 
 export default function LandingPage({ onStart }: LandingPageProps) {
+  const t = useTranslations('landing');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -24,6 +27,11 @@ export default function LandingPage({ onStart }: LandingPageProps) {
 
   return (
     <div className="min-h-screen bg-warm-gradient flex flex-col relative">
+      {/* 顶部导航栏 - 语言切换 */}
+      <header className="absolute top-0 right-0 p-4 sm:p-6 z-20">
+        <LanguageSwitcher />
+      </header>
+
       {/* 右侧浮动图标 */}
       <div className="fixed right-6 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-10">
         {/* 上方图标 - 网格/菜单 */}
@@ -62,7 +70,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             className="mb-6 sm:mb-8"
           >
             <span className="inline-block px-4 py-2 bg-gray-100 text-gray-500 text-xs sm:text-sm rounded-full tracking-wider">
-              THE HUMANIST ARCHIVE
+              {t('brand')}
             </span>
           </motion.div>
 
@@ -73,9 +81,9 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-black mb-4 sm:mb-6 tracking-tight leading-[1.1] px-2"
           >
-            盖洛普优势
+            {t('title')}
             <br />
-            <span className="text-brand">行动方案生成器</span>
+            <span className="text-brand">{t('subtitle')}</span>
           </motion.h1>
 
           {/* 副标题 */}
@@ -85,7 +93,9 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="text-base sm:text-lg md:text-xl text-gray-700 mb-10 sm:mb-12 max-w-2xl mx-auto leading-relaxed px-4"
           >
-            以温润的洞察，将你的天赋解码为 <span className="font-bold">精准可执行</span> 的决策锦囊
+            {t.rich('description', {
+              highlight: (chunks) => <span className="font-bold">{chunks}</span>
+            })}
           </motion.p>
 
           {/* CTA 按钮 */}
@@ -96,7 +106,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             onClick={onStart}
             className="bg-brand hover:bg-brand-dark text-white px-8 py-4 rounded-lg text-lg font-medium transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 mb-16 sm:mb-20"
           >
-            开始探索
+            {t('cta')}
           </motion.button>
 
           {/* 特征数据统计 */}
@@ -126,7 +136,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               className="text-center p-4 rounded-lg hover:bg-bg-secondary hover:shadow-card transition-all duration-200 cursor-default"
             >
               <div className="text-3xl sm:text-4xl font-bold text-black mb-1">34</div>
-              <div className="text-sm text-gray-500">项优势</div>
+              <div className="text-sm text-gray-500">{t('stats.strengths')}</div>
             </motion.div>
 
             {/* AI 智能驱动 */}
@@ -138,7 +148,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               className="text-center p-4 rounded-lg hover:bg-bg-secondary hover:shadow-card transition-all duration-200 cursor-default"
             >
               <div className="text-3xl sm:text-4xl font-bold text-black mb-1">AI</div>
-              <div className="text-sm text-gray-500">智能驱动</div>
+              <div className="text-sm text-gray-500">{t('stats.ai')}</div>
             </motion.div>
 
             {/* 4 大领域 */}
@@ -150,7 +160,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               className="text-center p-4 rounded-lg hover:bg-bg-secondary hover:shadow-card transition-all duration-200 cursor-default"
             >
               <div className="text-3xl sm:text-4xl font-bold text-black mb-1">4</div>
-              <div className="text-sm text-gray-500">大领域</div>
+              <div className="text-sm text-gray-500">{t('stats.domains')}</div>
             </motion.div>
           </motion.div>
         </div>
@@ -164,7 +174,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         className="pb-8 text-center"
       >
         <p className="text-sm text-gray-400">
-          基于盖洛普优势理论 · 用 AI 解读你的独特天赋
+          {t('footer')}
         </p>
       </motion.div>
     </div>

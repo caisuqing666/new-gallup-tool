@@ -6,6 +6,7 @@ import { StrengthGuideResult, StrengthGuide } from '@/lib/types';
 import { DOMAIN_COLORS } from '@/lib/gallup-strengths';
 import Toast, { type ToastType } from './Toast';
 import { exportToImage } from '@/lib/export';
+import { useTranslations } from 'next-intl';
 
 interface GuideResultPageProps {
   guideData: StrengthGuideResult;
@@ -16,6 +17,7 @@ interface GuideResultPageProps {
 
 // 个人化标签组件
 function PersonalLabelSection({ data }: { data: StrengthGuideResult['personalLabel'] }) {
+  const tGuide = useTranslations('guideResultPage');
   return (
     <motion.section
       initial={{ opacity: 0, y: 20 }}
@@ -23,7 +25,7 @@ function PersonalLabelSection({ data }: { data: StrengthGuideResult['personalLab
       className="bg-white/60 backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-white/80 shadow-card"
     >
       <div className="text-center">
-        <p className="text-sm text-text-muted mb-2">你的优势标签</p>
+        <p className="text-sm text-text-muted mb-2">{tGuide('sections.personalLabel')}</p>
         <h2 className="text-h2 font-serif text-brand mb-4">
           {data.label}
         </h2>
@@ -69,6 +71,7 @@ function OneLinerSection({ oneLiner }: { oneLiner: string }) {
 // 单个优势指南卡片
 function StrengthGuideCard({ guide, index }: { guide: StrengthGuide; index: number }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const tGuide = useTranslations('guideResultPage');
 
   return (
     <motion.div
@@ -113,13 +116,13 @@ function StrengthGuideCard({ guide, index }: { guide: StrengthGuide; index: numb
             <div className="px-6 pb-6 space-y-4">
               {/* 这意味着什么 */}
               <div>
-                <h4 className="text-sm font-medium text-text-muted mb-2">这意味着</h4>
+                <h4 className="text-sm font-medium text-text-muted mb-2">{tGuide('sections.whatItMeans')}</h4>
                 <p className="text-text-secondary leading-relaxed text-body-sm">{guide.whatItMeans}</p>
               </div>
 
               {/* 最佳发挥场景 */}
               <div>
-                <h4 className="text-sm font-medium text-text-muted mb-2">最佳发挥场景</h4>
+                <h4 className="text-sm font-medium text-text-muted mb-2">{tGuide('sections.bestScenarios')}</h4>
                 <ul className="space-y-1">
                   {guide.bestScenarios.map((scenario, idx) => (
                     <li key={idx} className="text-text-secondary text-body-sm flex items-start gap-2">
@@ -132,18 +135,18 @@ function StrengthGuideCard({ guide, index }: { guide: StrengthGuide; index: numb
 
               {/* 日常应用 */}
               <div>
-                <h4 className="text-sm font-medium text-text-muted mb-3">日常应用</h4>
+                <h4 className="text-sm font-medium text-text-muted mb-3">{tGuide('sections.dailyPractice')}</h4>
                 <div className="space-y-3">
                   <div className="bg-bg-secondary rounded-lg p-3 shadow-inner-soft border border-border-light">
-                    <p className="text-xs text-text-muted mb-1">🌅 早晨启动</p>
+                    <p className="text-xs text-text-muted mb-1">{tGuide('sections.daily.morning')}</p>
                     <p className="text-text-primary text-body-sm">{guide.dailyPractice.morning}</p>
                   </div>
                   <div className="bg-bg-secondary rounded-lg p-3 shadow-inner-soft border border-border-light">
-                    <p className="text-xs text-text-muted mb-1">💼 工作中</p>
+                    <p className="text-xs text-text-muted mb-1">{tGuide('sections.daily.work')}</p>
                     <p className="text-text-primary text-body-sm">{guide.dailyPractice.working}</p>
                   </div>
                   <div className="bg-bg-secondary rounded-lg p-3 shadow-inner-soft border border-border-light">
-                    <p className="text-xs text-text-muted mb-1">🌙 晚间恢复</p>
+                    <p className="text-xs text-text-muted mb-1">{tGuide('sections.daily.evening')}</p>
                     <p className="text-text-primary text-body-sm">{guide.dailyPractice.evening}</p>
                   </div>
                 </div>
@@ -151,14 +154,14 @@ function StrengthGuideCard({ guide, index }: { guide: StrengthGuide; index: numb
 
               {/* 能量管理 */}
               <div>
-                <h4 className="text-sm font-medium text-text-muted mb-3">能量管理</h4>
+                <h4 className="text-sm font-medium text-text-muted mb-3">{tGuide('sections.energy')}</h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-accent/10 rounded-lg p-3 border border-accent/20 shadow-inner-soft">
-                    <p className="text-xs text-text-muted mb-1">⚡ 充能时刻</p>
+                    <p className="text-xs text-text-muted mb-1">{tGuide('sections.energyCharge')}</p>
                     <p className="text-text-primary text-body-sm">{guide.energyTips.chargeWhen}</p>
                   </div>
                   <div className="bg-status-error/10 rounded-lg p-3 border border-status-error/20 shadow-inner-soft">
-                    <p className="text-xs text-text-muted mb-1">🔋 需要休息</p>
+                    <p className="text-xs text-text-muted mb-1">{tGuide('sections.energyRest')}</p>
                     <p className="text-text-primary text-body-sm">{guide.energyTips.restWhen}</p>
                   </div>
                 </div>
@@ -176,6 +179,7 @@ function ComboGuideSection({ comboGuide }: { comboGuide: StrengthGuideResult['co
   const [activeTab, setActiveTab] = useState<'synergy' | 'tension'>('synergy');
   const hasSynergy = comboGuide.synergyPairs.length > 0;
   const hasTension = comboGuide.tensionPairs.length > 0;
+  const tGuide = useTranslations('guideResultPage');
 
   if (!hasSynergy && !hasTension) {
     return null;
@@ -187,7 +191,7 @@ function ComboGuideSection({ comboGuide }: { comboGuide: StrengthGuideResult['co
       animate={{ opacity: 1, y: 0 }}
       className="bg-white/60 backdrop-blur-md rounded-2xl border border-white/80 p-6 shadow-card"
     >
-      <h3 className="text-h4 font-serif text-text-primary mb-4">优势组合指南</h3>
+      <h3 className="text-h4 font-serif text-text-primary mb-4">{tGuide('sections.comboGuide')}</h3>
 
       {/* 标签切换 */}
       {(hasSynergy && hasTension) && (
@@ -208,7 +212,7 @@ function ComboGuideSection({ comboGuide }: { comboGuide: StrengthGuideResult['co
                 />
               )}
               <span className="relative z-10">
-                {tab === 'synergy' ? '协同组合' : '需要平衡'}
+                {tab === 'synergy' ? tGuide('sections.comboTabs.synergy') : tGuide('sections.comboTabs.tension')}
               </span>
             </button>
           ))}
@@ -260,13 +264,14 @@ function ComboGuideSection({ comboGuide }: { comboGuide: StrengthGuideResult['co
 
 // 本周行动建议组件
 function WeeklyActionsSection({ weeklyActions }: { weeklyActions: StrengthGuideResult['weeklyActions'] }) {
+  const tGuide = useTranslations('guideResultPage');
   return (
     <motion.section
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="bg-white/60 backdrop-blur-md rounded-2xl border border-white/80 p-6 shadow-card"
     >
-      <h3 className="text-h4 font-serif text-text-primary mb-4">本周行动建议</h3>
+      <h3 className="text-h4 font-serif text-text-primary mb-4">{tGuide('sections.weeklyActions')}</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {weeklyActions.map((action, index) => (
           <motion.div
@@ -292,6 +297,7 @@ export default function GuideResultPage({ guideData, strengths: _strengths, onRe
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const tGuide = useTranslations('guideResultPage');
 
   useEffect(() => {
     setMounted(true);
@@ -309,9 +315,9 @@ export default function GuideResultPage({ guideData, strengths: _strengths, onRe
         scale: 2,
       });
 
-      setToast({ message: '已保存到本地', type: 'success' });
+      setToast({ message: tGuide('toasts.saved'), type: 'success' });
     } catch {
-      setToast({ message: '保存失败', type: 'error' });
+      setToast({ message: tGuide('toasts.saveFailed'), type: 'error' });
     } finally {
       setIsSaving(false);
     }
@@ -342,7 +348,7 @@ export default function GuideResultPage({ guideData, strengths: _strengths, onRe
               <svg className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              <span>返回修改</span>
+              <span>{tGuide('actions.back')}</span>
             </motion.button>
           )}
 
@@ -353,9 +359,9 @@ export default function GuideResultPage({ guideData, strengths: _strengths, onRe
             className="text-center mb-8"
           >
             <h1 className="text-h2 font-serif text-text-primary mb-2">
-              优势发挥指南
+              {tGuide('title')}
             </h1>
-            <p className="text-body-lg text-text-secondary">基于你的 TOP5 优势生成</p>
+            <p className="text-body-lg text-text-secondary">{tGuide('subtitle')}</p>
           </motion.div>
 
           {/* 内容区域 - 添加 ref 用于导出 */}
@@ -365,7 +371,7 @@ export default function GuideResultPage({ guideData, strengths: _strengths, onRe
 
             {/* 优势指南卡片列表 */}
             <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-text-primary font-serif">单个优势指南</h3>
+              <h3 className="text-lg font-semibold text-text-primary font-serif">{tGuide('sections.singleGuide')}</h3>
               {guideData.strengthGuides.map((guide, index) => (
                 <StrengthGuideCard key={guide.strengthId} guide={guide} index={index} />
               ))}
@@ -382,7 +388,7 @@ export default function GuideResultPage({ guideData, strengths: _strengths, onRe
                 onClick={onRegenerate}
                 className="w-full px-6 py-3 border-2 border-border-light rounded-xl text-text-primary font-semibold hover:bg-bg-card transition-colors"
               >
-                重新生成
+                {tGuide('actions.regenerate')}
               </button>
             )}
             <button
@@ -390,7 +396,7 @@ export default function GuideResultPage({ guideData, strengths: _strengths, onRe
               disabled={isSaving}
               className="w-full px-6 py-3 bg-brand text-white rounded-xl font-semibold hover:bg-brand-dark transition-colors disabled:opacity-50 shadow-glow hover:shadow-glow-lg"
             >
-              {isSaving ? '保存中...' : '保存指南'}
+              {isSaving ? tGuide('actions.saving') : tGuide('actions.save')}
             </button>
           </div>
         </div>

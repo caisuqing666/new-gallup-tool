@@ -1,17 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ALL_STRENGTHS } from '@/lib/gallup-strengths';
-
-const LOADING_PHASES = [
-  { text: '分析优势组合...', duration: 2000 },
-  { text: '识别优势冲突...', duration: 2000 },
-  { text: '生成行动方案...', duration: 2000 },
-  { text: '优化建议输出...', duration: 1500 },
-];
-
-const ESTIMATED_TIME = LOADING_PHASES.reduce((acc, phase) => acc + phase.duration, 0);
+import { useLocale, useTranslations } from 'next-intl';
 
 interface LoadingPageProps {
   selectedStrengths: string[];
@@ -23,8 +15,24 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
   const [mounted, setMounted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentPhase, setCurrentPhase] = useState(0);
+  const tLoading = useTranslations('loadingPage');
+  const tStrengths = useTranslations('strengths');
+  const locale = useLocale();
   
   const [elapsed, setElapsed] = useState(0);
+  const phases = useMemo(
+    () => [
+      { text: tLoading('phases.analysis'), duration: 2000 },
+      { text: tLoading('phases.conflict'), duration: 2000 },
+      { text: tLoading('phases.generation'), duration: 2000 },
+      { text: tLoading('phases.optimization'), duration: 1500 },
+    ],
+    [tLoading]
+  );
+  const estimatedTime = useMemo(
+    () => phases.reduce((acc, phase) => acc + phase.duration, 0),
+    [phases]
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -33,13 +41,13 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
     const progressInterval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) return 100;
-        return prev + 100 / (ESTIMATED_TIME / 100);
+        return prev + 100 / (estimatedTime / 100);
       });
     }, 100);
     
     // 阶段切换
     let delay = 0;
-    LOADING_PHASES.forEach((_, index) => {
+    phases.forEach((_, index) => {
       setTimeout(() => {
         setCurrentPhase(index);
       }, delay);
@@ -55,25 +63,29 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
       clearInterval(progressInterval);
       clearInterval(timer);
     };
-  }, []);
+  }, [estimatedTime, phases]);
   
   // 格式化时间显示
   const formatTime = (ms: number) => {
     const seconds = Math.floor(ms / 1000);
-    if (seconds < 60) return `${seconds}秒`;
+    if (seconds < 60) return tLoading('time.seconds', { count: seconds });
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return `${minutes}分${remainingSeconds}秒`;
+    return tLoading('time.minutesSeconds', {
+      minutes,
+      seconds: remainingSeconds,
+    });
   };
   
-  const remainingTime = ESTIMATED_TIME - elapsed;
+  const remainingTime = estimatedTime - elapsed;
 
   // 获取前两个优势名称
   const strengthNames = selectedStrengths
     .slice(0, 2)
-    .map(id => ALL_STRENGTHS.find(s => s.id === id)?.name)
+    .map(id => ALL_STRENGTHS.find(s => s.id === id)?.id)
     .filter(Boolean)
-    .join('、') || '优势';
+    .map(id => tStrengths(id as string))
+    .join(locale === 'en' ? ', ' : '、') || tLoading('strengthsFallback');
 
   // 提取困惑关键词（前15个字符）
   const confusionPreview = confusion.slice(0, 15) + (confusion.length > 15 ? '...' : '');
@@ -133,7 +145,7 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
             transition={{ delay: 0.2 }}
             className="text-h3 font-serif text-text-primary mb-3 sm:mb-4"
           >
-            正在生成你的行动方案
+            {tLoading('title')}
           </motion.h2>
 
           <motion.p
@@ -142,10 +154,10 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
             transition={{ delay: 0.3 }}
             className="text-body text-text-secondary leading-relaxed mb-4 sm:mb-6"
           >
-            基于你的「<span className="text-brand font-medium">{strengthNames}</span>」优势
+            {tLoading('basedOn', { strengths: strengthNames })}
             <br className="hidden sm:block" />
             <span className="sm:hidden"> </span>
-            分析「{confusionPreview}」的根源...
+            {tLoading('analyzing', { confusion: confusionPreview })}
           </motion.p>
 
           {/* 进度条 */}
@@ -165,7 +177,9 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
             </div>
             <div className="flex justify-between items-center text-xs text-text-secondary">
               <span className="font-medium">{Math.round(progress)}%</span>
-              <span className="font-normal">预计剩余 {formatTime(Math.max(0, remainingTime))}</span>
+              <span className="font-normal">
+                {tLoading('estimatedRemaining', { time: formatTime(Math.max(0, remainingTime)) })}
+              </span>
             </div>
           </motion.div>
 
@@ -180,13 +194,13 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
               className="flex items-center justify-center gap-2 mb-4 p-2 bg-white/40 backdrop-blur-sm rounded-lg shadow-soft border border-white/50"
             >
               <div className="w-2.5 h-2.5 rounded-full bg-brand animate-pulse" />
-              <span className="text-sm text-text-primary font-medium">{LOADING_PHASES[currentPhase]?.text}</span>
+              <span className="text-sm text-text-primary font-medium">{phases[currentPhase]?.text}</span>
             </motion.div>
           </AnimatePresence>
 
           {/* 进度点 */}
           <div className="flex justify-center gap-2 mb-6">
-            {LOADING_PHASES.map((_, i) => (
+            {phases.map((_, i) => (
               <div
                 key={i}
                 className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
@@ -204,7 +218,7 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
           transition={{ delay: 0.6 }}
           className="text-body-sm text-text-secondary mb-6 max-w-sm mx-auto"
         >
-          AI 正在深度解读你的优势组合，请稍候...
+          {tLoading('aiHint')}
         </motion.p>
 
         {/* 取消按钮 */}
@@ -219,7 +233,7 @@ export default function LoadingPage({ selectedStrengths, confusion, onCancel }: 
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-            <span className="text-sm">取消生成</span>
+            <span className="text-sm">{tLoading('cancel')}</span>
           </motion.button>
         )}
       </div>

@@ -12,6 +12,7 @@ export interface DiagnosisRequest {
   problemType?: ProblemType;
   problemFocus?: ProblemFocus;
   provider?: ProviderConfig;
+  locale?: 'zh' | 'en';
 }
 
 export async function runDiagnosis(request: DiagnosisRequest): Promise<GenerateResult> {
@@ -24,6 +25,7 @@ export async function runDiagnosis(request: DiagnosisRequest): Promise<GenerateR
         problemType: request.problemType,
         problemFocus: request.problemFocus,
         provider: request.provider,
+        locale: request.locale,
       });
     default:
       throw new Error(`Unsupported diagnosis path: ${request.path}`);

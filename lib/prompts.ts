@@ -69,6 +69,8 @@ export interface BasePromptParams {
   strengths: StrengthId[];
   /** 用户困惑描述 */
   confusion: string;
+  /** 语言代码 */
+  locale?: 'zh' | 'en';
 }
 
 /**
@@ -804,11 +806,18 @@ reframedInsight 是“懂我”的起点，必须满足：
 `;
 
 export function buildExplainSystemPrompt(
-  problemType: ProblemType, 
+  problemType: ProblemType,
   problemFocus: string,
   contextPack?: ContextPack,
-  knowledgeContext?: string
+  knowledgeContext?: string,
+  locale: 'zh' | 'en' = 'zh'
 ): string {
+  // 动态导入prompts-loader以避免循环依赖
+  if (locale === 'en') {
+    const { buildExplainSystemPromptI18n } = require('./prompts-loader');
+    return buildExplainSystemPromptI18n(problemType, problemFocus, locale, contextPack, knowledgeContext);
+  }
+
   const problemTypeName = PROBLEM_TYPE_LABELS[problemType];
   const problemTypeDesc = PROBLEM_TYPE_DESCRIPTIONS[problemType];
 
@@ -884,12 +893,19 @@ ${problemTypeDesc}
 }
 
 export function buildDecideSystemPrompt(
-  problemType: ProblemType, 
+  problemType: ProblemType,
   problemFocus: string,
   contextPack?: ContextPack,
   understanding?: ConfusionUnderstanding,
-  knowledgeContext?: string
+  knowledgeContext?: string,
+  locale: 'zh' | 'en' = 'zh'
 ): string {
+  // 动态导入prompts-loader以避免循环依赖
+  if (locale === 'en') {
+    const { buildDecideSystemPromptI18n } = require('./prompts-loader');
+    return buildDecideSystemPromptI18n(problemType, problemFocus, locale, contextPack, understanding, knowledgeContext);
+  }
+
   const problemTypeName = PROBLEM_TYPE_LABELS[problemType];
   const problemTypeDesc = PROBLEM_TYPE_DESCRIPTIONS[problemType];
 
@@ -1613,7 +1629,8 @@ export function buildPrompt(config: PromptConfig): PromptResult {
           p.problemType,
           p.problemFocus,
           contextPack,
-          knowledgeContext
+          knowledgeContext,
+          p.locale
         ),
         userPrompt: buildUserPrompt(
           p.strengths.map(id => {
@@ -1644,7 +1661,8 @@ export function buildPrompt(config: PromptConfig): PromptResult {
           p.problemFocus,
           contextPack,
           p.understanding,
-          knowledgeContext
+          knowledgeContext,
+          p.locale
         ),
         userPrompt: buildUserPrompt(
           p.strengths.map(id => {

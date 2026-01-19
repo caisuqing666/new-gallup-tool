@@ -1,0 +1,352 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "regenerate": "Regenerate",
+    "comingSoon": "Coming Soon"
+  },
+  "metadata": {
+    "title": "Gallup Strengths · Action Plan Generator",
+    "description": "Transform your strengths into actionable decision guidance"
+  },
+  "landing": {
+    "brand": "THE HUMANIST ARCHIVE",
+    "title": "Gallup Strengths",
+    "subtitle": "Action Plan Generator",
+    "description": "With warm insight, decode your talents into <highlight>precise and actionable</highlight> decision tips",
+    "cta": "Start Exploring",
+    "stats": {
+      "strengths": "Strengths",
+      "ai": "AI Powered",
+      "domains": "Domains"
+    },
+    "footer": "Based on Gallup Strengths Theory · AI-powered talent interpretation"
+  },
+  "pathSelection": {
+    "title": "Choose How You'd Like Help",
+    "subtitle": "Select the best entry point for your needs",
+    "paths": {
+      "reportInterpret": {
+        "title": "I don't understand this report",
+        "subtitle": "Upload your report for easy-to-understand insights"
+      },
+      "careerMatch": {
+        "title": "I want to find suitable career paths",
+        "subtitle": "Enter your TOP 5 to discover matching careers"
+      },
+      "breakthrough": {
+        "title": "I'm facing a specific challenge",
+        "subtitle": "Break through current obstacles with a strengths perspective"
+      },
+      "strengthGuide": {
+        "title": "I want to leverage myself better",
+        "subtitle": "Get personalized guides for your strengths"
+      }
+    }
+  },
+  "navigation": {
+    "language": "Language",
+    "switchLanguage": "Switch Language"
+  },
+  "inputPage": {
+    "title": "Explain in one sentence where you're stuck",
+    "description": "Combine your \"{strengths}\" strengths to describe the current confusion or challenge",
+    "placeholder": "For example: I have a strong sense of \"Responsibility\" but I'm juggling three projects and feel stuck...",
+    "charCount": "Characters",
+    "submit": "Submit",
+    "back": "Back",
+    "stepLabel": "Step 3 / 3",
+    "tips": [
+      "I have [strength], but I'm facing [specific challenge], which leads to [negative outcome].",
+      "Example: I have \"Responsibility\" but shifting deadlines throw me into chaos and I can't decide.",
+      "Be specific about the situation and how it feels to help the system diagnose accurately."
+    ],
+    "helper": "Describe the scenario and feelings for more accurate guidance",
+    "submitCta": "Generate a personalized action plan",
+    "submitHint": "Click to generate an execution plan based on your strengths",
+    "validationHint": "Please enter at least 10 characters describing your confusion",
+    "strengthsFallback": "your strengths"
+  },
+  "loadingPage": {
+    "title": "Generating your action plan",
+    "phases": {
+      "analysis": "Analyzing strengths combination...",
+      "conflict": "Identifying strengths conflicts...",
+      "generation": "Generating action plan...",
+      "optimization": "Optimizing suggestions..."
+    },
+    "cancel": "Cancel Generation",
+    "basedOn": "Based on your \"{strengths}\" strengths",
+    "analyzing": "Analyzing the roots of \"{confusion}\"...",
+    "estimatedRemaining": "Estimated remaining {time}",
+    "aiHint": "AI is deeply interpreting your strengths combination. Please wait...",
+    "strengthsFallback": "strengths",
+    "time": {
+      "seconds": "{count}s",
+      "minutes": "{count}m",
+      "minutesSeconds": "{minutes}m {seconds}s"
+    }
+  },
+  "strengthsPage": {
+    "stepLabel": "Step 2 / 3",
+    "titlePrefix": "Select your",
+    "titleHighlight": "Top 5",
+    "titleSuffix": "strengths",
+    "subtitle": "Choose your most prominent 3-5 strengths in report order",
+    "selectedLabel": "Selected",
+    "selectedListTitle": "Selected strengths order",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "remove": "Remove",
+    "completed": "Captured your core strengths combination!",
+    "next": {
+      "breakthrough": "Next: Describe confusion",
+      "career": "Generate career matches",
+      "guide": "Generate strengths guide"
+    }
+  },
+  "scenarioPage": {
+    "stepLabel": "Step 1 / 3",
+    "title": "Which kind of issue do you most want your strengths to solve?",
+    "subtitle": "Choose a real-life scenario and we'll tune the plan around it",
+    "scenarioLabel": "Scenario {index}",
+    "selectedConfirm": "Scenario selected, continue",
+    "selectPrompt": "Please select a scenario to continue...",
+    "next": "Next: Select strengths"
+  },
+  "resultPage": {
+    "tabs": {
+      "explain": "Understand what happened",
+      "decide": "What to do now"
+    },
+    "explain": {
+      "title": "Understand what happened",
+      "subtitle": "Describe only, no judgment",
+      "sections": {
+        "strengths": "What your strengths are doing",
+        "interactions": "What happens between your strengths",
+        "blindspots": "What you may not have noticed",
+        "summary": "Summary"
+      }
+    },
+    "decide": {
+      "title": "What to do now",
+      "subtitle": "Judge only, no explanation",
+      "decisionFor": "Decision for: {focus}",
+      "defaultFocus": "current situation",
+      "checkToday": "Today's self-check",
+      "pathLogic": "Reasoning chain",
+      "extraEvidence": "Additional evidence",
+      "mustDo": "Must-do actions",
+      "mustStop": "Must-stop actions",
+      "responsibilityBoundary": "Responsibility boundaries",
+      "responsible": "Responsible for",
+      "notResponsible": "Not responsible for",
+      "fromTiming": "From: {timing}"
+    },
+    "pathDecisionLabels": {
+      "DoubleDown": "Double down",
+      "Reframe": "Reframe",
+      "Narrow": "Narrow down",
+      "Exit": "Exit"
+    },
+    "pathDecisionEnergy": {
+      "DoubleDown": "Energy-efficient — strengths are used positively and amplified",
+      "Reframe": "Energy-draining — adjust the way you use strengths",
+      "Narrow": "Energy-scattered — refocus and consolidate",
+      "Exit": "High cost — continuing will amplify drain"
+    },
+    "verdictChars": {
+      "DoubleDown": "GO",
+      "Reframe": "SHIFT",
+      "Narrow": "FOCUS",
+      "Exit": "STOP",
+      "default": "DECIDE"
+    },
+    "actions": {
+      "back": "Back to edit",
+      "regenerate": "Regenerate",
+      "saving": "Saving...",
+      "saveExplain": "Save explanation",
+      "saveDecide": "Save decision"
+    },
+    "toasts": {
+      "saved": "Saved locally",
+      "saveFailed": "Save failed"
+    }
+  },
+  "scenarios": {
+    "work-decision": {
+      "title": "Too many tasks, unsure which to prioritize"
+    },
+    "career-transition": {
+      "title": "Considering a career switch but unclear on strengths"
+    },
+    "efficiency": {
+      "title": "Exhausted every day but still not efficient"
+    },
+    "communication": {
+      "title": "Communication is draining; feel misunderstood"
+    }
+  },
+  "domains": {
+    "executing": "Executing",
+    "influencing": "Influencing",
+    "relationship": "Relationship Building",
+    "strategic": "Strategic Thinking"
+  },
+  "strengths": {
+    "focus": "Focus",
+    "belief": "Belief",
+    "consistency": "Consistency",
+    "deliberative": "Deliberative",
+    "achiever": "Achiever",
+    "restorative": "Restorative",
+    "discipline": "Discipline",
+    "arranger": "Arranger",
+    "responsibility": "Responsibility",
+    "woo": "Woo",
+    "maximizer": "Maximizer",
+    "communication": "Communication",
+    "competition": "Competition",
+    "command": "Command",
+    "self-assurance": "Self-Assurance",
+    "activator": "Activator",
+    "significance": "Significance",
+    "individualization": "Individualization",
+    "relator": "Relator",
+    "developer": "Developer",
+    "empathy": "Empathy",
+    "connectedness": "Connectedness",
+    "include": "Inclusion",
+    "harmony": "Harmony",
+    "positivity": "Positivity",
+    "adaptability": "Adaptability",
+    "analytical": "Analytical",
+    "futuristic": "Futuristic",
+    "context": "Context",
+    "learner": "Learner",
+    "intellection": "Intellection",
+    "strategic": "Strategic",
+    "input": "Input",
+    "ideation": "Ideation"
+  },
+  "guideResultPage": {
+    "title": "Strengths guide",
+    "subtitle": "Based on your Top 5 strengths",
+    "sections": {
+      "personalLabel": "Your strengths label",
+      "singleGuide": "Single strength guides",
+      "comboGuide": "Strengths combo guide",
+      "comboTabs": {
+        "synergy": "Synergy pairs",
+        "tension": "Needs balance"
+      },
+      "whatItMeans": "What it means",
+      "bestScenarios": "Best-fit scenarios",
+      "dailyPractice": "Daily practice",
+      "daily": {
+        "morning": "Morning kickstart",
+        "work": "At work",
+        "evening": "Evening reset"
+      },
+      "energy": "Energy management",
+      "energyCharge": "Recharge when",
+      "energyRest": "Rest when",
+      "weeklyActions": "This week's action plan"
+    },
+    "actions": {
+      "back": "Back to edit",
+      "regenerate": "Regenerate",
+      "saving": "Saving...",
+      "save": "Save guide"
+    },
+    "toasts": {
+      "saved": "Saved locally",
+      "saveFailed": "Save failed"
+    }
+  },
+  "careerResultPage": {
+    "title": "Career match analysis",
+    "subtitle": "Based on your Top 5 strengths",
+    "topMatches": "Top matches TOP{count}",
+    "matchScore": "{score}% match",
+    "strengthUsage": "How your strengths help",
+    "watchOut": "Watch out",
+    "generalAdvice": "General career advice",
+    "coreStrength": "Core strength",
+    "energyManagement": "Energy management",
+    "growthDirection": "Growth direction",
+    "actions": {
+      "back": "Back to edit",
+      "regenerate": "Regenerate",
+      "saving": "Saving...",
+      "save": "Save report"
+    },
+    "toasts": {
+      "saved": "Saved locally",
+      "saveFailed": "Save failed"
+    }
+  },
+  "reportResultPage": {
+    "title": "Report interpretation",
+    "subtitle": "Based on recognized Top 5 strengths",
+    "top5Title": "Your Top 5 strengths",
+    "summaryTitle": "One-line summary",
+    "domainDistribution": "Domain distribution",
+    "strengthDetails": "Strength details",
+    "whatItIs": "What it is",
+    "yourStrength": "How it shows up for you",
+    "watchOut": "Watch out",
+    "bestWhen": "Best scenarios",
+    "pairWith": "Pairs well with",
+    "comboAnalysis": "Strengths combo analysis",
+    "coreDrive": "Core drive",
+    "potentialTraps": "Potential traps",
+    "synergy": "Synergies",
+    "keyInsights": "Key insights",
+    "suggestedNext": "Suggested next steps",
+    "personalAdvice": "Advice for you",
+    "domainCount": "{count} items ({percentage}%)",
+    "actions": {
+      "back": "Back",
+      "saving": "Saving...",
+      "save": "Save report"
+    },
+    "toasts": {
+      "saved": "Saved locally",
+      "saveFailed": "Save failed"
+    }
+  },
+  "ocrPage": {
+    "title": "Upload your Gallup report",
+    "subtitle": "AI will automatically detect your Top 5 strengths (first use downloads OCR engine ~20MB)",
+    "dropHint": "Click or drag to upload report image",
+    "processing": "Processing...",
+    "imageHint": "Make sure the image is clear and includes the Top 5 list",
+    "uploadedAlt": "Uploaded report",
+    "reupload": "Upload again",
+    "status": {
+      "downloading": "Downloading OCR engine...",
+      "recognizing": "Recognizing... {progress}%",
+      "success": "Done! Found {count} strengths",
+      "error": "Recognition failed, please retry or select manually"
+    },
+    "errorNotEnough": "Couldn't detect enough strengths, please select manually or retry",
+    "errorGeneric": "OCR failed",
+    "strengthsTitle": "Your Top 5 strengths",
+    "strengthsHint": "Select 3-5 strengths (<count>{value}</count>/5)",
+    "continue": {
+      "needMore": "Select at least 3 strengths",
+      "generate": "Generate report interpretation"
+    },
+    "aiTag": "(AI)",
+    "actions": {
+      "back": "Back"
+    }
+  }
+}

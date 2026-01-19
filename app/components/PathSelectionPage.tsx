@@ -1,7 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { PathId, PATH_DESCRIPTIONS } from '@/lib/types';
+import { useTranslations } from 'next-intl';
+import { PathId } from '@/lib/types';
 import { isPathImplemented } from '@/lib/path-config';
 
 interface PathSelectionPageProps {
@@ -17,7 +18,30 @@ const PATH_ORDER: PathId[] = [
   'strength-guide',    // 我想更好地发挥自己
 ];
 
+const PATH_META: Record<PathId, { icon: string; i18nKey: string }> = {
+  'report-interpret': {
+    icon: '📄',
+    i18nKey: 'reportInterpret',
+  },
+  'career-match': {
+    icon: '🎯',
+    i18nKey: 'careerMatch',
+  },
+  'breakthrough': {
+    icon: '🚀',
+    i18nKey: 'breakthrough',
+  },
+  'strength-guide': {
+    icon: '✨',
+    i18nKey: 'strengthGuide',
+  },
+};
+
 export default function PathSelectionPage({ onSelectPath, onBack }: PathSelectionPageProps) {
+  const t = useTranslations('pathSelection');
+  const tCommon = useTranslations('common');
+  const tLanding = useTranslations('landing');
+
   return (
     <div className="min-h-screen bg-warm-gradient flex flex-col">
       {/* 顶部导航 */}
@@ -29,7 +53,7 @@ export default function PathSelectionPage({ onSelectPath, onBack }: PathSelectio
           <svg className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          <span className="text-sm">返回</span>
+          <span className="text-sm">{tCommon('back')}</span>
         </button>
       </header>
 
@@ -44,10 +68,10 @@ export default function PathSelectionPage({ onSelectPath, onBack }: PathSelectio
             className="text-center mb-8 sm:mb-12"
           >
             <h1 className="font-serif text-h2 text-text-primary mb-3 sm:mb-4">
-              选择你想要的帮助方式
+              {t('title')}
             </h1>
             <p className="text-body-lg text-text-secondary">
-              根据你的需求，选择最合适的入口
+              {t('subtitle')}
             </p>
           </motion.div>
 
@@ -59,7 +83,7 @@ export default function PathSelectionPage({ onSelectPath, onBack }: PathSelectio
             className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-3xl mx-auto"
           >
             {PATH_ORDER.map((pathId, index) => {
-              const pathInfo = PATH_DESCRIPTIONS[pathId];
+              const pathInfo = PATH_META[pathId];
               const isImplemented = pathId === 'report-interpret' || isPathImplemented(pathId);
 
               return (
@@ -88,7 +112,7 @@ export default function PathSelectionPage({ onSelectPath, onBack }: PathSelectio
                     text-h4 font-serif mb-2
                     ${isImplemented ? 'text-text-primary' : 'text-text-muted'}
                   `}>
-                    {pathInfo.title}
+                    {t(`paths.${pathInfo.i18nKey}.title`)}
                   </h3>
 
                   {/* 副标题 */}
@@ -96,14 +120,14 @@ export default function PathSelectionPage({ onSelectPath, onBack }: PathSelectio
                     text-body-sm
                     ${isImplemented ? 'text-text-secondary' : 'text-text-muted'}
                   `}>
-                    {pathInfo.subtitle}
+                    {t(`paths.${pathInfo.i18nKey}.subtitle`)}
                   </p>
 
                   {/* 未实现标记 */}
                   {!isImplemented && (
                     <div className="absolute top-4 right-4">
                       <span className="text-xs px-2 py-1 bg-bg-tertiary text-text-tertiary rounded-full">
-                        即将推出
+                        {tCommon('comingSoon')}
                       </span>
                     </div>
                   )}
@@ -117,7 +141,7 @@ export default function PathSelectionPage({ onSelectPath, onBack }: PathSelectio
       {/* 底部装饰 */}
       <div className="pb-6 sm:pb-8 text-center">
         <p className="text-xs sm:text-sm text-gray-400">
-          基于盖洛普优势理论 · 用 AI 解读你的独特天赋
+          {tLanding('footer')}
         </p>
       </div>
     </div>

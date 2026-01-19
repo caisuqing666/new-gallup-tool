@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ExplainData, DecideData, GallupResult, PathDecision, PATH_DECISION_LABELS, PATH_DECISION_ENERGY_STATES } from '@/lib/types';
+import { ExplainData, DecideData, GallupResult, PathDecision } from '@/lib/types';
 import Toast, { type ToastType } from './Toast';
 import { exportToImage } from '@/lib/export';
+import { useTranslations } from 'next-intl';
 
 // 解释页组件
 function ExplainPage({ data }: { data: ExplainData }) {
+  const tResult = useTranslations('resultPage');
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -17,10 +19,10 @@ function ExplainPage({ data }: { data: ExplainData }) {
       {/* 页面标题 */}
       <div className="text-center mb-8">
         <h1 className="text-h2 font-serif text-text-primary mb-2">
-          理解发生了什么
+          {tResult('explain.title')}
         </h1>
         <p className="text-body-lg text-text-secondary text-sm">
-          只描述，不判断
+          {tResult('explain.subtitle')}
         </p>
       </div>
 
@@ -30,7 +32,7 @@ function ExplainPage({ data }: { data: ExplainData }) {
         animate={{ opacity: 1, y: 0 }}
         className="bg-white/60 backdrop-blur-md rounded-2xl border border-white/80 p-6 shadow-card"
       >
-        <h2 className="text-h4 font-serif text-text-primary mb-4">你的优势在做什么</h2>
+        <h2 className="text-h4 font-serif text-text-primary mb-4">{tResult('explain.sections.strengths')}</h2>
         <div className="space-y-4">
           {data.strengthManifestations.map((item, index) => (
             <div key={index} className="bg-bg-secondary rounded-xl p-4">
@@ -48,7 +50,7 @@ function ExplainPage({ data }: { data: ExplainData }) {
         transition={{ delay: 0.1 }}
         className="bg-white/60 backdrop-blur-md rounded-2xl border border-white/80 p-6 shadow-card"
       >
-        <h2 className="text-h4 font-serif text-text-primary mb-4">优势之间在发生什么</h2>
+        <h2 className="text-h4 font-serif text-text-primary mb-4">{tResult('explain.sections.interactions')}</h2>
         <p className="text-text-secondary leading-relaxed text-body-sm">{data.strengthInteractions}</p>
       </motion.section>
 
@@ -59,7 +61,7 @@ function ExplainPage({ data }: { data: ExplainData }) {
         transition={{ delay: 0.2 }}
         className="bg-white/60 backdrop-blur-md rounded-2xl border border-status-warning/60 p-6 shadow-card"
       >
-        <h2 className="text-h4 font-serif text-status-warning mb-4">你可能没意识到</h2>
+        <h2 className="text-h4 font-serif text-status-warning mb-4">{tResult('explain.sections.blindspots')}</h2>
         <p className="text-text-secondary leading-relaxed text-body-sm">{data.blindspots}</p>
       </motion.section>
 
@@ -78,6 +80,7 @@ function ExplainPage({ data }: { data: ExplainData }) {
 
 // 判定页组件 - 新中式赛博风格
 function DecidePage({ data }: { data: DecideData }) {
+  const tResult = useTranslations('resultPage');
   // 拆分 pathLogic 为步骤
   const logicSteps = data.pathLogic
     .split(/[。；，\n]/)
@@ -106,13 +109,8 @@ function DecidePage({ data }: { data: DecideData }) {
 
   // 获取路径判定对应的汉字（用于水印）
   const getVerdictChar = () => {
-    const verdictChars = {
-      [PathDecision.DOUBLE_DOWN]: '行',
-      [PathDecision.REFRAME]: '易',
-      [PathDecision.NARROW]: '敛',
-      [PathDecision.EXIT]: '止',
-    };
-    return verdictChars[data.pathDecision] || '断';
+    const key = data.pathDecision;
+    return tResult(`verdictChars.${key}`) || tResult('verdictChars.default');
   };
 
   const reframedInsight = data.reframedInsight;
@@ -125,10 +123,10 @@ function DecidePage({ data }: { data: DecideData }) {
       {/* 页面标题 */}
       <div className="text-center mb-6">
         <h1 className="text-h2 font-serif text-text-primary mb-2">
-          现在该怎么做
+          {tResult('decide.title')}
         </h1>
         <p className="text-body-lg text-text-secondary text-sm">
-          只判断，不解释
+          {tResult('decide.subtitle')}
         </p>
       </div>
 
@@ -175,18 +173,18 @@ function DecidePage({ data }: { data: DecideData }) {
             {/* 判定对象标签 */}
             <div className="mb-6 relative z-10">
               <span className="inline-block px-3 py-1 bg-accent/20 border border-accent/40 rounded-full text-xs font-medium text-accent font-mono">
-                判定针对：{data.problemFocus || '当前困境'}
+                {tResult('decide.decisionFor', { focus: data.problemFocus || tResult('decide.defaultFocus') })}
               </span>
             </div>
 
             {/* 主标题：超大衬线体 */}
             <h2 className="text-h1 font-serif leading-tight mb-4 relative z-10 text-white tracking-tight">
-              {PATH_DECISION_LABELS[data.pathDecision]}
+              {tResult(`pathDecisionLabels.${data.pathDecision}`)}
             </h2>
 
             {/* 副标题：能量态说明 */}
             <p className="text-accent/90 text-body-sm mb-6 relative z-10 font-mono">
-              {PATH_DECISION_ENERGY_STATES[data.pathDecision]}
+              {tResult(`pathDecisionEnergy.${data.pathDecision}`)}
             </p>
 
             {/* 判断规则 */}
@@ -196,7 +194,7 @@ function DecidePage({ data }: { data: DecideData }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div className="flex-1">
-                  <p className="text-accent/90 text-sm font-medium mb-1">今日自检</p>
+                  <p className="text-accent/90 text-sm font-medium mb-1">{tResult('decide.checkToday')}</p>
                   <p className="text-white/80 text-body-sm">{data.checkRule}</p>
                 </div>
               </div>
@@ -222,7 +220,7 @@ function DecidePage({ data }: { data: DecideData }) {
               <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
-              路径推导链条
+              {tResult('decide.pathLogic')}
             </h3>
 
             {/* 脉络图：垂直连线 + 节点 */}
@@ -257,9 +255,9 @@ function DecidePage({ data }: { data: DecideData }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-white/40 backdrop-blur-sm rounded-2xl border border-white/60 p-5 shadow-inner-soft"
-            >
-              <h3 className="text-sm font-medium text-text-muted mb-2">补充证据</h3>
+            className="bg-white/40 backdrop-blur-sm rounded-2xl border border-white/60 p-5 shadow-inner-soft"
+          >
+              <h3 className="text-sm font-medium text-text-muted mb-2">{tResult('decide.extraEvidence')}</h3>
               <p className="text-text-secondary text-body-sm leading-relaxed">{data.pathReason}</p>
             </motion.section>
           )}
@@ -284,7 +282,7 @@ function DecidePage({ data }: { data: DecideData }) {
                 <svg className="w-5 h-5 text-accent" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
                 </svg>
-                必须发生的关键动作
+                {tResult('decide.mustDo')}
               </h3>
               <div className="space-y-3 relative z-10">
                 {limitedDoMore.map((item, index) => (
@@ -313,7 +311,7 @@ function DecidePage({ data }: { data: DecideData }) {
                 <svg className="w-5 h-5 text-status-error" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
                 </svg>
-                必须停止的关键动作
+                {tResult('decide.mustStop')}
               </h3>
               <div className="space-y-3 relative z-10">
                 {limitedDoLess.map((item, index) => (
@@ -323,7 +321,9 @@ function DecidePage({ data }: { data: DecideData }) {
 
                     <p className="text-text-primary font-medium text-body-sm mb-1 line-through decoration-status-error/50 decoration-2">{item.action}</p>
                     <p className="text-text-secondary text-caption relative z-10">→ {item.replacement}</p>
-                    <p className="text-text-muted text-caption mt-1 font-mono">从：{item.timing}</p>
+                    <p className="text-text-muted text-caption mt-1 font-mono">
+                      {tResult('decide.fromTiming', { timing: item.timing })}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -344,7 +344,7 @@ function DecidePage({ data }: { data: DecideData }) {
                 <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
                 </svg>
-                责任边界
+                {tResult('decide.responsibilityBoundary')}
               </h3>
 
               {/* 天平对照表：左右布局 */}
@@ -358,13 +358,17 @@ function DecidePage({ data }: { data: DecideData }) {
                     <div className="grid grid-cols-2 gap-4">
                       {/* 左侧：负责 */}
                       <div className="bg-bg-secondary rounded-lg p-4 text-right pr-6 shadow-inner-soft">
-                        <p className="text-caption text-text-muted mb-2 font-mono uppercase tracking-wide">负责</p>
+                        <p className="text-caption text-text-muted mb-2 font-mono uppercase tracking-wide">
+                          {tResult('decide.responsible')}
+                        </p>
                         <p className="text-text-primary text-body-sm font-medium">{item.responsibleFor}</p>
                       </div>
 
                       {/* 右侧：不负责 */}
                       <div className="bg-bg-secondary rounded-lg p-4 text-left pl-6 shadow-inner-soft">
-                        <p className="text-caption text-text-muted mb-2 font-mono uppercase tracking-wide">不负责</p>
+                        <p className="text-caption text-text-muted mb-2 font-mono uppercase tracking-wide">
+                          {tResult('decide.notResponsible')}
+                        </p>
                         <p className="text-text-primary text-body-sm font-medium">{item.notResponsibleFor}</p>
                       </div>
                     </div>
@@ -399,6 +403,7 @@ export default function ResultPage({
   const [activeTab, setActiveTab] = useState<'explain' | 'decide'>('explain');
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const tResult = useTranslations('resultPage');
 
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -418,12 +423,12 @@ export default function ResultPage({
         scale: 2,
       });
 
-      setToast({ message: '已保存到本地', type: 'success' });
+      setToast({ message: tResult('toasts.saved'), type: 'success' });
       if (onSave) {
         onSave({ explain: explainData, decide: decideData });
       }
     } catch {
-      setToast({ message: '保存失败', type: 'error' });
+      setToast({ message: tResult('toasts.saveFailed'), type: 'error' });
     } finally {
       setIsSaving(false);
     }
@@ -454,7 +459,7 @@ export default function ResultPage({
               <svg className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              <span>返回修改</span>
+              <span>{tResult('actions.back')}</span>
             </motion.button>
           )}
 
@@ -476,7 +481,7 @@ export default function ResultPage({
                   />
                 )}
                 <span className="relative z-10">
-                  {tab === 'explain' ? '理解发生了什么' : '现在该怎么做'}
+                  {tab === 'explain' ? tResult('tabs.explain') : tResult('tabs.decide')}
                 </span>
               </button>
             ))}
@@ -516,7 +521,7 @@ export default function ResultPage({
                 onClick={onRegenerate}
                 className="w-full px-6 py-3 border-2 border-border-light rounded-xl text-text-primary font-semibold hover:bg-bg-card transition-colors"
               >
-                重新生成
+                {tResult('actions.regenerate')}
               </button>
             )}
             <button
@@ -524,7 +529,11 @@ export default function ResultPage({
               disabled={isSaving}
               className="w-full px-6 py-3 bg-brand text-white rounded-xl font-semibold hover:bg-brand-dark transition-colors disabled:opacity-50 shadow-glow hover:shadow-glow-lg"
             >
-              {isSaving ? '保存中...' : `保存${activeTab === 'explain' ? '理解页' : '决策页'}`}
+              {isSaving
+                ? tResult('actions.saving')
+                : activeTab === 'explain'
+                  ? tResult('actions.saveExplain')
+                  : tResult('actions.saveDecide')}
             </button>
           </div>
         </div>

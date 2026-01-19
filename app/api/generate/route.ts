@@ -11,8 +11,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runDiagnosis } from '@/lib/diagnosis/runner';
 import type { ProviderConfig } from '@/lib/services/action-plan';
 import { ScenarioId, StrengthId, ProblemType, isValidProblemFocus } from '@/lib/types';
-import { isValidScenarioId } from '@/lib/scenarios';
+import { isValidScenarioId, isValidScenarioIdForLocale } from '@/lib/scenarios';
 import { VALID_STRENGTH_IDS } from '@/lib/gallup-strengths';
+import { Locale } from '@/i18n/config';
 
 // ============================================================
 // 请求类型定义
@@ -25,6 +26,7 @@ interface GenerateRequest {
   problemType?: unknown;
   problemFocus?: unknown;
   provider?: ProviderConfig;
+  locale?: unknown;  // 语言: 'zh' 或 'en'
 }
 
 // ============================================================
@@ -36,11 +38,25 @@ interface ValidationResult {
   error?: string;
 }
 
-function validateScenario(scenario: unknown): ValidationResult {
+function validateLocale(locale: unknown): ValidationResult {
+  if (locale === undefined || locale === null) {
+    return { valid: true }; // 可选参数，默认为 'zh'
+  }
+  if (typeof locale !== 'string') {
+    return { valid: false, error: 'locale 必须是字符串' };
+  }
+  if (!['zh', 'en'].includes(locale)) {
+    return { valid: false, error: 'locale 必须是 "zh" 或 "en"' };
+  }
+  return { valid: true };
+}
+
+function validateScenario(scenario: unknown, locale: Locale = 'zh'): ValidationResult {
   if (!scenario || typeof scenario !== 'string' || !scenario.trim()) {
     return { valid: false, error: '场景 ID 是必需的' };
   }
-  if (!isValidScenarioId(scenario)) {
+  // 使用多语言验证函数，支持指定语言的场景 ID
+  if (!isValidScenarioIdForLocale(scenario, locale)) {
     return { valid: false, error: '无效的场景 ID' };
   }
   return { valid: true };
@@ -126,9 +142,20 @@ export async function POST(request: NextRequest) {
   try {
     const body: GenerateRequest = await request.json();
 
+    // 确定 locale，优先级: 请求体 > 默认 'zh'
+    const locale = (body.locale as Locale | undefined) || 'zh';
+
     // 校验参数
+    const localeValidation = validateLocale(body.locale);
+    if (!localeValidation.valid) {
+      return NextResponse.json(
+        { error: localeValidation.error },
+        { status: 400 }
+      );
+    }
+
     const validations = [
-      validateScenario(body.scenario),
+      validateScenario(body.scenario, locale),
       validateStrengths(body.strengths),
       validateConfusion(body.confusion),
       validateProblemType(body.problemType),
@@ -153,6 +180,7 @@ export async function POST(request: NextRequest) {
       problemType: body.problemType as ProblemType | undefined,
       problemFocus: body.problemFocus as string | undefined,
       provider: body.provider,
+      locale, // 传递语言参数
     });
 
     // 返回成功响应
@@ -165,6 +193,7 @@ export async function POST(request: NextRequest) {
         provider: result.provider.type,
         aiProvider: result.provider.provider,
         usedMockFallback: result.metadata.usedMockFallback,
+        locale, // 返回使用的语言
       },
     });
 

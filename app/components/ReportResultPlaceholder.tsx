@@ -6,6 +6,7 @@ import { ReportInterpretResult } from '@/lib/types';
 import { DOMAIN_COLORS } from '@/lib/gallup-strengths';
 import { exportToImage } from '@/lib/export';
 import Toast, { type ToastType } from './Toast';
+import { useTranslations } from 'next-intl';
 
 interface ReportResultPlaceholderProps {
   reportData: ReportInterpretResult;
@@ -20,6 +21,7 @@ export default function ReportResultPlaceholder({
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const tReport = useTranslations('reportResultPage');
 
   useEffect(() => {
     setMounted(true);
@@ -34,10 +36,10 @@ export default function ReportResultPlaceholder({
         format: 'png',
         scale: 2,
       });
-      setToast({ message: '已保存到本地', type: 'success' });
+      setToast({ message: tReport('toasts.saved'), type: 'success' });
     } catch (error) {
       console.error('保存失败:', error);
-      setToast({ message: '保存失败', type: 'error' });
+      setToast({ message: tReport('toasts.saveFailed'), type: 'error' });
     } finally {
       setIsSaving(false);
     }
@@ -66,7 +68,7 @@ export default function ReportResultPlaceholder({
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-1">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          <span>返回</span>
+          <span>{tReport('actions.back')}</span>
         </motion.button>
 
         {/* 页面标题 */}
@@ -76,9 +78,9 @@ export default function ReportResultPlaceholder({
           className="text-center mb-8"
         >
           <h1 className="text-h2 font-serif text-text-primary mb-2">
-            报告解读
+            {tReport('title')}
           </h1>
-          <p className="text-body-lg text-text-secondary">基于识别的 TOP5 优势生成</p>
+          <p className="text-body-lg text-text-secondary">{tReport('subtitle')}</p>
         </motion.div>
 
         {/* 个人标签 */}
@@ -104,7 +106,7 @@ export default function ReportResultPlaceholder({
           className="mb-6 bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/80 shadow-card"
         >
           <h2 className="text-h4 font-serif text-text-primary mb-4">
-            你的 TOP5 优势
+            {tReport('top5Title')}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {reportData.top5Strengths.map((strength) => (
@@ -137,7 +139,7 @@ export default function ReportResultPlaceholder({
           className="mb-6 bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-brand/60 shadow-card"
         >
           <h2 className="text-h4 font-serif text-text-primary mb-4">
-            一句话解读
+            {tReport('summaryTitle')}
           </h2>
           <div className="bg-gradient-to-br from-brand/10 to-accent/5 rounded-xl p-6 border border-brand/20 shadow-inner-soft">
             <p className="text-text-secondary leading-relaxed text-body-sm">{reportData.summary}</p>
@@ -152,14 +154,16 @@ export default function ReportResultPlaceholder({
           className="mb-6 bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/80 shadow-card"
         >
           <h2 className="text-h4 font-serif text-text-primary mb-4">
-            领域分布
+            {tReport('domainDistribution')}
           </h2>
           <div className="space-y-4">
             {reportData.domainAnalysis.map((domain) => (
               <div key={domain.domain} className="bg-bg-secondary rounded-xl p-4 shadow-inner-soft border border-border-light">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-body-sm font-medium text-text-primary">{domain.domain}</span>
-                  <span className="text-body-sm text-text-secondary">{domain.count}项 ({domain.percentage}%)</span>
+                  <span className="text-body-sm text-text-secondary">
+                    {tReport('domainCount', { count: domain.count, percentage: domain.percentage })}
+                  </span>
                 </div>
                 <div className="w-full bg-bg-tertiary rounded-full h-2">
                   <div
@@ -192,7 +196,7 @@ export default function ReportResultPlaceholder({
           className="mb-6 bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/80 shadow-card"
         >
           <h2 className="text-h4 font-serif text-text-primary mb-4">
-            优势详解
+            {tReport('strengthDetails')}
           </h2>
           <div className="space-y-4">
             {reportData.strengthInterpretations.map((interpretation, index) => (
@@ -214,25 +218,25 @@ export default function ReportResultPlaceholder({
                     </div>
                   </div>
 
-                  <div className="space-y-3 text-sm">
-                    <div>
-                      <span className="font-medium text-text-primary">这是什么：</span>
+                    <div className="space-y-3 text-sm">
+                      <div>
+                      <span className="font-medium text-text-primary">{tReport('whatItIs')}：</span>
                       <p className="text-text-secondary text-body-sm mt-1">{interpretation.whatItIs}</p>
                     </div>
 
                     <div>
-                      <span className="font-medium text-text-primary">你的表现：</span>
+                      <span className="font-medium text-text-primary">{tReport('yourStrength')}：</span>
                       <p className="text-text-secondary text-body-sm mt-1">{interpretation.yourStrength}</p>
                     </div>
 
                     <div className="bg-status-warning/5 rounded-lg p-3 border border-status-warning/10 shadow-inner-soft">
-                      <span className="font-medium text-status-warning">注意：</span>
+                      <span className="font-medium text-status-warning">{tReport('watchOut')}：</span>
                       <p className="text-text-secondary text-body-sm mt-1">{interpretation.watchOut}</p>
                     </div>
 
                     {interpretation.bestWhen.length > 0 && (
                       <div>
-                        <span className="font-medium text-text-primary">最佳场景：</span>
+                        <span className="font-medium text-text-primary">{tReport('bestWhen')}：</span>
                         <div className="mt-1 flex flex-wrap gap-2">
                           {interpretation.bestWhen.map((scenario, idx) => (
                             <span key={idx} className="text-xs bg-brand/10 text-brand px-2 py-1 rounded-md border border-brand/20">
@@ -245,7 +249,7 @@ export default function ReportResultPlaceholder({
 
                     {interpretation.pairWith.length > 0 && (
                       <div>
-                        <span className="font-medium text-text-primary">搭配优势：</span>
+                        <span className="font-medium text-text-primary">{tReport('pairWith')}：</span>
                         <div className="mt-1 flex flex-wrap gap-2">
                           {interpretation.pairWith.map((strength, idx) => (
                             <span key={idx} className="text-xs bg-accent/10 text-accent px-2 py-1 rounded-md border border-accent/20">
@@ -270,15 +274,15 @@ export default function ReportResultPlaceholder({
           className="mb-6 bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/80 shadow-card"
         >
           <h2 className="text-h4 font-serif text-text-primary mb-4">
-            优势组合分析
+            {tReport('comboAnalysis')}
           </h2>
           <div className="bg-bg-secondary rounded-xl p-6 border border-border-light shadow-inner-soft space-y-4">
             <div>
-              <h3 className="font-medium text-brand text-body flex items-center gap-2">
+                <h3 className="font-medium text-brand text-body flex items-center gap-2">
                 <svg className="w-5 h-5 text-brand" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
                 </svg>
-                核心驱动力
+                {tReport('coreDrive')}
               </h3>
               <p className="text-text-secondary text-body-sm mt-1">{reportData.comboInterpretation.coreDrive}</p>
             </div>
@@ -289,7 +293,7 @@ export default function ReportResultPlaceholder({
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
-                  潜在陷阱
+                  {tReport('potentialTraps')}
                 </h3>
                 <ul className="space-y-1">
                   {reportData.comboInterpretation.potentialTraps.map((trap, idx) => (
@@ -308,7 +312,7 @@ export default function ReportResultPlaceholder({
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
-                  协同效应
+                  {tReport('synergy')}
                 </h3>
                 <ul className="space-y-1">
                   {reportData.comboInterpretation.synergies.map((synergy, idx) => (
@@ -331,7 +335,7 @@ export default function ReportResultPlaceholder({
           className="mb-6 bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/80 shadow-card"
         >
           <h2 className="text-h4 font-serif text-text-primary mb-4">
-            关键洞察
+            {tReport('keyInsights')}
           </h2>
           <div className="space-y-3">
             {reportData.keyInsights.map((insight, index) => (
@@ -353,7 +357,7 @@ export default function ReportResultPlaceholder({
           className="mb-6 bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/80 shadow-card"
         >
           <h2 className="text-h4 font-serif text-text-primary mb-4">
-            建议的下一步
+            {tReport('suggestedNext')}
           </h2>
           <div className="space-y-3">
             {reportData.suggestedPaths.map((path) => (
@@ -376,7 +380,7 @@ export default function ReportResultPlaceholder({
           className="mb-6 bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/80 shadow-card"
         >
           <h2 className="text-h4 font-serif text-text-primary mb-4">
-            给你的建议
+            {tReport('personalAdvice')}
           </h2>
           <div className="bg-gradient-to-br from-brand/5 to-accent/5 rounded-xl p-6 border border-brand/10 shadow-inner-soft">
             <p className="text-text-secondary leading-relaxed text-body-sm whitespace-pre-line">{reportData.personalizedAdvice}</p>
@@ -390,7 +394,7 @@ export default function ReportResultPlaceholder({
             disabled={isSaving}
             className="w-full px-6 py-3 bg-brand text-white rounded-xl font-semibold hover:bg-brand-dark transition-colors disabled:opacity-50 shadow-glow hover:shadow-glow-lg"
           >
-            {isSaving ? '保存中...' : '保存报告'}
+            {isSaving ? tReport('actions.saving') : tReport('actions.save')}
           </button>
         </div>
       </div>

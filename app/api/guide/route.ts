@@ -7,6 +7,7 @@ import { isValidGuideResultData } from '@/lib/schema';
 import { StrengthGuideResult, StrengthId } from '@/lib/types';
 import { buildStrengthGuidePrompt, parseStrengthGuideResponse } from '@/lib/strength-guide-prompts';
 import { validateConfig } from '@/lib/config-validator';
+import { Locale } from '@/i18n/config';
 
 type AIProvider = 'anthropic' | 'openai' | 'zhipu' | 'minimax';
 
@@ -76,8 +77,14 @@ function getAIConfig(provider: AIProvider): AIConfig {
 }
 
 // Vercel Serverless 函数超时限制：Hobby 10s，Pro 60s
-// 设置为 55 秒，留出余量
-const API_TIMEOUT = 55000;
+// 在 Vercel 上缩短超时时间，避免平台强制超时导致 504。
+const API_TIMEOUT = (() => {
+  const envTimeout = Number(process.env.AI_TIMEOUT_MS);
+  if (Number.isFinite(envTimeout) && envTimeout > 0) {
+    return envTimeout;
+  }
+  return process.env.VERCEL ? 8000 : 55000;
+})();
 
 async function generateGuideWithAI(
   strengths: StrengthId[],
@@ -209,7 +216,16 @@ async function generateGuideWithAI(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { strengths } = body;
+    const { strengths, locale } = body;
+
+    // 验证 locale 参数
+    const currentLocale = (locale as Locale | undefined) || 'zh';
+    if (typeof currentLocale !== 'string' || !['zh', 'en'].includes(currentLocale)) {
+      return NextResponse.json(
+        { error: 'locale 必须是 "zh" 或 "en"' },
+        { status: 400 }
+      );
+    }
 
     // 参数校验
     if (!strengths || !Array.isArray(strengths)) {
@@ -256,6 +272,7 @@ export async function POST(request: NextRequest) {
             processingTimeMs: Date.now() - startTime,
             provider,
             version: '1.0.0',
+            locale: currentLocale,
           },
         });
       } catch (error) {
@@ -266,17 +283,7 @@ export async function POST(request: NextRequest) {
           : `AI 生成失败: ${errorMessage}`;
         console.warn('优势指南 AI 生成失败，降级为 Mock:', aiError);
 
-        // 如果是超时错误，返回更详细的错误信息
-        if (isTimeout) {
-          return NextResponse.json({
-            success: false,
-            error: `${provider.toUpperCase()} API 请求超时，请稍后重试或检查网络连接`,
-            metadata: {
-              provider,
-              processingTimeMs: Date.now() - startTime,
-            },
-          }, { status: 504 });
-        }
+        // 超时也降级为 Mock，避免 Vercel 平台返回 504
       }
     }
 
@@ -297,6 +304,7 @@ export async function POST(request: NextRequest) {
         fallbackReason: aiError || (aiEnabled ? 'AI 生成失败' : 'AI 未启用'),
         processingTimeMs: Date.now() - startTime,
         version: '1.0.0',
+        locale: currentLocale,
       },
     });
 

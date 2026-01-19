@@ -1,6 +1,8 @@
 // 34个盖洛普优势才干 (CliftonStrengths)
 // 官方四个领域分类及中文翻译
 
+import { Locale } from '@/i18n/config';
+
 export const ALL_STRENGTHS = [
   // ========== 执行力领域 (Executing) - 9项 ==========
   // 帮助人们将想法变成行动
@@ -89,3 +91,162 @@ export const DOMAIN_NAMES = {
   relationship: '关系建立',
   strategic: '战略思维',
 };
+
+// ============================================================
+// ✨ 多语言支持（第3阶段国际化）
+// ============================================================
+
+/**
+ * 优势名称多语言映射
+ * 用于获取特定语言的优势名称
+ */
+export const STRENGTH_NAMES: Record<Locale, Record<StrengthId, string>> = {
+  zh: {
+    focus: '专注',
+    belief: '信仰',
+    consistency: '公平',
+    deliberative: '审慎',
+    achiever: '成就',
+    restorative: '排难',
+    discipline: '纪律',
+    arranger: '统筹',
+    responsibility: '责任',
+    woo: '取悦',
+    maximizer: '完美',
+    communication: '沟通',
+    competition: '竞争',
+    command: '统率',
+    'self-assurance': '自信',
+    activator: '行动',
+    significance: '追求',
+    individualization: '个别',
+    relator: '交往',
+    developer: '伯乐',
+    empathy: '体谅',
+    connectedness: '关联',
+    include: '包容',
+    harmony: '和谐',
+    positivity: '积极',
+    adaptability: '适应',
+    analytical: '分析',
+    futuristic: '前瞻',
+    context: '回顾',
+    learner: '学习',
+    intellection: '思维',
+    strategic: '战略',
+    input: '搜集',
+    ideation: '理念',
+  },
+  en: {
+    focus: 'Focus',
+    belief: 'Belief',
+    consistency: 'Consistency',
+    deliberative: 'Deliberative',
+    achiever: 'Achiever',
+    restorative: 'Restorative',
+    discipline: 'Discipline',
+    arranger: 'Arranger',
+    responsibility: 'Responsibility',
+    woo: 'Woo',
+    maximizer: 'Maximizer',
+    communication: 'Communication',
+    competition: 'Competition',
+    command: 'Command',
+    'self-assurance': 'Self-Assurance',
+    activator: 'Activator',
+    significance: 'Significance',
+    individualization: 'Individualization',
+    relator: 'Relator',
+    developer: 'Developer',
+    empathy: 'Empathy',
+    connectedness: 'Connectedness',
+    include: 'Inclusion',
+    harmony: 'Harmony',
+    positivity: 'Positivity',
+    adaptability: 'Adaptability',
+    analytical: 'Analytical',
+    futuristic: 'Futuristic',
+    context: 'Context',
+    learner: 'Learner',
+    intellection: 'Intellection',
+    strategic: 'Strategic',
+    input: 'Input',
+    ideation: 'Ideation',
+  },
+};
+
+/**
+ * 获取指定语言的优势名称
+ * @param id 优势ID
+ * @param locale 语言，默认为中文
+ * @returns 优势名称，如果不存在则返回 ID
+ */
+export function getStrengthName(
+  id: StrengthId,
+  locale: Locale = 'zh'
+): string {
+  return STRENGTH_NAMES[locale]?.[id] ?? STRENGTH_NAMES.zh[id] ?? id;
+}
+
+/**
+ * 获取指定语言的所有优势（带名称）
+ * @param locale 语言，默认为中文
+ * @returns 优势数组，包含指定语言的名称
+ */
+export function getStrengthsByLocale(
+  locale: Locale = 'zh'
+): Array<Strength & { name: string }> {
+  return ALL_STRENGTHS.map((s) => ({
+    ...s,
+    name: getStrengthName(s.id, locale),
+  })) as Array<Strength & { name: string }>;
+}
+
+/**
+ * 获取指定语言的优势对象（带名称）
+ * @param id 优势ID
+ * @param locale 语言，默认为中文
+ * @returns 优势对象，包含指定语言的名称
+ */
+export function getStrengthWithName(
+  id: StrengthId,
+  locale: Locale = 'zh'
+): (Strength & { name: string }) | undefined {
+  const strength = getStrengthById(id);
+  if (!strength) return undefined;
+  return {
+    ...strength,
+    name: getStrengthName(id, locale),
+  } as Strength & { name: string };
+}
+
+/**
+ * 领域名称多语言映射
+ */
+export const DOMAIN_NAMES_I18N: Record<Locale, Record<StrengthDomain, string>> = {
+  zh: {
+    executing: '执行力',
+    influencing: '影响力',
+    relationship: '关系建立',
+    strategic: '战略思维',
+  },
+  en: {
+    executing: 'Executing',
+    influencing: 'Influencing',
+    relationship: 'Relationship Building',
+    strategic: 'Strategic Thinking',
+  },
+};
+
+/**
+ * 获取指定语言的领域名称
+ * @param domain 领域ID
+ * @param locale 语言，默认为中文
+ * @returns 领域名称
+ */
+export function getDomainName(
+  domain: StrengthDomain,
+  locale: Locale = 'zh'
+): string {
+  return DOMAIN_NAMES_I18N[locale]?.[domain] ?? DOMAIN_NAMES_I18N.zh[domain] ?? domain;
+}

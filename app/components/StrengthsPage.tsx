@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ALL_STRENGTHS, DOMAIN_COLORS, DOMAIN_NAMES, StrengthId, StrengthDomain } from '@/lib/gallup-strengths';
+import { ALL_STRENGTHS, DOMAIN_COLORS, StrengthId, StrengthDomain } from '@/lib/gallup-strengths';
+import { useTranslations } from 'next-intl';
 
 interface StrengthsPageProps {
   selectedStrengths: StrengthId[];
@@ -24,17 +25,21 @@ export default function StrengthsPage({
   path = 'breakthrough',
 }: StrengthsPageProps) {
   const [activeTab, setActiveTab] = useState<StrengthDomain>('executing');
+  const tCommon = useTranslations('common');
+  const tStrengthsPage = useTranslations('strengthsPage');
+  const tStrengths = useTranslations('strengths');
+  const tDomains = useTranslations('domains');
 
   // 根据路径获取按钮文本
   const getButtonText = () => {
     switch (path) {
       case 'career-match':
-        return '生成适合你的职业方向';
+        return tStrengthsPage('next.career');
       case 'strength-guide':
-        return '生成优势发挥指南';
+        return tStrengthsPage('next.guide');
       case 'breakthrough':
       default:
-        return '下一步：描述困惑';
+        return tStrengthsPage('next.breakthrough');
     }
   };
 
@@ -67,7 +72,7 @@ export default function StrengthsPage({
             <svg className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            <span>返回</span>
+            <span>{tCommon('back')}</span>
           </button>
         )}
 
@@ -76,16 +81,20 @@ export default function StrengthsPage({
           <div className="w-3 h-3 rounded-full bg-brand" />
           <div className="w-3 h-3 rounded-full bg-brand" />
           <div className="w-3 h-3 rounded-full bg-border-light" />
-          <span className="text-sm text-text-secondary ml-1">步骤 2 / 3</span>
+          <span className="text-sm text-text-secondary ml-1">{tStrengthsPage('stepLabel')}</span>
         </div>
 
         {/* 标题区 */}
         <div className="text-center mb-8 sm:mb-12">
           <h1 className="text-h2 font-serif text-text-primary mb-3 sm:mb-4">
-            选择你的 <span className="bg-gradient-to-r from-brand to-accent text-transparent bg-clip-text">Top 5</span> 优势
+            {tStrengthsPage('titlePrefix')}{' '}
+            <span className="bg-gradient-to-r from-brand to-accent text-transparent bg-clip-text">
+              {tStrengthsPage('titleHighlight')}
+            </span>{' '}
+            {tStrengthsPage('titleSuffix')}
           </h1>
           <p className="text-body-lg text-text-secondary mb-4 sm:mb-6 px-2 max-w-2xl mx-auto">
-            按报告顺序选择你最突出的 3-5 项优势
+            {tStrengthsPage('subtitle')}
           </p>
 
           {/* 选择计数器 */}
@@ -96,7 +105,7 @@ export default function StrengthsPage({
               : 'bg-bg-secondary text-text-tertiary border-border'
             }
           `}>
-            <span>已选择</span>
+            <span>{tStrengthsPage('selectedLabel')}</span>
             <span className="font-bold">{selectedCount}</span>
             <span>/</span>
             <span>5</span>
@@ -131,7 +140,7 @@ export default function StrengthsPage({
                   color: isActive ? 'white' : undefined, // 确保文字在有色背景上可见
                 }}
               >
-                {DOMAIN_NAMES[domain]}
+                {tDomains(domain)}
                 {selectedInDomain > 0 && (
                   <span className={`
                     ml-2 px-1.5 py-0.5 text-xs rounded-full
@@ -181,7 +190,7 @@ export default function StrengthsPage({
                       {rank}
                     </span>
                   )}
-                  {strength.name}
+                  {tStrengths(strength.id)}
                 </button>
               );
             })}
@@ -192,7 +201,7 @@ export default function StrengthsPage({
       {selectedStrengths.length > 0 && (
         <div className="mb-8 sm:mb-12 px-2">
           <h3 className="text-h4 font-serif text-text-primary mb-3 sm:mb-4 text-center">
-            已选优势排序
+            {tStrengthsPage('selectedListTitle')}
           </h3>
           <motion.div layout className="space-y-2 max-w-2xl mx-auto">
             {selectedStrengths.map((strengthId, index) => {
@@ -218,9 +227,9 @@ export default function StrengthsPage({
 
                   {/* 优势名称 */}
                   <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0">
-                    <span className="text-body text-text-primary font-semibold truncate">{strength.name}</span>
+                    <span className="text-body text-text-primary font-semibold truncate">{tStrengths(strength.id)}</span>
                     <span className="text-caption text-text-tertiary px-2 py-1 rounded-full bg-bg-secondary whitespace-nowrap">
-                      {DOMAIN_NAMES[strength.domain]}
+                      {tDomains(strength.domain)}
                     </span>
                   </div>
 
@@ -230,7 +239,7 @@ export default function StrengthsPage({
                       <button
                         onClick={() => onMoveUp(index)}
                         className="p-2 sm:p-2.5 w-9 h-9 flex items-center justify-center rounded-lg text-text-muted hover:text-brand-dark hover:bg-brand-subtle transition-colors touch-manipulation"
-                        title="上移"
+                        title={tStrengthsPage('moveUp')}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -241,7 +250,7 @@ export default function StrengthsPage({
                       <button
                         onClick={() => onMoveDown(index)}
                         className="p-2 sm:p-2.5 w-9 h-9 flex items-center justify-center rounded-lg text-text-muted hover:text-brand-dark hover:bg-brand-subtle transition-colors touch-manipulation"
-                        title="下移"
+                        title={tStrengthsPage('moveDown')}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -251,7 +260,7 @@ export default function StrengthsPage({
                     <button
                       onClick={() => onSelectStrength(strengthId)}
                       className="p-2 sm:p-2.5 w-9 h-9 flex items-center justify-center rounded-lg text-text-muted hover:text-status-error hover:bg-status-error/10 transition-colors touch-manipulation"
-                      title="移除"
+                      title={tStrengthsPage('remove')}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -268,7 +277,7 @@ export default function StrengthsPage({
       {/* 完成提示 */}
       {selectedStrengths.length === 5 && (
         <p className="text-center text-status-success font-medium text-body-lg mb-6">
-          已捕捉到你的核心优势组合！
+          {tStrengthsPage('completed')}
         </p>
       )}
 

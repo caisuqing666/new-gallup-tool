@@ -36,6 +36,7 @@ export interface GenerateOptions {
   problemType?: ProblemType;
   problemFocus?: ProblemFocus;
   provider?: ProviderConfig;
+  locale?: 'zh' | 'en';
 }
 
 /** 生成结果 */
@@ -61,11 +62,12 @@ async function generateWithMock(
   strengths: StrengthId[],
   confusion: string,
   _problemType: ProblemType,
-  _problemFocus: string
+  _problemFocus: string,
+  locale?: 'zh' | 'en'
 ): Promise<GallupResult> {
   // 动态导入 mock-data 以避免循环依赖
   const { generateMockResult } = await import('../mock-data');
-  return generateMockResult(scenario, strengths, confusion, _problemType, _problemFocus, true);
+  return generateMockResult(scenario, strengths, confusion, _problemType, _problemFocus, true, locale);
 }
 
 /**
@@ -77,7 +79,8 @@ async function generateWithAI(
   confusion: string,
   problemType: ProblemType,
   problemFocus: string,
-  provider: ProviderConfig['provider']
+  provider: ProviderConfig['provider'],
+  locale?: 'zh' | 'en'
 ): Promise<GallupResult> {
   // 设置环境变量以启用 AI
   const originalEnableAi = process.env.ENABLE_AI;
@@ -89,7 +92,7 @@ async function generateWithAI(
       process.env.AI_PROVIDER = provider;
     }
 
-    return await generateResult(scenario, strengths, confusion, problemType, problemFocus, true);
+    return await generateResult(scenario, strengths, confusion, problemType, problemFocus, true, locale);
   } finally {
     // 恢复环境变量
     if (originalEnableAi !== undefined) {
@@ -148,7 +151,7 @@ function normalizeProblemFocus(focus: string): string {
  * @returns 生成结果
  */
 export async function generateActionPlan(options: GenerateOptions): Promise<GenerateResult> {
-  const { scenario, strengths, confusion, problemType, problemFocus, provider } = options;
+  const { scenario, strengths, confusion, problemType, problemFocus, provider, locale } = options;
 
   // 确定 Provider
   const effectiveProvider: ProviderConfig = provider || { type: 'mock' };
@@ -187,13 +190,13 @@ export async function generateActionPlan(options: GenerateOptions): Promise<Gene
   let usedMockFallback = false;
 
   if (effectiveProvider.type === 'mock') {
-    result = await generateWithMock(scenario, strengths, confusion, finalProblemType, finalProblemFocus);
+    result = await generateWithMock(scenario, strengths, confusion, finalProblemType, finalProblemFocus, locale);
   } else {
     try {
-      result = await generateWithAI(scenario, strengths, confusion, finalProblemType, finalProblemFocus, effectiveProvider.provider);
+      result = await generateWithAI(scenario, strengths, confusion, finalProblemType, finalProblemFocus, effectiveProvider.provider, locale);
     } catch (error) {
       console.warn('AI 生成失败，降级到 Mock:', error);
-      result = await generateWithMock(scenario, strengths, confusion, finalProblemType, finalProblemFocus);
+      result = await generateWithMock(scenario, strengths, confusion, finalProblemType, finalProblemFocus, locale);
       usedMockFallback = true;
     }
   }
@@ -201,7 +204,7 @@ export async function generateActionPlan(options: GenerateOptions): Promise<Gene
   if (!isValidResultData(result)) {
     console.warn('生成结果未通过 schema 校验，进行降级处理');
     if (effectiveProvider.type === 'ai') {
-      result = await generateWithMock(scenario, strengths, confusion, finalProblemType, finalProblemFocus);
+      result = await generateWithMock(scenario, strengths, confusion, finalProblemType, finalProblemFocus, locale);
       usedMockFallback = true;
     }
   }

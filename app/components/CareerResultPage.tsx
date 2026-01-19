@@ -6,6 +6,7 @@ import { CareerMatchResult } from '@/lib/types';
 import { DOMAIN_COLORS } from '@/lib/gallup-strengths';
 import Toast, { type ToastType } from './Toast';
 import { exportToImage } from '@/lib/export';
+import { useTranslations } from 'next-intl';
 
 interface CareerResultPageProps {
   careerData: CareerMatchResult;
@@ -23,6 +24,7 @@ function CareerMatchCard({
   index: number;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const tCareer = useTranslations('careerResultPage');
 
   // 根据匹配分数获取颜色
   const getScoreColor = (score: number) => {
@@ -60,7 +62,7 @@ function CareerMatchCard({
                   match.matchScore
                 )} ${getScoreColor(match.matchScore)}`}
               >
-                {match.matchScore}% 匹配
+                {tCareer('matchScore', { score: match.matchScore })}
               </div>
             </div>
             <p className="text-body-sm text-text-secondary mt-1 line-clamp-2">
@@ -94,7 +96,7 @@ function CareerMatchCard({
               {match.strengthUsage.length > 0 && (
                 <div>
                   <h4 className="text-sm font-medium text-text-muted mb-3">
-                    你的优势如何发挥作用
+                    {tCareer('strengthUsage')}
                   </h4>
                   <div className="space-y-2">
                     {match.strengthUsage.map((item, idx) => (
@@ -127,7 +129,7 @@ function CareerMatchCard({
               {match.watchOut && (
                 <div>
                   <h4 className="text-sm font-medium text-text-muted mb-2">
-                    需要注意
+                    {tCareer('watchOut')}
                   </h4>
                   <div className="bg-bg-secondary rounded-lg p-3 border border-status-warning/20 shadow-inner-soft">
                     <p className="text-sm text-status-warning leading-relaxed">{match.watchOut}</p>
@@ -148,6 +150,7 @@ function GeneralAdviceSection({
 }: {
   advice: CareerMatchResult['generalAdvice'];
 }) {
+  const tCareer = useTranslations('careerResultPage');
   return (
     <motion.section
       initial={{ opacity: 0, y: 20 }}
@@ -155,12 +158,12 @@ function GeneralAdviceSection({
       className="bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/80 shadow-card"
     >
       <h3 className="text-h4 font-serif text-text-primary mb-4">
-        通用职业建议
+        {tCareer('generalAdvice')}
       </h3>
       <div className="space-y-4">
         {/* 核心优势 */}
         <div className="bg-bg-secondary rounded-lg p-4 shadow-inner-soft border border-border-light">
-          <p className="text-caption text-text-muted mb-2">💡 核心优势</p>
+          <p className="text-caption text-text-muted mb-2">{tCareer('coreStrength')}</p>
           <p className="text-body-sm text-text-primary leading-relaxed">
             {advice.coreStrengthToUse}
           </p>
@@ -168,7 +171,7 @@ function GeneralAdviceSection({
 
         {/* 能量管理 */}
         <div className="bg-bg-secondary rounded-lg p-4 shadow-inner-soft border border-border-light">
-          <p className="text-caption text-text-muted mb-2">⚡ 能量管理</p>
+          <p className="text-caption text-text-muted mb-2">{tCareer('energyManagement')}</p>
           <p className="text-body-sm text-text-primary leading-relaxed">
             {advice.energyManagement}
           </p>
@@ -176,7 +179,7 @@ function GeneralAdviceSection({
 
         {/* 成长方向 */}
         <div className="bg-bg-secondary rounded-lg p-4 shadow-inner-soft border border-border-light">
-          <p className="text-caption text-text-muted mb-2">🚀 成长方向</p>
+          <p className="text-caption text-text-muted mb-2">{tCareer('growthDirection')}</p>
           <p className="text-body-sm text-text-primary leading-relaxed">
             {advice.growthDirection}
           </p>
@@ -199,6 +202,7 @@ export default function CareerResultPage({
   );
   const [isSaving, setIsSaving] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const tCareer = useTranslations('careerResultPage');
 
   useEffect(() => {
     setMounted(true);
@@ -216,9 +220,9 @@ export default function CareerResultPage({
         scale: 2,
       });
 
-      setToast({ message: '已保存到本地', type: 'success' });
+      setToast({ message: tCareer('toasts.saved'), type: 'success' });
     } catch {
-      setToast({ message: '保存失败', type: 'error' });
+      setToast({ message: tCareer('toasts.saveFailed'), type: 'error' });
     } finally {
       setIsSaving(false);
     }
@@ -255,7 +259,7 @@ export default function CareerResultPage({
               <svg className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              <span>返回修改</span>
+              <span>{tCareer('actions.back')}</span>
             </motion.button>
           )}
 
@@ -266,10 +270,10 @@ export default function CareerResultPage({
             className="text-center mb-8"
           >
             <h1 className="text-h2 font-serif text-text-primary mb-2">
-              职业匹配分析
+              {tCareer('title')}
             </h1>
             <p className="text-body-lg text-text-secondary">
-              基于你的 TOP5 优势生成
+              {tCareer('subtitle')}
             </p>
           </motion.div>
 
@@ -278,7 +282,7 @@ export default function CareerResultPage({
             {/* TOP 匹配职业 */}
             <div>
               <h2 className="text-lg font-semibold text-text-primary mb-4 font-serif">
-                最佳匹配职业 TOP{careerData.topMatches.length}
+                {tCareer('topMatches', { count: careerData.topMatches.length })}
               </h2>
               <div className="space-y-3">
                 {careerData.topMatches.map((match, index) => (
@@ -298,7 +302,7 @@ export default function CareerResultPage({
                 onClick={onRegenerate}
                 className="w-full px-6 py-3 border-2 border-border-light rounded-xl text-text-primary font-semibold hover:bg-bg-card transition-colors"
               >
-                重新生成
+                {tCareer('actions.regenerate')}
               </button>
             )}
             <button
@@ -306,7 +310,7 @@ export default function CareerResultPage({
               disabled={isSaving}
               className="w-full px-6 py-3 bg-brand text-white rounded-xl font-semibold hover:bg-brand-dark transition-colors disabled:opacity-50 shadow-glow hover:shadow-glow-lg"
             >
-              {isSaving ? '保存中...' : '保存报告'}
+              {isSaving ? tCareer('actions.saving') : tCareer('actions.save')}
             </button>
           </div>
         </div>

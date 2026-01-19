@@ -657,7 +657,8 @@ export async function generateResult(
   confusion: string,
   problemType: ProblemType,
   problemFocus: ProblemFocus,
-  useAI: boolean = ENABLE_AI
+  useAI: boolean = ENABLE_AI,
+  locale: 'zh' | 'en' = 'zh'
 ): Promise<GallupResult> {
   // ═══════════════════════════════════════════════════════════
   // 第零步：构建 Context Pack（无论 AI 还是 Mock 都需要）
@@ -746,6 +747,7 @@ export async function generateResult(
         problemType,
         problemFocus,
         contextPack,
+        locale,
       },
     });
 
@@ -758,6 +760,7 @@ export async function generateResult(
         problemFocus,
         contextPack,
         understanding: confusionUnderstanding,
+        locale,
       },
     });
 

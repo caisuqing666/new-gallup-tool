@@ -1,0 +1,34 @@
+{
+  "scenarios": [
+    {
+      "id": "work-decision",
+      "title": "Too many tasks, unsure which to prioritize",
+      "description": "You're juggling multiple tasks or projects but don't know how to prioritize",
+      "keywords": ["decision", "choice", "priority", "multitasking", "parallel"],
+      "typicalProblemType": "EFFICIENCY_BOTTLENECK"
+    },
+    {
+      "id": "career-transition",
+      "title": "Considering a career change but unclear on strengths",
+      "description": "You're thinking about switching careers but unsure how your strengths apply to the new field",
+      "keywords": ["transition", "career", "direction", "new field", "pivot"],
+      "typicalProblemType": "DIRECTION_UNCERTAINTY"
+    },
+    {
+      "id": "efficiency",
+      "title": "Exhausted every day but productivity isn't improving",
+      "description": "You feel you're putting in significant effort but the results aren't showing",
+      "keywords": ["efficiency", "exhausted", "overextended", "effort", "output"],
+      "typicalProblemType": "EFFICIENCY_BOTTLENECK"
+    },
+    {
+      "id": "communication",
+      "title": "Communication is draining; feeling misunderstood",
+      "description": "You struggle with communication and often feel people don't understand you",
+      "keywords": ["communication", "understanding", "expression", "others", "draining"],
+      "typicalProblemType": "BOUNDARY_OVERLOAD"
+    }
+  ],
+  "version": "1.0.0",
+  "lastUpdated": "2024-01-20"
+}

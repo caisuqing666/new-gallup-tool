@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { SCENARIOS } from '@/lib/scenarios';
 import { ScenarioId } from '@/lib/scenarios';
+import { useTranslations } from 'next-intl';
 
 interface ScenarioPageProps {
   selectedScenario?: ScenarioId;
@@ -19,6 +20,9 @@ export default function ScenarioPage({
   onBack,
 }: ScenarioPageProps) {
   const [mounted, setMounted] = useState(false);
+  const t = useTranslations('scenarioPage');
+  const tCommon = useTranslations('common');
+  const tScenarios = useTranslations('scenarios');
 
   useEffect(() => {
     setMounted(true);
@@ -42,7 +46,7 @@ export default function ScenarioPage({
             <svg className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            <span>返回</span>
+            <span>{tCommon('back')}</span>
           </motion.button>
         )}
 
@@ -56,7 +60,7 @@ export default function ScenarioPage({
           <div className="step-dot-active rounded-full" />
           <div className="step-dot-inactive" />
           <div className="step-dot-inactive" />
-          <span className="text-sm text-text-muted ml-3">步骤 1 / 3</span>
+          <span className="text-sm text-text-muted ml-3">{t('stepLabel')}</span>
         </motion.div>
 
         {/* 标题区 */}
@@ -67,10 +71,10 @@ export default function ScenarioPage({
           className="mb-8 sm:mb-12 text-center"
         >
           <h1 className="text-h2 font-serif text-text-primary mb-3 sm:mb-4">
-            你现在最需要用优势解决哪类问题？
+            {t('title')}
           </h1>
           <p className="text-body-lg text-text-secondary max-w-2xl mx-auto">
-            选择一个您最关心的现实场景，我们将基于此进行深度调频
+            {t('subtitle')}
           </p>
         </motion.div>
 
@@ -99,7 +103,7 @@ export default function ScenarioPage({
                   <span className={`text-label transition-colors duration-300 ${
                     isSelected ? 'text-brand' : 'text-text-muted'
                   }`}>
-                    场景 {String(index + 1).padStart(2, '0')}
+                    {t('scenarioLabel', { index: String(index + 1).padStart(2, '0') })}
                   </span>
 
                   {/* 选中指示器 */}
@@ -126,7 +130,7 @@ export default function ScenarioPage({
                 </div>
 
                 <h3 className="text-h4 font-serif text-text-primary">
-                  {scenario.title}
+                  {tScenarios(`${scenario.id}.title`)}
                 </h3>
               </motion.button>
             );
@@ -142,8 +146,8 @@ export default function ScenarioPage({
         >
           <p className="text-sm text-text-secondary text-center sm:text-left">
             {selectedScenario
-              ? <span className="font-medium text-text-primary">场景已选定，请继续</span>
-              : '请选择一个场景以继续...'
+              ? <span className="font-medium text-text-primary">{t('selectedConfirm')}</span>
+              : t('selectPrompt')
             }
           </p>
 
@@ -154,7 +158,7 @@ export default function ScenarioPage({
             whileTap={selectedScenario ? { scale: 0.98 } : {}}
             className="w-full sm:w-auto px-6 py-3 rounded-lg text-white font-semibold transition-all duration-300 shadow-lg disabled:shadow-none disabled:bg-gray-300 disabled:cursor-not-allowed bg-brand hover:bg-brand-dark"
           >
-            下一步：选择优势
+            {t('next')}
             <svg className="w-4 h-4 ml-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>

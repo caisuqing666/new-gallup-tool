@@ -11,6 +11,7 @@ import {
   parseCareerMatchResponse,
   isValidCareerMatchResult,
 } from '@/lib/career-prompts';
+import { Locale } from '@/i18n/config';
 
 type AIProvider = 'anthropic' | 'openai' | 'zhipu' | 'minimax';
 
@@ -212,7 +213,16 @@ async function generateCareerWithAI(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { strengths } = body;
+    const { strengths, locale } = body;
+
+    // 验证 locale 参数
+    const currentLocale = (locale as Locale | undefined) || 'zh';
+    if (typeof currentLocale !== 'string' || !['zh', 'en'].includes(currentLocale)) {
+      return NextResponse.json(
+        { error: 'locale 必须是 "zh" 或 "en"' },
+        { status: 400 }
+      );
+    }
 
     // 参数校验
     if (!strengths || !Array.isArray(strengths)) {
@@ -274,6 +284,7 @@ export async function POST(request: NextRequest) {
             usedMockFallback: false,
             processingTimeMs: Date.now() - startTime,
             version: '1.0.0',
+            locale: currentLocale,
           },
         });
       } catch (error) {
@@ -299,6 +310,7 @@ export async function POST(request: NextRequest) {
         usedMockFallback: true,
         processingTimeMs: Date.now() - startTime,
         version: '1.0.0',
+        locale: currentLocale,
       },
     });
 

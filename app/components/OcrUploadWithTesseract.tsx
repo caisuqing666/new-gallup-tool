@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { StrengthId, ALL_STRENGTHS } from '@/lib/gallup-strengths';
 import { performOcr, OcrResult } from '@/lib/ocr-service';
+import { useTranslations } from 'next-intl';
 
 interface OcrUploadProps {
   onNext: (_strengths: StrengthId[]) => void;
@@ -25,6 +26,8 @@ export default function OcrUploadWithTesseract({
   const [errorMessage, setErrorMessage] = useState('');
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const tOcr = useTranslations('ocrPage');
+  const tStrengths = useTranslations('strengths');
 
   const handleFileSelect = useCallback(async (file: File) => {
     // 创建预览
@@ -48,16 +51,16 @@ export default function OcrUploadWithTesseract({
           setOcrStatus('success');
         } else {
           setOcrStatus('error');
-          setErrorMessage('未能识别到足够优势，请手动选择或重试');
+          setErrorMessage(tOcr('errorNotEnough'));
         }
       } catch (error) {
         console.error('OCR 错误:', error);
         setOcrStatus('error');
-        setErrorMessage(error instanceof Error ? error.message : 'OCR 识别失败');
+        setErrorMessage(error instanceof Error ? error.message : tOcr('errorGeneric'));
       }
     };
     reader.readAsDataURL(file);
-  }, []);
+  }, [tOcr]);
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -113,13 +116,13 @@ export default function OcrUploadWithTesseract({
   const getStatusMessage = () => {
     switch (ocrStatus) {
       case 'downloading':
-        return '下载 OCR 引擎...';
+        return tOcr('status.downloading');
       case 'recognizing':
-        return `正在识别... ${progress}%`;
+        return tOcr('status.recognizing', { progress });
       case 'success':
-        return `识别完成！找到 ${ocrResult?.top5.length || 0} 个优势`;
+        return tOcr('status.success', { count: ocrResult?.top5.length || 0 });
       case 'error':
-        return '识别失败，请重试或手动选择';
+        return tOcr('status.error');
       default:
         return '';
     }
@@ -138,7 +141,7 @@ export default function OcrUploadWithTesseract({
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-1">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          <span>返回</span>
+          <span>{tOcr('actions.back')}</span>
         </motion.button>
 
         {/* 页面标题 */}
@@ -148,10 +151,10 @@ export default function OcrUploadWithTesseract({
           className="text-center mb-8"
         >
           <h1 className="text-h2 font-serif text-text-primary mb-2">
-            上传你的盖洛普报告
+            {tOcr('title')}
           </h1>
           <p className="text-body-lg text-text-secondary">
-            AI 将自动识别你的 TOP5 优势（首次使用需下载 OCR 引擎约 20MB）
+            {tOcr('subtitle')}
           </p>
         </motion.div>
 
@@ -205,11 +208,11 @@ export default function OcrUploadWithTesseract({
 
                 {/* 提示文字 */}
                 <p className="text-text-primary font-medium text-body mb-2">
-                  {ocrStatus === 'idle' && '点击或拖拽上传报告图片'}
-                  {(ocrStatus === 'downloading' || ocrStatus === 'recognizing') && '正在处理...'}
+                  {ocrStatus === 'idle' && tOcr('dropHint')}
+                  {(ocrStatus === 'downloading' || ocrStatus === 'recognizing') && tOcr('processing')}
                 </p>
                 <p className="text-text-secondary text-body-sm">
-                  请确保图片清晰，包含 TOP5 优势列表
+                  {tOcr('imageHint')}
                 </p>
 
                 {/* 进度条 */}
@@ -231,7 +234,7 @@ export default function OcrUploadWithTesseract({
                 <div className="bg-white/60 backdrop-blur-md rounded-2xl p-4 mb-4 border border-white/80 shadow-card">
                   <Image
                     src={uploadedImage}
-                    alt="上传的报告"
+                    alt={tOcr('uploadedAlt')}
                     className="w-full h-auto rounded-lg"
                     width={800}
                     height={600}
@@ -245,7 +248,7 @@ export default function OcrUploadWithTesseract({
                   disabled={ocrStatus === 'downloading' || ocrStatus === 'recognizing'}
                   className="w-full py-3 border border-border-light rounded-xl text-text-primary font-medium hover:bg-bg-secondary transition-colors disabled:opacity-50 shadow-soft"
                 >
-                  重新上传
+                  {tOcr('reupload')}
                 </button>
               </div>
             )}
@@ -303,10 +306,13 @@ export default function OcrUploadWithTesseract({
           >
             <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 h-full border border-white/80 shadow-card">
               <h2 className="text-h4 font-serif text-text-primary mb-4">
-                你的 TOP5 优势
+                {tOcr('strengthsTitle')}
               </h2>
               <p className="text-body-sm text-text-secondary mb-4">
-                请选择 3-5 个优势（<span className="font-medium text-brand">{selectedStrengths.length}</span>/5）
+                {tOcr.rich('strengthsHint', {
+                  value: selectedStrengths.length,
+                  count: (chunks) => <span className="font-medium text-brand">{chunks}</span>,
+                })}
               </p>
 
               {/* 优势列表 */}
@@ -331,9 +337,9 @@ export default function OcrUploadWithTesseract({
                         ${!isSelected && selectedStrengths.length >= 5 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                       `}
                     >
-                      {strength.name}
+                      {tStrengths(strength.id)}
                       {wasRecognized && !isSelected && (
-                        <span className="ml-1 text-caption text-brand/80">(AI)</span>
+                        <span className="ml-1 text-caption text-brand/80">{tOcr('aiTag')}</span>
                       )}
                     </button>
                   );
@@ -348,8 +354,8 @@ export default function OcrUploadWithTesseract({
                   className="w-full py-4 bg-brand hover:bg-brand-dark text-white rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-glow hover:shadow-glow-lg"
                 >
                   {selectedStrengths.length < 3
-                    ? '请至少选择 3 个优势'
-                    : '生成报告解读'
+                    ? tOcr('continue.needMore')
+                    : tOcr('continue.generate')
                   }
                 </button>
               </div>

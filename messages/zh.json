@@ -1,0 +1,352 @@
+{
+  "common": {
+    "loading": "加载中...",
+    "back": "返回",
+    "next": "下一步",
+    "submit": "提交",
+    "save": "保存",
+    "cancel": "取消",
+    "regenerate": "重新生成",
+    "comingSoon": "即将推出"
+  },
+  "metadata": {
+    "title": "盖洛普优势 · 行动方案生成器",
+    "description": "把你的优势，翻译成当下可执行的决策建议"
+  },
+  "landing": {
+    "brand": "THE HUMANIST ARCHIVE",
+    "title": "盖洛普优势",
+    "subtitle": "行动方案生成器",
+    "description": "以温润的洞察，将你的天赋解码为<highlight>精准可执行</highlight>的决策锦囊",
+    "cta": "开始探索",
+    "stats": {
+      "strengths": "项优势",
+      "ai": "智能驱动",
+      "domains": "大领域"
+    },
+    "footer": "基于盖洛普优势理论 · 用 AI 解读你的独特天赋"
+  },
+  "pathSelection": {
+    "title": "选择你想要的帮助方式",
+    "subtitle": "根据你的需求，选择最合适的入口",
+    "paths": {
+      "reportInterpret": {
+        "title": "我不太懂这份报告",
+        "subtitle": "上传报告，获得通俗易懂的解读"
+      },
+      "careerMatch": {
+        "title": "我想找到适合的职业方向",
+        "subtitle": "输入TOP5，发现最匹配的职业"
+      },
+      "breakthrough": {
+        "title": "我遇到了具体问题",
+        "subtitle": "用优势视角突破当前困境"
+      },
+      "strengthGuide": {
+        "title": "我想更好地发挥自己",
+        "subtitle": "获得个性化的优势发挥指南"
+      }
+    }
+  },
+  "navigation": {
+    "language": "语言",
+    "switchLanguage": "切换语言"
+  },
+  "inputPage": {
+    "title": "用一句话说清楚，你现在卡在哪",
+    "description": "结合你的「{strengths}」优势，描述当前的困惑或挑战",
+    "placeholder": "比如：我明明很有「责任」感，但现在同时负责三个项目，每个都想做好，结果哪个都推进不动，感觉自己被困住了...",
+    "charCount": "字符数",
+    "submit": "提交",
+    "back": "返回",
+    "stepLabel": "步骤 3 / 3",
+    "tips": [
+      "我拥有 [优势]，但现在遇到 [具体困境]，导致我 [负面结果]",
+      "比如：我拥有「责任」，但项目截止期变动，导致我陷入混乱不敢决策",
+      "描述具体场景和感受，真实表达有助于系统精准诊断"
+    ],
+    "helper": "描述具体场景和感受，便于系统精准诊断",
+    "submitCta": "生成专属行动方案",
+    "submitHint": "点击按钮，系统将基于你的优势组合生成执行指令",
+    "validationHint": "请至少输入 10 个字符描述你的困惑",
+    "strengthsFallback": "你的优势"
+  },
+  "loadingPage": {
+    "title": "正在生成你的行动方案",
+    "phases": {
+      "analysis": "分析优势组合...",
+      "conflict": "识别优势冲突...",
+      "generation": "生成行动方案...",
+      "optimization": "优化建议输出..."
+    },
+    "cancel": "取消生成",
+    "basedOn": "基于你的「{strengths}」优势",
+    "analyzing": "分析「{confusion}」的根源...",
+    "estimatedRemaining": "预计剩余 {time}",
+    "aiHint": "AI 正在深度解读你的优势组合，请稍候...",
+    "strengthsFallback": "优势",
+    "time": {
+      "seconds": "{count}秒",
+      "minutes": "{count}分",
+      "minutesSeconds": "{minutes}分{seconds}秒"
+    }
+  },
+  "strengthsPage": {
+    "stepLabel": "步骤 2 / 3",
+    "titlePrefix": "选择你的",
+    "titleHighlight": "Top 5",
+    "titleSuffix": "优势",
+    "subtitle": "按报告顺序选择你最突出的 3-5 项优势",
+    "selectedLabel": "已选择",
+    "selectedListTitle": "已选优势排序",
+    "moveUp": "上移",
+    "moveDown": "下移",
+    "remove": "移除",
+    "completed": "已捕捉到你的核心优势组合！",
+    "next": {
+      "breakthrough": "下一步：描述困惑",
+      "career": "生成适合你的职业方向",
+      "guide": "生成优势发挥指南"
+    }
+  },
+  "scenarioPage": {
+    "stepLabel": "步骤 1 / 3",
+    "title": "你现在最需要用优势解决哪类问题？",
+    "subtitle": "选择一个您最关心的现实场景，我们将基于此进行深度调频",
+    "scenarioLabel": "场景 {index}",
+    "selectedConfirm": "场景已选定，请继续",
+    "selectPrompt": "请选择一个场景以继续...",
+    "next": "下一步：选择优势"
+  },
+  "resultPage": {
+    "tabs": {
+      "explain": "理解发生了什么",
+      "decide": "现在该怎么做"
+    },
+    "explain": {
+      "title": "理解发生了什么",
+      "subtitle": "只描述，不判断",
+      "sections": {
+        "strengths": "你的优势在做什么",
+        "interactions": "优势之间在发生什么",
+        "blindspots": "你可能没意识到",
+        "summary": "总结"
+      }
+    },
+    "decide": {
+      "title": "现在该怎么做",
+      "subtitle": "只判断，不解释",
+      "decisionFor": "判定针对：{focus}",
+      "defaultFocus": "当前困境",
+      "checkToday": "今日自检",
+      "pathLogic": "路径推导链条",
+      "extraEvidence": "补充证据",
+      "mustDo": "必须发生的关键动作",
+      "mustStop": "必须停止的关键动作",
+      "responsibilityBoundary": "责任边界",
+      "responsible": "负责",
+      "notResponsible": "不负责",
+      "fromTiming": "从：{timing}"
+    },
+    "pathDecisionLabels": {
+      "DoubleDown": "继续投入",
+      "Reframe": "结构性调整",
+      "Narrow": "阶段性收敛",
+      "Exit": "退出/放弃"
+    },
+    "pathDecisionEnergy": {
+      "DoubleDown": "省能量 - 优势被正向使用，能量被放大",
+      "Reframe": "当前榨能量 - 使用方式错了，需调整",
+      "Narrow": "分散消耗 - 优势过度发散，需收敛",
+      "Exit": "代价区 - 长期榨干，继续投入放大消耗"
+    },
+    "verdictChars": {
+      "DoubleDown": "行",
+      "Reframe": "易",
+      "Narrow": "敛",
+      "Exit": "止",
+      "default": "断"
+    },
+    "actions": {
+      "back": "返回修改",
+      "regenerate": "重新生成",
+      "saving": "保存中...",
+      "saveExplain": "保存理解页",
+      "saveDecide": "保存决策页"
+    },
+    "toasts": {
+      "saved": "已保存到本地",
+      "saveFailed": "保存失败"
+    }
+  },
+  "scenarios": {
+    "work-decision": {
+      "title": "手头事太多，不知道该先保哪一个"
+    },
+    "career-transition": {
+      "title": "想换赛道，但不确定优势在哪"
+    },
+    "efficiency": {
+      "title": "每天都累到透支，但效率还是上不去"
+    },
+    "communication": {
+      "title": "沟通心累，总觉得别人不理解我"
+    }
+  },
+  "domains": {
+    "executing": "执行力",
+    "influencing": "影响力",
+    "relationship": "关系建立",
+    "strategic": "战略思维"
+  },
+  "strengths": {
+    "focus": "专注",
+    "belief": "信仰",
+    "consistency": "公平",
+    "deliberative": "审慎",
+    "achiever": "成就",
+    "restorative": "排难",
+    "discipline": "纪律",
+    "arranger": "统筹",
+    "responsibility": "责任",
+    "woo": "取悦",
+    "maximizer": "完美",
+    "communication": "沟通",
+    "competition": "竞争",
+    "command": "统率",
+    "self-assurance": "自信",
+    "activator": "行动",
+    "significance": "追求",
+    "individualization": "个别",
+    "relator": "交往",
+    "developer": "伯乐",
+    "empathy": "体谅",
+    "connectedness": "关联",
+    "include": "包容",
+    "harmony": "和谐",
+    "positivity": "积极",
+    "adaptability": "适应",
+    "analytical": "分析",
+    "futuristic": "前瞻",
+    "context": "回顾",
+    "learner": "学习",
+    "intellection": "思维",
+    "strategic": "战略",
+    "input": "搜集",
+    "ideation": "理念"
+  },
+  "guideResultPage": {
+    "title": "优势发挥指南",
+    "subtitle": "基于你的 TOP5 优势生成",
+    "sections": {
+      "personalLabel": "你的优势标签",
+      "singleGuide": "单个优势指南",
+      "comboGuide": "优势组合指南",
+      "comboTabs": {
+        "synergy": "协同组合",
+        "tension": "需要平衡"
+      },
+      "whatItMeans": "这意味着",
+      "bestScenarios": "最佳发挥场景",
+      "dailyPractice": "日常应用",
+      "daily": {
+        "morning": "🌅 早晨启动",
+        "work": "💼 工作中",
+        "evening": "🌙 晚间恢复"
+      },
+      "energy": "能量管理",
+      "energyCharge": "⚡ 充能时刻",
+      "energyRest": "🔋 需要休息",
+      "weeklyActions": "本周行动建议"
+    },
+    "actions": {
+      "back": "返回修改",
+      "regenerate": "重新生成",
+      "saving": "保存中...",
+      "save": "保存指南"
+    },
+    "toasts": {
+      "saved": "已保存到本地",
+      "saveFailed": "保存失败"
+    }
+  },
+  "careerResultPage": {
+    "title": "职业匹配分析",
+    "subtitle": "基于你的 TOP5 优势生成",
+    "topMatches": "最佳匹配职业 TOP{count}",
+    "matchScore": "{score}% 匹配",
+    "strengthUsage": "你的优势如何发挥作用",
+    "watchOut": "需要注意",
+    "generalAdvice": "通用职业建议",
+    "coreStrength": "💡 核心优势",
+    "energyManagement": "⚡ 能量管理",
+    "growthDirection": "🚀 成长方向",
+    "actions": {
+      "back": "返回修改",
+      "regenerate": "重新生成",
+      "saving": "保存中...",
+      "save": "保存报告"
+    },
+    "toasts": {
+      "saved": "已保存到本地",
+      "saveFailed": "保存失败"
+    }
+  },
+  "reportResultPage": {
+    "title": "报告解读",
+    "subtitle": "基于识别的 TOP5 优势生成",
+    "top5Title": "你的 TOP5 优势",
+    "summaryTitle": "一句话解读",
+    "domainDistribution": "领域分布",
+    "strengthDetails": "优势详解",
+    "whatItIs": "这是什么",
+    "yourStrength": "你的表现",
+    "watchOut": "注意",
+    "bestWhen": "最佳场景",
+    "pairWith": "搭配优势",
+    "comboAnalysis": "优势组合分析",
+    "coreDrive": "核心驱动力",
+    "potentialTraps": "潜在陷阱",
+    "synergy": "协同效应",
+    "keyInsights": "关键洞察",
+    "suggestedNext": "建议的下一步",
+    "personalAdvice": "给你的建议",
+    "domainCount": "{count}项 ({percentage}%)",
+    "actions": {
+      "back": "返回",
+      "saving": "保存中...",
+      "save": "保存报告"
+    },
+    "toasts": {
+      "saved": "已保存到本地",
+      "saveFailed": "保存失败"
+    }
+  },
+  "ocrPage": {
+    "title": "上传你的盖洛普报告",
+    "subtitle": "AI 将自动识别你的 TOP5 优势（首次使用需下载 OCR 引擎约 20MB）",
+    "dropHint": "点击或拖拽上传报告图片",
+    "processing": "正在处理...",
+    "imageHint": "请确保图片清晰，包含 TOP5 优势列表",
+    "uploadedAlt": "上传的报告",
+    "reupload": "重新上传",
+    "status": {
+      "downloading": "下载 OCR 引擎...",
+      "recognizing": "正在识别... {progress}%",
+      "success": "识别完成！找到 {count} 个优势",
+      "error": "识别失败，请重试或手动选择"
+    },
+    "errorNotEnough": "未能识别到足够优势，请手动选择或重试",
+    "errorGeneric": "OCR 识别失败",
+    "strengthsTitle": "你的 TOP5 优势",
+    "strengthsHint": "请选择 3-5 个优势（<count>{value}</count>/5）",
+    "continue": {
+      "needMore": "请至少选择 3 个优势",
+      "generate": "生成报告解读"
+    },
+    "aiTag": "(AI)",
+    "actions": {
+      "back": "返回"
+    }
+  }
+}

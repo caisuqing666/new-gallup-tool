@@ -1,18 +1,19 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import LandingPage from './components/LandingPage';
-import PathSelectionPage from './components/PathSelectionPage';
-import ScenarioPage from './components/ScenarioPage';
-import StrengthsPage from './components/StrengthsPage';
-import InputPage from './components/InputPage';
-import LoadingPage from './components/LoadingPage';
-import ResultPage from './components/ResultPage';
-import GuideResultPage from './components/GuideResultPage';
-import CareerResultPage from './components/CareerResultPage';
-import OcrUploadWithTesseract from './components/OcrUploadWithTesseract';
-import ReportResultPlaceholder from './components/ReportResultPlaceholder';
-import { useStepMachine } from './hooks/useStepMachine';
+import { useParams } from 'next/navigation';
+import LandingPage from '../components/LandingPage';
+import PathSelectionPage from '../components/PathSelectionPage';
+import ScenarioPage from '../components/ScenarioPage';
+import StrengthsPage from '../components/StrengthsPage';
+import InputPage from '../components/InputPage';
+import LoadingPage from '../components/LoadingPage';
+import ResultPage from '../components/ResultPage';
+import GuideResultPage from '../components/GuideResultPage';
+import CareerResultPage from '../components/CareerResultPage';
+import OcrUploadWithTesseract from '../components/OcrUploadWithTesseract';
+import ReportResultPlaceholder from '../components/ReportResultPlaceholder';
+import { useStepMachine } from '../hooks/useStepMachine';
 import { GallupResult } from '@/lib/types';
 import { ALL_STRENGTHS } from '@/lib/gallup-strengths';
 import { generateMockResult } from '@/lib/mock-data';
@@ -22,6 +23,8 @@ import { generateMockReportResult } from '@/lib/mock-report';
 import { addHistory } from '@/lib/history';
 
 export default function Home() {
+  const params = useParams();
+  const locale = (params.locale as string) || 'zh';
   const { state, actions } = useStepMachine();
   const [mounted, setMounted] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -57,6 +60,7 @@ export default function Home() {
               },
               body: JSON.stringify({
                 strengths: state.formData.strengths,
+                locale,
               }),
               signal: abortControllerRef.current?.signal,
             });
@@ -77,6 +81,7 @@ export default function Home() {
               },
               body: JSON.stringify({
                 strengths: state.formData.strengths,
+                locale,
               }),
               signal: abortControllerRef.current?.signal,
             });
@@ -99,6 +104,7 @@ export default function Home() {
                 scenario: state.formData.scenario,
                 strengths: state.formData.strengths,
                 confusion: state.formData.confusion,
+                locale,
               }),
               signal: abortControllerRef.current?.signal,
             });
@@ -293,7 +299,7 @@ export default function Home() {
                 actions.selectStrength(strengthId);
               }
             });
-            
+
             // 准备优势数据（包含排名和领域信息）
             const top5Strengths = strengths.map((strengthId, index) => {
               const strength = ALL_STRENGTHS.find(s => s.id === strengthId);
@@ -314,6 +320,7 @@ export default function Home() {
                 body: JSON.stringify({
                   strengths: top5Strengths,
                   useAi: true,
+                  locale,
                 }),
               });
 

@@ -353,7 +353,8 @@ export function generateMockResult(
   confusion: string,
   problemType?: ProblemType,
   problemFocus?: ProblemFocus,
-  useNewPipeline: boolean = true  // 开关：是否使用新的数据流管道
+  useNewPipeline: boolean = true,  // 开关：是否使用新的数据流管道
+  locale: 'zh' | 'en' = 'zh'  // 语言参数
 ): GallupResult {
   // ═══════════════════════════════════════════════════════════
   // 新数据流管道（推荐）
@@ -361,8 +362,8 @@ export function generateMockResult(
   // ═══════════════════════════════════════════════════════════
   if (useNewPipeline) {
     try {
-      const ctx = buildAnalysisContext(scenario, strengths as StrengthId[], confusion);
-      return generateResultFromContext(ctx);
+      const ctx = buildAnalysisContext(scenario, strengths as StrengthId[], confusion, locale);
+      return generateResultFromContext(ctx, locale);
     } catch (e) {
       // 如果新管道出错，回退到旧逻辑
       console.warn('新数据流管道出错，回退到旧逻辑:', e);

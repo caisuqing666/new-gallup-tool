@@ -4,6 +4,7 @@ import { ALL_STRENGTHS } from '@/lib/gallup-strengths';
 import { generateMockReportResult } from '@/lib/mock-report';
 import { buildPrompt } from '@/lib/prompts';
 import { isValidReportResultData } from '@/lib/schema';
+import { Locale } from '@/i18n/config';
 
 // 重新导出类型，供内部使用
 import { parseReportInterpretResponse, isValidReportInterpretResult } from '@/lib/report-interpret-prompts';
@@ -28,6 +29,7 @@ interface InterpretRequest {
   strengths?: SimplifiedStrength[] | FullStrength[] | StrengthId[];
   useAi?: boolean;
   provider?: 'zhipu' | 'anthropic' | 'openai' | 'minimax';
+  locale?: unknown;  // 语言: 'zh' 或 'en'
 }
 
 interface InterpretResponse {
@@ -395,7 +397,16 @@ function normalizeStrengths(
 export async function POST(request: NextRequest): Promise<NextResponse<InterpretResponse>> {
   try {
     const body: InterpretRequest = await request.json();
-    const { strengths, useAi = true, provider = 'zhipu' } = body;
+    const { strengths, useAi = true, provider = 'zhipu', locale } = body;
+
+    // 验证 locale 参数
+    const currentLocale = (locale as Locale | undefined) || 'zh';
+    if (typeof currentLocale !== 'string' || !['zh', 'en'].includes(currentLocale)) {
+      return NextResponse.json(
+        { success: false, error: 'locale 必须是 "zh" 或 "en"' },
+        { status: 400 }
+      );
+    }
 
     // 验证优势列表
     if (!strengths || !Array.isArray(strengths)) {
@@ -418,6 +429,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Interpret
     // 生成解读结果
     console.info('📊 生成报告解读', {
       provider,
+      locale: currentLocale,
       strengths: normalizedStrengths.map(s => s.name).join(', ')
     });
 
@@ -448,6 +460,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Interpret
         usedMockFallback,
         processingTimeMs: Date.now() - startTime,
         version: '1.0.0',
+        locale: currentLocale,
       },
     });
 
