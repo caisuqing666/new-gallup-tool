@@ -75,7 +75,9 @@ function getAIConfig(provider: AIProvider): AIConfig {
   };
 }
 
-const API_TIMEOUT = 120000;
+// Vercel Serverless 函数超时限制：Hobby 10s，Pro 60s
+// 设置为 55 秒，留出余量
+const API_TIMEOUT = 55000;
 
 async function generateGuideWithAI(
   strengths: StrengthId[],
@@ -234,9 +236,12 @@ export async function POST(request: NextRequest) {
       console.warn('AI 配置无效，优势指南降级为 Mock', config.errors);
     }
 
+    let aiError: string | undefined;
+    const provider = (config.config.aiProvider as AIProvider) || 'zhipu';
+
     if (aiEnabled) {
+
       try {
-        const provider = (config.config.aiProvider as AIProvider) || 'zhipu';
         const guideData = await generateGuideWithAI(strengthIds, provider);
 
         if (!isValidGuideResultData(guideData)) {
@@ -249,11 +254,29 @@ export async function POST(request: NextRequest) {
           metadata: {
             usedMockFallback: false,
             processingTimeMs: Date.now() - startTime,
+            provider,
             version: '1.0.0',
           },
         });
       } catch (error) {
-        console.warn('优势指南 AI 生成失败，降级为 Mock:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const isTimeout = errorMessage.includes('aborted') || errorMessage.includes('timeout');
+        aiError = isTimeout
+          ? `AI 请求超时 (provider: ${provider})`
+          : `AI 生成失败: ${errorMessage}`;
+        console.warn('优势指南 AI 生成失败，降级为 Mock:', aiError);
+
+        // 如果是超时错误，返回更详细的错误信息
+        if (isTimeout) {
+          return NextResponse.json({
+            success: false,
+            error: `${provider.toUpperCase()} API 请求超时，请稍后重试或检查网络连接`,
+            metadata: {
+              provider,
+              processingTimeMs: Date.now() - startTime,
+            },
+          }, { status: 504 });
+        }
       }
     }
 
@@ -271,6 +294,7 @@ export async function POST(request: NextRequest) {
       data: guideData,
       metadata: {
         usedMockFallback: true,
+        fallbackReason: aiError || (aiEnabled ? 'AI 生成失败' : 'AI 未启用'),
         processingTimeMs: Date.now() - startTime,
         version: '1.0.0',
       },

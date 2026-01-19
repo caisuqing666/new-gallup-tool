@@ -1,0 +1,16 @@
+{
+  "functions": {
+    "app/api/guide/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/generate/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/career/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/interpret/route.ts": {
+      "maxDuration": 60
+    }
+  }
+}
