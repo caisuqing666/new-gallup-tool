@@ -266,7 +266,10 @@ export async function POST(request: NextRequest) {
     }
 
     let aiError: string | undefined;
-    const provider = (config.config.aiProvider as AIProvider) || 'zhipu';
+    const minimaxReady = !!process.env.MINIMAX_API_KEY && !!process.env.MINIMAX_GROUP_ID;
+    const provider = minimaxReady
+      ? 'minimax'
+      : ((config.config.aiProvider as AIProvider) || 'zhipu');
 
     if (aiEnabled) {
 
