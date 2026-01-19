@@ -14,6 +14,7 @@ import type { GallupResult } from '../schema';
 import { isValidResultData } from '../schema';
 import { generateResult } from '../ai-generate';
 import { parseConfusion, ProblemType as ConfusionProblemType } from '../confusion-parser';
+import { validateConfig } from '../config-validator';
 
 // ============================================================
 // 类型定义
@@ -84,6 +85,7 @@ async function generateWithAI(
 ): Promise<GallupResult> {
   // 设置环境变量以启用 AI
   const originalEnableAi = process.env.ENABLE_AI;
+  const originalProvider = process.env.AI_PROVIDER;
   process.env.ENABLE_AI = 'true';
 
   try {
@@ -99,6 +101,11 @@ async function generateWithAI(
       process.env.ENABLE_AI = originalEnableAi;
     } else {
       delete process.env.ENABLE_AI;
+    }
+    if (originalProvider !== undefined) {
+      process.env.AI_PROVIDER = originalProvider;
+    } else {
+      delete process.env.AI_PROVIDER;
     }
   }
 }
@@ -154,7 +161,16 @@ export async function generateActionPlan(options: GenerateOptions): Promise<Gene
   const { scenario, strengths, confusion, problemType, problemFocus, provider, locale } = options;
 
   // 确定 Provider
-  const effectiveProvider: ProviderConfig = provider || { type: 'mock' };
+  const config = validateConfig();
+  const aiEnabled = config.config.aiEnabled && config.valid;
+  if (config.config.aiEnabled && !config.valid) {
+    console.warn('AI 配置无效，突破方案降级为 Mock', config.errors);
+  }
+
+  const defaultProvider: ProviderConfig = aiEnabled
+    ? { type: 'ai', provider: config.config.aiProvider as ProviderConfig['provider'] }
+    : { type: 'mock' };
+  const effectiveProvider: ProviderConfig = provider || defaultProvider;
 
   // 解析困惑，提取问题类型和焦点
   let parsedProblem: ReturnType<typeof parseConfusion>;

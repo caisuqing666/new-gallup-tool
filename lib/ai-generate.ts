@@ -27,11 +27,16 @@ import {
 export const ENABLE_AI = process.env.ENABLE_AI === 'true' || process.env.NEXT_PUBLIC_ENABLE_AI === 'true';
 
 // AI 提供商选择（anthropic、openai、zhipu 或 minimax）
-const AI_PROVIDER = (process.env.AI_PROVIDER || 'anthropic') as 'anthropic' | 'openai' | 'zhipu' | 'minimax';
+function getAIProvider(): 'anthropic' | 'openai' | 'zhipu' | 'minimax' {
+  return (process.env.AI_PROVIDER || 'anthropic') as 'anthropic' | 'openai' | 'zhipu' | 'minimax';
+}
+
+const AI_RACE_PROVIDERS = process.env.AI_RACE_PROVIDERS !== 'false';
+const AI_RACE_HEDGE_MS = parseInt(process.env.AI_RACE_HEDGE_MS || '500', 10);
 
 // AI API 配置
 const getAIConfig = () => {
-  const provider = AI_PROVIDER;
+  const provider = getAIProvider();
 
   if (provider === 'anthropic') {
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -97,18 +102,62 @@ const getAIConfig = () => {
 // 获取超时配置
 const API_TIMEOUT = parseInt(process.env.API_TIMEOUT || '60000', 10);
 
+function hasZhipuKey(): boolean {
+  return !!(process.env.ZHIPU_API_KEY || process.env.GLMS_API_KEY);
+}
+
+function hasMinimaxConfig(): boolean {
+  return !!process.env.MINIMAX_API_KEY && !!process.env.MINIMAX_GROUP_ID;
+}
+
+function shouldRaceZhipuMinimax(): boolean {
+  return AI_RACE_PROVIDERS && hasZhipuKey() && hasMinimaxConfig();
+}
+
+function createAbortController(externalSignal?: AbortSignal) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+  const onAbort = () => controller.abort();
+
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      controller.abort();
+    } else {
+      externalSignal.addEventListener('abort', onAbort);
+    }
+  }
+
+  return {
+    controller,
+    timeoutId,
+    externalSignal,
+    onAbort,
+  };
+}
+
+function cleanupAbortController(input: {
+  timeoutId: ReturnType<typeof setTimeout>;
+  externalSignal?: AbortSignal;
+  onAbort: () => void;
+}) {
+  clearTimeout(input.timeoutId);
+  if (input.externalSignal) {
+    input.externalSignal.removeEventListener('abort', input.onAbort);
+  }
+}
+
 // ========================================
 // AI 生成函数 - 解释页
 // ========================================
 
 async function generateExplainWithClaude(
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  signal?: AbortSignal
 ): Promise<ExplainData> {
   const config = getAIConfig();
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal);
 
   try {
     const response = await fetch(config.endpoint, {
@@ -132,8 +181,6 @@ async function generateExplainWithClaude(
       signal: controller.signal,
     });
 
-    clearTimeout(timeoutId);
-
     if (!response.ok) {
       const error = await response.text();
       throw new Error(`Claude API 错误 (${response.status}): ${error}`);
@@ -148,17 +195,19 @@ async function generateExplainWithClaude(
       throw new Error(`AI 请求超时（${API_TIMEOUT}ms），请稍后重试`);
     }
     throw error;
+  } finally {
+    cleanupAbortController({ timeoutId, externalSignal, onAbort });
   }
 }
 
 async function generateExplainWithOpenAI(
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  signal?: AbortSignal
 ): Promise<ExplainData> {
   const config = getAIConfig();
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal);
 
   try {
     const response = await fetch(config.endpoint, {
@@ -185,8 +234,6 @@ async function generateExplainWithOpenAI(
       signal: controller.signal,
     });
 
-    clearTimeout(timeoutId);
-
     if (!response.ok) {
       const error = await response.text();
       throw new Error(`OpenAI API 错误 (${response.status}): ${error}`);
@@ -201,6 +248,8 @@ async function generateExplainWithOpenAI(
       throw new Error(`AI 请求超时（${API_TIMEOUT}ms），请稍后重试`);
     }
     throw error;
+  } finally {
+    cleanupAbortController({ timeoutId, externalSignal, onAbort });
   }
 }
 
@@ -225,12 +274,12 @@ function parseExplainResponse(content: string): ExplainData {
 
 async function generateDecideWithClaude(
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  signal?: AbortSignal
 ): Promise<DecideOutput> {
   const config = getAIConfig();
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal);
 
   try {
     const response = await fetch(config.endpoint, {
@@ -254,8 +303,6 @@ async function generateDecideWithClaude(
       signal: controller.signal,
     });
 
-    clearTimeout(timeoutId);
-
     if (!response.ok) {
       const error = await response.text();
       throw new Error(`Claude API 错误 (${response.status}): ${error}`);
@@ -270,17 +317,19 @@ async function generateDecideWithClaude(
       throw new Error(`AI 请求超时（${API_TIMEOUT}ms），请稍后重试`);
     }
     throw error;
+  } finally {
+    cleanupAbortController({ timeoutId, externalSignal, onAbort });
   }
 }
 
 async function generateDecideWithOpenAI(
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  signal?: AbortSignal
 ): Promise<DecideOutput> {
   const config = getAIConfig();
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal);
 
   try {
     const response = await fetch(config.endpoint, {
@@ -307,8 +356,6 @@ async function generateDecideWithOpenAI(
       signal: controller.signal,
     });
 
-    clearTimeout(timeoutId);
-
     if (!response.ok) {
       const error = await response.text();
       throw new Error(`OpenAI API 错误 (${response.status}): ${error}`);
@@ -323,6 +370,8 @@ async function generateDecideWithOpenAI(
       throw new Error(`AI 请求超时（${API_TIMEOUT}ms），请稍后重试`);
     }
     throw error;
+  } finally {
+    cleanupAbortController({ timeoutId, externalSignal, onAbort });
   }
 }
 
@@ -347,12 +396,12 @@ function parseDecideResponse(content: string): DecideOutput {
 
 async function generateExplainWithZhipu(
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  signal?: AbortSignal
 ): Promise<ExplainData> {
   const config = getAIConfig();
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal);
 
   try {
     const response = await fetch(config.endpoint, {
@@ -371,8 +420,6 @@ async function generateExplainWithZhipu(
       }),
       signal: controller.signal,
     });
-
-    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const error = await response.text();
@@ -388,17 +435,19 @@ async function generateExplainWithZhipu(
       throw new Error(`AI 请求超时（${API_TIMEOUT}ms），请稍后重试`);
     }
     throw error;
+  } finally {
+    cleanupAbortController({ timeoutId, externalSignal, onAbort });
   }
 }
 
 async function generateDecideWithZhipu(
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  signal?: AbortSignal
 ): Promise<DecideOutput> {
   const config = getAIConfig();
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal);
 
   try {
     const response = await fetch(config.endpoint, {
@@ -418,8 +467,6 @@ async function generateDecideWithZhipu(
       signal: controller.signal,
     });
 
-    clearTimeout(timeoutId);
-
     if (!response.ok) {
       const error = await response.text();
       throw new Error(`Zhipu API 错误 (${response.status}): ${error}`);
@@ -434,6 +481,8 @@ async function generateDecideWithZhipu(
       throw new Error(`AI 请求超时（${API_TIMEOUT}ms），请稍后重试`);
     }
     throw error;
+  } finally {
+    cleanupAbortController({ timeoutId, externalSignal, onAbort });
   }
 }
 
@@ -443,12 +492,12 @@ async function generateDecideWithZhipu(
 
 async function generateExplainWithMinimax(
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  signal?: AbortSignal
 ): Promise<ExplainData> {
   const config = getAIConfig();
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal);
 
   // 构建带 GroupId 的完整 URL
   const fullUrl = `${config.endpoint}?GroupId=${(config as any).groupId}`;
@@ -470,8 +519,6 @@ async function generateExplainWithMinimax(
       }),
       signal: controller.signal,
     });
-
-    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const error = await response.text();
@@ -487,17 +534,19 @@ async function generateExplainWithMinimax(
       throw new Error(`AI 请求超时（${API_TIMEOUT}ms），请稍后重试`);
     }
     throw error;
+  } finally {
+    cleanupAbortController({ timeoutId, externalSignal, onAbort });
   }
 }
 
 async function generateDecideWithMinimax(
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  signal?: AbortSignal
 ): Promise<DecideOutput> {
   const config = getAIConfig();
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal);
 
   // 构建带 GroupId 的完整 URL
   const fullUrl = `${config.endpoint}?GroupId=${(config as any).groupId}`;
@@ -520,8 +569,6 @@ async function generateDecideWithMinimax(
       signal: controller.signal,
     });
 
-    clearTimeout(timeoutId);
-
     if (!response.ok) {
       const error = await response.text();
       throw new Error(`Minimax API 错误 (${response.status}): ${error}`);
@@ -535,6 +582,116 @@ async function generateDecideWithMinimax(
     if (error instanceof Error && error.name === 'AbortError') {
       throw new Error(`AI 请求超时（${API_TIMEOUT}ms），请稍后重试`);
     }
+    throw error;
+  } finally {
+    cleanupAbortController({ timeoutId, externalSignal, onAbort });
+  }
+}
+
+async function raceExplainZhipuMinimax(
+  systemPrompt: string,
+  userPrompt: string,
+  preferred: 'zhipu' | 'minimax'
+): Promise<ExplainData> {
+  const controllers = {
+    zhipu: new AbortController(),
+    minimax: new AbortController(),
+  };
+
+  let delayedTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const start = (provider: 'zhipu' | 'minimax') => {
+    return (provider === 'zhipu'
+      ? generateExplainWithZhipu(systemPrompt, userPrompt, controllers.zhipu.signal)
+      : generateExplainWithMinimax(systemPrompt, userPrompt, controllers.minimax.signal)
+    ).then(result => ({ provider, result }));
+  };
+
+  const tasks: Promise<{ provider: 'zhipu' | 'minimax'; result: ExplainData }>[] = [];
+  if (preferred === 'zhipu') {
+    tasks.push(start('zhipu'));
+    tasks.push(new Promise((resolve, reject) => {
+      delayedTimer = setTimeout(() => {
+        start('minimax').then(resolve).catch(reject);
+      }, AI_RACE_HEDGE_MS);
+    }));
+  } else {
+    tasks.push(start('minimax'));
+    tasks.push(new Promise((resolve, reject) => {
+      delayedTimer = setTimeout(() => {
+        start('zhipu').then(resolve).catch(reject);
+      }, AI_RACE_HEDGE_MS);
+    }));
+  }
+
+  try {
+    const winner = await Promise.any(tasks);
+    if (delayedTimer) clearTimeout(delayedTimer);
+    if (winner.provider === 'zhipu') {
+      controllers.minimax.abort();
+    } else {
+      controllers.zhipu.abort();
+    }
+    console.info(`✓ 解释页竞速胜出: ${winner.provider}`);
+    return winner.result;
+  } catch (error) {
+    if (delayedTimer) clearTimeout(delayedTimer);
+    controllers.zhipu.abort();
+    controllers.minimax.abort();
+    throw error;
+  }
+}
+
+async function raceDecideZhipuMinimax(
+  systemPrompt: string,
+  userPrompt: string,
+  preferred: 'zhipu' | 'minimax'
+): Promise<DecideOutput> {
+  const controllers = {
+    zhipu: new AbortController(),
+    minimax: new AbortController(),
+  };
+
+  let delayedTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const start = (provider: 'zhipu' | 'minimax') => {
+    return (provider === 'zhipu'
+      ? generateDecideWithZhipu(systemPrompt, userPrompt, controllers.zhipu.signal)
+      : generateDecideWithMinimax(systemPrompt, userPrompt, controllers.minimax.signal)
+    ).then(result => ({ provider, result }));
+  };
+
+  const tasks: Promise<{ provider: 'zhipu' | 'minimax'; result: DecideOutput }>[] = [];
+  if (preferred === 'zhipu') {
+    tasks.push(start('zhipu'));
+    tasks.push(new Promise((resolve, reject) => {
+      delayedTimer = setTimeout(() => {
+        start('minimax').then(resolve).catch(reject);
+      }, AI_RACE_HEDGE_MS);
+    }));
+  } else {
+    tasks.push(start('minimax'));
+    tasks.push(new Promise((resolve, reject) => {
+      delayedTimer = setTimeout(() => {
+        start('zhipu').then(resolve).catch(reject);
+      }, AI_RACE_HEDGE_MS);
+    }));
+  }
+
+  try {
+    const winner = await Promise.any(tasks);
+    if (delayedTimer) clearTimeout(delayedTimer);
+    if (winner.provider === 'zhipu') {
+      controllers.minimax.abort();
+    } else {
+      controllers.zhipu.abort();
+    }
+    console.info(`✓ 判定页竞速胜出: ${winner.provider}`);
+    return winner.result;
+  } catch (error) {
+    if (delayedTimer) clearTimeout(delayedTimer);
+    controllers.zhipu.abort();
+    controllers.minimax.abort();
     throw error;
   }
 }
@@ -716,10 +873,13 @@ export async function generateResult(
         scenarioTitle,
       };
       // 默认使用智谱 GLM4
-      confusionUnderstanding = await generateUnderstanding(understandingInput, 'zhipu');
+      const understandingProvider = config.provider === 'minimax' ? undefined : config.provider;
+      if (understandingProvider) {
+        confusionUnderstanding = await generateUnderstanding(understandingInput, understandingProvider);
+      }
       console.info('✓ 已生成理解层转译:', {
-        coreBlock: confusionUnderstanding.coreBlock.substring(0, 40) + '...',
-        decisionTension: confusionUnderstanding.decisionTension,
+        coreBlock: confusionUnderstanding?.coreBlock?.substring(0, 40) + '...',
+        decisionTension: confusionUnderstanding?.decisionTension,
       });
     } catch (error) {
       console.warn('理解层转译生成失败，将继续使用基础流程:', error);
@@ -786,10 +946,17 @@ export async function generateResult(
             }
             throw claudeError;
           }
-        } else if (config.provider === 'zhipu') {
-          return await generateExplainWithZhipu(explainPrompt.systemPrompt, explainPrompt.userPrompt);
-        } else if (config.provider === 'minimax') {
-          return await generateExplainWithMinimax(explainPrompt.systemPrompt, explainPrompt.userPrompt);
+        } else if (config.provider === 'zhipu' || config.provider === 'minimax') {
+          if (shouldRaceZhipuMinimax()) {
+            return await raceExplainZhipuMinimax(
+              explainPrompt.systemPrompt,
+              explainPrompt.userPrompt,
+              config.provider
+            );
+          }
+          return config.provider === 'zhipu'
+            ? await generateExplainWithZhipu(explainPrompt.systemPrompt, explainPrompt.userPrompt)
+            : await generateExplainWithMinimax(explainPrompt.systemPrompt, explainPrompt.userPrompt);
         } else {
           return await generateExplainWithOpenAI(explainPrompt.systemPrompt, explainPrompt.userPrompt);
         }
@@ -808,10 +975,17 @@ export async function generateResult(
             }
             throw claudeError;
           }
-        } else if (config.provider === 'zhipu') {
-          return await generateDecideWithZhipu(decidePrompt.systemPrompt, decidePrompt.userPrompt);
-        } else if (config.provider === 'minimax') {
-          return await generateDecideWithMinimax(decidePrompt.systemPrompt, decidePrompt.userPrompt);
+        } else if (config.provider === 'zhipu' || config.provider === 'minimax') {
+          if (shouldRaceZhipuMinimax()) {
+            return await raceDecideZhipuMinimax(
+              decidePrompt.systemPrompt,
+              decidePrompt.userPrompt,
+              config.provider
+            );
+          }
+          return config.provider === 'zhipu'
+            ? await generateDecideWithZhipu(decidePrompt.systemPrompt, decidePrompt.userPrompt)
+            : await generateDecideWithMinimax(decidePrompt.systemPrompt, decidePrompt.userPrompt);
         } else {
           return await generateDecideWithOpenAI(decidePrompt.systemPrompt, decidePrompt.userPrompt);
         }
@@ -1147,14 +1321,22 @@ export function checkAIConfig(): {
     return { enabled: false };
   }
 
-  const provider = AI_PROVIDER;
+  const provider = getAIProvider();
   const hasApiKey = provider === 'anthropic'
     ? !!process.env.ANTHROPIC_API_KEY
-    : !!process.env.OPENAI_API_KEY;
+    : provider === 'openai'
+      ? !!process.env.OPENAI_API_KEY
+      : provider === 'zhipu'
+        ? !!(process.env.ZHIPU_API_KEY || process.env.GLMS_API_KEY)
+        : !!process.env.MINIMAX_API_KEY;
 
   const model = provider === 'anthropic'
     ? process.env.ANTHROPIC_MODEL
-    : process.env.OPENAI_MODEL;
+    : provider === 'openai'
+      ? process.env.OPENAI_MODEL
+      : provider === 'zhipu'
+        ? process.env.ZHIPU_MODEL
+        : process.env.MINIMAX_MODEL;
 
   return {
     enabled: true,
