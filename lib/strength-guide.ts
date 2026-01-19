@@ -857,20 +857,46 @@ function generateSynergyPairs(strengthIds: string[]): Array<{ strengths: [string
 
   if (names.length < 2) return pairs;
 
+  const baseTemplates = [
+    '当${first}推动方向、${second}负责落地时，你会更快看到结果。',
+    '把${first}当作引擎，用${second}把想法落地。',
+    '先用${first}厘清目标，再用${second}推进执行。',
+    '让${first}负责洞察，让${second}负责连接与扩散。',
+    '用${first}打底，${second}负责把成果呈现出来。',
+    '在关键节点先启动${first}，再用${second}把节奏稳住。',
+    '当${first}与${second}同频时，你能同时兼顾方向与推进。',
+    '用${first}设定优先级，让${second}成为推进器。',
+  ];
+  const tailTemplates = [
+    '建议用“${first} → ${second}”的顺序启动任务。',
+    '可以在开局用${first}定方向，落地环节交给${second}。',
+    '试着把${second}放在最后一步，帮助你把${first}的想法转成行动。',
+    '把${first}当作问题定义器，${second}当作解决推进器。',
+    '在团队协作里，让${first}输出框架，${second}推动共识。',
+    '日常节奏上，先用${first}做判断，再让${second}把事情推进。',
+  ];
+
+  const hashString = (value: string): number => {
+    let hash = 0;
+    for (let i = 0; i < value.length; i++) {
+      hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+    }
+    return hash;
+  };
+
   // 生成所有可能的组合（最多 3 对）
   for (let i = 0; i < Math.min(names.length - 1, 3); i++) {
     const first = names[i];
     const second = names[i + 1];
     if (!first || !second) continue;
 
-    const synergyTemplates = [
-      `用${first}来${second}，你会发现两者的结合能产生奇妙的化学反应。`,
-      `当${first}遇上${second}，你的行动会更加有力和精准。`,
-      `${first}和${second}的组合，让你既能看到大局，又能落实到细节。`,
-    ];
+    const seed = `${first}:${second}:${i}`;
+    const baseIndex = hashString(`${seed}:base`) % baseTemplates.length;
+    const tailIndex = hashString(`${seed}:tail`) % tailTemplates.length;
+    const template = `${baseTemplates[baseIndex]}${tailTemplates[tailIndex]}`;
     pairs.push({
       strengths: [first, second],
-      howToUse: synergyTemplates[Math.floor(Math.random() * synergyTemplates.length)],
+      howToUse: template.replace(/\$\{first\}/g, first).replace(/\$\{second\}/g, second),
     });
   }
 
