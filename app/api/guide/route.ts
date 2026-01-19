@@ -271,6 +271,13 @@ export async function POST(request: NextRequest) {
       ? 'minimax'
       : ((config.config.aiProvider as AIProvider) || 'zhipu');
 
+    console.info('Guide provider selection', {
+      aiEnabled,
+      configValid: config.valid,
+      minimaxReady,
+      provider,
+    });
+
     if (aiEnabled) {
 
       try {
