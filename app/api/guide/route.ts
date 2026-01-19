@@ -248,6 +248,19 @@ export async function POST(request: NextRequest) {
     const aiEnabled = config.config.aiEnabled && config.valid;
     const strengthIds = strengths as StrengthId[];
 
+    // 详细日志：输出配置状态
+    console.log('[优势指南] 配置状态:', {
+      aiEnabled: config.config.aiEnabled,
+      valid: config.valid,
+      errors: config.errors,
+      aiProvider: config.config.aiProvider,
+      hasApiKey: config.config.hasApiKey,
+      model: config.config.model,
+      finalAiEnabled: aiEnabled,
+      envEnableAi: process.env.ENABLE_AI,
+      envProvider: process.env.AI_PROVIDER,
+    });
+
     if (config.config.aiEnabled && !config.valid) {
       console.warn('AI 配置无效，优势指南降级为 Mock', config.errors);
     }
