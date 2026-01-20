@@ -1,5 +1,5 @@
 import { applyRules } from '@/lib/coach_rules/applyRules';
-import type { Stage3Output } from '@/lib/legacy-pipeline/types';
+import type { Stage3Output } from '@/lib/pipeline/types';
 
 function baseDiagnosis(overrides: Partial<Stage3Output>): Stage3Output {
   return {

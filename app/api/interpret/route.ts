@@ -5,6 +5,12 @@ import { generateMockReportResult } from '@/lib/mock-report';
 import { buildPrompt } from '@/lib/prompts';
 import { isValidReportResultData } from '@/lib/schema';
 import { Locale } from '@/i18n/config';
+import {
+  InterpretRequestSchema,
+  validateRequest,
+  formatValidationError,
+} from '@/lib/api-schemas';
+import { createInterpretAIContext } from '@/lib/ai-context';
 
 // 重新导出类型，供内部使用
 import { parseReportInterpretResponse, isValidReportInterpretResult } from '@/lib/report-interpret-prompts';
@@ -12,25 +18,6 @@ import { parseReportInterpretResponse, isValidReportInterpretResult } from '@/li
 // ========================================
 // 类型定义
 // ========================================
-
-// 简化的优势输入格式（从前端传入）
-interface SimplifiedStrength {
-  id: StrengthId;
-}
-
-// 完整的优势输入格式（兼容旧接口）
-interface FullStrength {
-  rank: number;
-  name: string;
-  domain: string;
-}
-
-interface InterpretRequest {
-  strengths?: SimplifiedStrength[] | FullStrength[] | StrengthId[];
-  useAi?: boolean;
-  provider?: 'zhipu' | 'anthropic' | 'openai' | 'minimax';
-  locale?: unknown;  // 语言: 'zh' 或 'en'
-}
 
 interface InterpretResponse {
   success: boolean;
@@ -109,8 +96,6 @@ function getAIConfig(provider: AIProvider = 'zhipu'): AIConfig {
   };
 }
 
-const API_TIMEOUT = 120000;
-
 // ========================================
 // AI 生成函数
 // ========================================
@@ -121,8 +106,9 @@ async function generateWithZhipu(
   strengths: StrengthId[]
 ): Promise<ReportInterpretResult> {
   const config = getAIConfig('zhipu');
+  const aiContext = createInterpretAIContext();
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+  const timeoutId = setTimeout(() => controller.abort(), aiContext.timeout);
 
   try {
     const response = await fetch(config.endpoint, {
@@ -162,7 +148,7 @@ async function generateWithZhipu(
   } catch (error) {
     clearTimeout(timeoutId);
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`AI 请求超时（${API_TIMEOUT}ms）`);
+      throw new Error(`AI 请求超时（${aiContext.timeout}ms）`);
     }
     throw error;
   }
@@ -174,8 +160,9 @@ async function generateWithClaude(
   strengths: StrengthId[]
 ): Promise<ReportInterpretResult> {
   const config = getAIConfig('anthropic');
+  const aiContext = createInterpretAIContext();
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+  const timeoutId = setTimeout(() => controller.abort(), aiContext.timeout);
 
   try {
     const response = await fetch(config.endpoint, {
@@ -213,7 +200,7 @@ async function generateWithClaude(
   } catch (error) {
     clearTimeout(timeoutId);
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`AI 请求超时（${API_TIMEOUT}ms）`);
+      throw new Error(`AI 请求超时（${aiContext.timeout}ms）`);
     }
     throw error;
   }
@@ -225,8 +212,9 @@ async function generateWithOpenAI(
   strengths: StrengthId[]
 ): Promise<ReportInterpretResult> {
   const config = getAIConfig('openai');
+  const aiContext = createInterpretAIContext();
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+  const timeoutId = setTimeout(() => controller.abort(), aiContext.timeout);
 
   try {
     const response = await fetch(config.endpoint, {
@@ -267,7 +255,64 @@ async function generateWithOpenAI(
   } catch (error) {
     clearTimeout(timeoutId);
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`AI 请求超时（${API_TIMEOUT}ms）`);
+      throw new Error(`AI 请求超时（${aiContext.timeout}ms）`);
+    }
+    throw error;
+  }
+}
+
+async function generateWithMinimax(
+  systemPrompt: string,
+  userPrompt: string,
+  strengths: StrengthId[]
+): Promise<ReportInterpretResult> {
+  const config = getAIConfig('minimax');
+  const aiContext = createInterpretAIContext();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), aiContext.timeout);
+
+  // 构建带 GroupId 的完整 URL
+  const fullUrl = `${config.endpoint}?GroupId=${config.groupId}`;
+
+  try {
+    const response = await fetch(fullUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        max_tokens: 2048,
+        temperature: 0.7,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Minimax API 错误 (${response.status}): ${error}`);
+    }
+
+    const data = await response.json();
+    const content = data?.choices?.[0]?.message?.content ?? '';
+
+    const parsedResult = parseReportInterpretResponse(content, strengths);
+    if (!isValidReportInterpretResult(parsedResult)) {
+      throw new Error('Minimax 响应格式不完整');
+    }
+
+    return parsedResult;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`AI 请求超时（${aiContext.timeout}ms）`);
     }
     throw error;
   }
@@ -355,86 +400,36 @@ async function generateReportInterpret(
 // API 路由处理器
 // ========================================
 
-/**
- * 将输入转换为标准格式
- */
-function normalizeStrengths(
-  input: SimplifiedStrength[] | FullStrength[] | StrengthId[]
-): StandardStrengthInput[] {
-  // 如果已经是简单字符串数组
-  if (input.length > 0 && typeof input[0] === 'string') {
-    const strengthIds = input as StrengthId[];
-    return strengthIds.map((id, index) => {
-      const strength = ALL_STRENGTHS.find(s => s.id === id);
-      return {
-        rank: index + 1,
-        name: strength?.name || id,
-        domain: strength?.domain || '未知领域',
-      };
-    });
-  }
+export async function POST(request: NextRequest): Promise<NextResponse<InterpretResponse>> {
+  try {
+    const body = await request.json();
 
-  // 如果是完整格式 {rank, name, domain}
-  if (input.length > 0 && 'rank' in (input[0] as object)) {
-    return (input as FullStrength[]).map((s, index) => ({
+    // 使用 Zod 校验
+    const validation = validateRequest(InterpretRequestSchema, body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { success: false, error: formatValidationError(validation.errors).error },
+        { status: 400 }
+      );
+    }
+
+    const { strengths, useAi = true, locale } = validation.data;
+
+    // 转换为标准格式
+    const normalizedStrengths = strengths.map((s, index) => ({
       rank: s.rank || index + 1,
       name: s.name,
       domain: s.domain || '未知领域',
     }));
-  }
-
-  // 如果是简化格式 {id}
-  return (input as SimplifiedStrength[]).map((s, index) => {
-    const strength = ALL_STRENGTHS.find(st => st.id === s.id);
-    return {
-      rank: index + 1,
-      name: strength?.name || s.id,
-      domain: strength?.domain || '未知领域',
-    };
-  });
-}
-
-export async function POST(request: NextRequest): Promise<NextResponse<InterpretResponse>> {
-  try {
-    const body: InterpretRequest = await request.json();
-    const { strengths, useAi = true, provider = 'zhipu', locale } = body;
-
-    // 验证 locale 参数
-    const currentLocale = (locale as Locale | undefined) || 'zh';
-    if (typeof currentLocale !== 'string' || !['zh', 'en'].includes(currentLocale)) {
-      return NextResponse.json(
-        { success: false, error: 'locale 必须是 "zh" 或 "en"' },
-        { status: 400 }
-      );
-    }
-
-    // 验证优势列表
-    if (!strengths || !Array.isArray(strengths)) {
-      return NextResponse.json(
-        { success: false, error: '优势列表格式错误' },
-        { status: 400 }
-      );
-    }
-
-    if (strengths.length < 3 || strengths.length > 5) {
-      return NextResponse.json(
-        { success: false, error: '请提供 3-5 个优势' },
-        { status: 400 }
-      );
-    }
-
-    // 转换为标准格式
-    const normalizedStrengths = normalizeStrengths(strengths);
 
     // 生成解读结果
     console.info('📊 生成报告解读', {
-      provider,
-      locale: currentLocale,
+      locale,
       strengths: normalizedStrengths.map(s => s.name).join(', ')
     });
 
-    let { data: result, usedMockFallback } = await generateReportInterpret(normalizedStrengths, useAi, provider);
     const startTime = Date.now();
+    let { data: result, usedMockFallback } = await generateReportInterpret(normalizedStrengths, useAi);
 
     if (!isValidReportResultData(result)) {
       console.warn('报告解读结果未通过 schema 校验，降级到 Mock 数据');
@@ -460,7 +455,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Interpret
         usedMockFallback,
         processingTimeMs: Date.now() - startTime,
         version: '1.0.0',
-        locale: currentLocale,
+        locale,
       },
     });
 
@@ -471,60 +466,5 @@ export async function POST(request: NextRequest): Promise<NextResponse<Interpret
       { success: false, error: errorMessage },
       { status: 500 }
     );
-  }
-}
-async function generateWithMinimax(
-  systemPrompt: string,
-  userPrompt: string,
-  strengths: StrengthId[]
-): Promise<ReportInterpretResult> {
-  const config = getAIConfig('minimax');
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
-
-  // 构建带 GroupId 的完整 URL
-  const fullUrl = `${config.endpoint}?GroupId=${config.groupId}`;
-
-  try {
-    const response = await fetch(fullUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: config.model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        max_tokens: 2048,
-        temperature: 0.7,
-      }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Minimax API 错误 (${response.status}): ${error}`);
-    }
-
-    const data = await response.json();
-    const content = data?.choices?.[0]?.message?.content ?? '';
-
-    const parsedResult = parseReportInterpretResponse(content, strengths);
-    if (!isValidReportInterpretResult(parsedResult)) {
-      throw new Error('Minimax 响应格式不完整');
-    }
-
-    return parsedResult;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`AI 请求超时（${API_TIMEOUT}ms）`);
-    }
-    throw error;
   }
 }

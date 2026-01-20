@@ -8,6 +8,12 @@ import { StrengthGuideResult, StrengthId } from '@/lib/types';
 import { buildStrengthGuidePrompt, parseStrengthGuideResponse } from '@/lib/strength-guide-prompts';
 import { validateConfig } from '@/lib/config-validator';
 import { Locale } from '@/i18n/config';
+import {
+  GuideRequestSchema,
+  validateRequest,
+  formatValidationError,
+} from '@/lib/api-schemas';
+import { createGuideAIContext } from '@/lib/ai-context';
 
 type AIProvider = 'anthropic' | 'openai' | 'zhipu' | 'minimax';
 
@@ -76,24 +82,15 @@ function getAIConfig(provider: AIProvider): AIConfig {
   };
 }
 
-// Vercel Serverless 函数超时限制：Hobby 10s，Pro 60s
-// 在 Vercel 上缩短超时时间，避免平台强制超时导致 504。
-const API_TIMEOUT = (() => {
-  const envTimeout = Number(process.env.AI_TIMEOUT_MS);
-  if (Number.isFinite(envTimeout) && envTimeout > 0) {
-    return envTimeout;
-  }
-  return process.env.VERCEL ? 12000 : 55000;
-})();
-
 async function generateGuideWithAI(
   strengths: StrengthId[],
   provider: AIProvider
 ): Promise<StrengthGuideResult> {
   const { systemPrompt, userPrompt } = buildStrengthGuidePrompt(strengths);
   const config = getAIConfig(provider);
+  const aiContext = createGuideAIContext();
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+  const timeoutId = setTimeout(() => controller.abort(), aiContext.timeout);
 
   try {
     if (config.provider === 'zhipu') {
@@ -216,31 +213,17 @@ async function generateGuideWithAI(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { strengths, locale } = body;
 
-    // 验证 locale 参数
-    const currentLocale = (locale as Locale | undefined) || 'zh';
-    if (typeof currentLocale !== 'string' || !['zh', 'en'].includes(currentLocale)) {
+    // 使用 Zod 校验
+    const validation = validateRequest(GuideRequestSchema, body);
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'locale 必须是 "zh" 或 "en"' },
+        formatValidationError(validation.errors),
         { status: 400 }
       );
     }
 
-    // 参数校验
-    if (!strengths || !Array.isArray(strengths)) {
-      return NextResponse.json(
-        { error: '请提供有效的优势列表' },
-        { status: 400 }
-      );
-    }
-
-    if (strengths.length < 3 || strengths.length > 5) {
-      return NextResponse.json(
-        { error: '请选择 3-5 个优势' },
-        { status: 400 }
-      );
-    }
+    const { strengths, locale } = validation.data;
 
     // 检查是否启用 AI
     const startTime = Date.now();
@@ -295,7 +278,7 @@ export async function POST(request: NextRequest) {
             processingTimeMs: Date.now() - startTime,
             provider,
             version: '1.0.0',
-            locale: currentLocale,
+            locale,
           },
         });
       } catch (error) {
@@ -327,7 +310,7 @@ export async function POST(request: NextRequest) {
         fallbackReason: aiError || (aiEnabled ? 'AI 生成失败' : 'AI 未启用'),
         processingTimeMs: Date.now() - startTime,
         version: '1.0.0',
-        locale: currentLocale,
+        locale,
       },
     });
 

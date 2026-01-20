@@ -12,6 +12,12 @@ import {
   isValidCareerMatchResult,
 } from '@/lib/career-prompts';
 import { Locale } from '@/i18n/config';
+import {
+  CareerRequestSchema,
+  validateRequest,
+  formatValidationError,
+} from '@/lib/api-schemas';
+import { createCareerAIContext } from '@/lib/ai-context';
 
 type AIProvider = 'anthropic' | 'openai' | 'zhipu' | 'minimax';
 
@@ -80,16 +86,15 @@ function getAIConfig(provider: AIProvider): AIConfig {
   };
 }
 
-const API_TIMEOUT = 120000;
-
 async function generateCareerWithAI(
   strengths: StrengthId[],
   provider: AIProvider
 ): Promise<CareerMatchResult> {
   const { systemPrompt, userPrompt } = buildCareerMatchPrompt(strengths);
   const config = getAIConfig(provider);
+  const aiContext = createCareerAIContext();
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+  const timeoutId = setTimeout(() => controller.abort(), aiContext.timeout);
 
   try {
     if (config.provider === 'zhipu') {
@@ -213,31 +218,17 @@ async function generateCareerWithAI(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { strengths, locale } = body;
 
-    // 验证 locale 参数
-    const currentLocale = (locale as Locale | undefined) || 'zh';
-    if (typeof currentLocale !== 'string' || !['zh', 'en'].includes(currentLocale)) {
+    // 使用 Zod 校验
+    const validation = validateRequest(CareerRequestSchema, body);
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'locale 必须是 "zh" 或 "en"' },
+        formatValidationError(validation.errors),
         { status: 400 }
       );
     }
 
-    // 参数校验
-    if (!strengths || !Array.isArray(strengths)) {
-      return NextResponse.json(
-        { error: '请提供有效的优势列表' },
-        { status: 400 }
-      );
-    }
-
-    if (strengths.length < 3 || strengths.length > 5) {
-      return NextResponse.json(
-        { error: '请选择 3-5 个优势' },
-        { status: 400 }
-      );
-    }
+    const { strengths, locale } = validation.data;
 
     // 检查是否启用 AI
     const startTime = Date.now();
@@ -284,7 +275,7 @@ export async function POST(request: NextRequest) {
             usedMockFallback: false,
             processingTimeMs: Date.now() - startTime,
             version: '1.0.0',
-            locale: currentLocale,
+            locale,
           },
         });
       } catch (error) {
@@ -310,7 +301,7 @@ export async function POST(request: NextRequest) {
         usedMockFallback: true,
         processingTimeMs: Date.now() - startTime,
         version: '1.0.0',
-        locale: currentLocale,
+        locale,
       },
     });
 

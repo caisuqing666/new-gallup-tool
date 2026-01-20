@@ -18,6 +18,7 @@ import {
   type ConfusionUnderstanding,
   type UnderstandingInput,
 } from './generate-understanding';
+import { AIContext, createGenerateAIContext } from './ai-context';
 
 // ========================================
 // 环境变量配置
@@ -114,9 +115,9 @@ function shouldRaceZhipuMinimax(): boolean {
   return AI_RACE_PROVIDERS && hasZhipuKey() && hasMinimaxConfig();
 }
 
-function createAbortController(externalSignal?: AbortSignal) {
+function createAbortController(externalSignal?: AbortSignal, timeout: number = API_TIMEOUT) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
   const onAbort = () => controller.abort();
 
   if (externalSignal) {
@@ -153,11 +154,12 @@ function cleanupAbortController(input: {
 async function generateExplainWithClaude(
   systemPrompt: string,
   userPrompt: string,
+  context: AIContext,
   signal?: AbortSignal
 ): Promise<ExplainData> {
   const config = getAIConfig();
 
-  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal);
+  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal, context.timeout);
 
   try {
     const response = await fetch(config.endpoint, {
@@ -203,11 +205,12 @@ async function generateExplainWithClaude(
 async function generateExplainWithOpenAI(
   systemPrompt: string,
   userPrompt: string,
+  context: AIContext,
   signal?: AbortSignal
 ): Promise<ExplainData> {
   const config = getAIConfig();
 
-  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal);
+  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal, context.timeout);
 
   try {
     const response = await fetch(config.endpoint, {
@@ -275,11 +278,12 @@ function parseExplainResponse(content: string): ExplainData {
 async function generateDecideWithClaude(
   systemPrompt: string,
   userPrompt: string,
+  context: AIContext,
   signal?: AbortSignal
 ): Promise<DecideOutput> {
   const config = getAIConfig();
 
-  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal);
+  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal, context.timeout);
 
   try {
     const response = await fetch(config.endpoint, {
@@ -325,11 +329,12 @@ async function generateDecideWithClaude(
 async function generateDecideWithOpenAI(
   systemPrompt: string,
   userPrompt: string,
+  context: AIContext,
   signal?: AbortSignal
 ): Promise<DecideOutput> {
   const config = getAIConfig();
 
-  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal);
+  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal, context.timeout);
 
   try {
     const response = await fetch(config.endpoint, {
@@ -397,11 +402,12 @@ function parseDecideResponse(content: string): DecideOutput {
 async function generateExplainWithZhipu(
   systemPrompt: string,
   userPrompt: string,
+  context: AIContext,
   signal?: AbortSignal
 ): Promise<ExplainData> {
   const config = getAIConfig();
 
-  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal);
+  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal, context.timeout);
 
   try {
     const response = await fetch(config.endpoint, {
@@ -443,11 +449,12 @@ async function generateExplainWithZhipu(
 async function generateDecideWithZhipu(
   systemPrompt: string,
   userPrompt: string,
+  context: AIContext,
   signal?: AbortSignal
 ): Promise<DecideOutput> {
   const config = getAIConfig();
 
-  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal);
+  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal, context.timeout);
 
   try {
     const response = await fetch(config.endpoint, {
@@ -493,11 +500,12 @@ async function generateDecideWithZhipu(
 async function generateExplainWithMinimax(
   systemPrompt: string,
   userPrompt: string,
+  context: AIContext,
   signal?: AbortSignal
 ): Promise<ExplainData> {
   const config = getAIConfig();
 
-  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal);
+  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal, context.timeout);
 
   // 构建带 GroupId 的完整 URL
   const fullUrl = `${config.endpoint}?GroupId=${(config as any).groupId}`;
@@ -542,11 +550,12 @@ async function generateExplainWithMinimax(
 async function generateDecideWithMinimax(
   systemPrompt: string,
   userPrompt: string,
+  context: AIContext,
   signal?: AbortSignal
 ): Promise<DecideOutput> {
   const config = getAIConfig();
 
-  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal);
+  const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal, context.timeout);
 
   // 构建带 GroupId 的完整 URL
   const fullUrl = `${config.endpoint}?GroupId=${(config as any).groupId}`;
@@ -591,7 +600,8 @@ async function generateDecideWithMinimax(
 async function raceExplainZhipuMinimax(
   systemPrompt: string,
   userPrompt: string,
-  preferred: 'zhipu' | 'minimax'
+  preferred: 'zhipu' | 'minimax',
+  context: AIContext
 ): Promise<ExplainData> {
   const controllers = {
     zhipu: new AbortController(),
@@ -602,8 +612,8 @@ async function raceExplainZhipuMinimax(
 
   const start = (provider: 'zhipu' | 'minimax') => {
     return (provider === 'zhipu'
-      ? generateExplainWithZhipu(systemPrompt, userPrompt, controllers.zhipu.signal)
-      : generateExplainWithMinimax(systemPrompt, userPrompt, controllers.minimax.signal)
+      ? generateExplainWithZhipu(systemPrompt, userPrompt, context)
+      : generateExplainWithMinimax(systemPrompt, userPrompt, context)
     ).then(result => ({ provider, result }));
   };
 
@@ -645,7 +655,8 @@ async function raceExplainZhipuMinimax(
 async function raceDecideZhipuMinimax(
   systemPrompt: string,
   userPrompt: string,
-  preferred: 'zhipu' | 'minimax'
+  preferred: 'zhipu' | 'minimax',
+  context: AIContext
 ): Promise<DecideOutput> {
   const controllers = {
     zhipu: new AbortController(),
@@ -656,8 +667,8 @@ async function raceDecideZhipuMinimax(
 
   const start = (provider: 'zhipu' | 'minimax') => {
     return (provider === 'zhipu'
-      ? generateDecideWithZhipu(systemPrompt, userPrompt, controllers.zhipu.signal)
-      : generateDecideWithMinimax(systemPrompt, userPrompt, controllers.minimax.signal)
+      ? generateDecideWithZhipu(systemPrompt, userPrompt, context)
+      : generateDecideWithMinimax(systemPrompt, userPrompt, context)
     ).then(result => ({ provider, result }));
   };
 
@@ -706,9 +717,11 @@ async function raceDecideZhipuMinimax(
 async function lockProblem(
   scenario: string,
   confusion: string,
-  config: ReturnType<typeof getAIConfig>
+  context: AIContext
 ): Promise<string> {
-  const problemLockPrompt = `场景：${scenario}
+  const config = getAIConfig();
+  
+    const problemLockPrompt = `场景：${scenario}
 
 用户描述的困惑：
 ${confusion}
@@ -815,12 +828,16 @@ export async function generateResult(
   problemType: ProblemType,
   problemFocus: ProblemFocus,
   useAI: boolean = ENABLE_AI,
-  locale: 'zh' | 'en' = 'zh'
+  locale: 'zh' | 'en' = 'zh',
+  context?: AIContext
 ): Promise<GallupResult> {
   // ═══════════════════════════════════════════════════════════
   // 第零步：构建 Context Pack（无论 AI 还是 Mock 都需要）
   // confusion-parser → strength-profiles → combo-rules → Context Pack
   // ═══════════════════════════════════════════════════════════
+  // 创建或使用传入的 AIContext
+  const aiContext = context || createGenerateAIContext();
+
   let contextPack: ContextPack | undefined;
   try {
     contextPack = buildContextPack(strengths, confusion);
@@ -889,7 +906,7 @@ export async function generateResult(
     // 第一步：锁定"用户当前问题"（作为后续所有内容的"问题锚点"）
     let lockedProblem: string;
     try {
-      lockedProblem = await lockProblem(scenarioTitle, confusion, config);
+      lockedProblem = await lockProblem(scenarioTitle, confusion, aiContext);
       console.info('✓ 已锁定用户当前问题:', lockedProblem);
     } catch (error) {
       console.warn('问题锁定失败，将直接使用用户原始描述:', error);
@@ -935,14 +952,14 @@ export async function generateResult(
       (async () => {
         if (config.provider === 'anthropic') {
           try {
-            return await generateExplainWithClaude(explainPrompt.systemPrompt, explainPrompt.userPrompt);
+            return await generateExplainWithClaude(explainPrompt.systemPrompt, explainPrompt.userPrompt, aiContext);
           } catch (claudeError) {
             console.warn('Claude API (解释页) 调用失败:', claudeError);
             // 尝试 OpenAI 备用
             const openaiKey = process.env.OPENAI_API_KEY;
             if (openaiKey) {
               console.info('尝试使用 OpenAI 作为备用方案（解释页）');
-              return await generateExplainWithOpenAI(explainPrompt.systemPrompt, explainPrompt.userPrompt);
+              return await generateExplainWithOpenAI(explainPrompt.systemPrompt, explainPrompt.userPrompt, aiContext);
             }
             throw claudeError;
           }
@@ -951,27 +968,28 @@ export async function generateResult(
             return await raceExplainZhipuMinimax(
               explainPrompt.systemPrompt,
               explainPrompt.userPrompt,
-              config.provider
+              config.provider,
+              aiContext
             );
           }
           return config.provider === 'zhipu'
-            ? await generateExplainWithZhipu(explainPrompt.systemPrompt, explainPrompt.userPrompt)
-            : await generateExplainWithMinimax(explainPrompt.systemPrompt, explainPrompt.userPrompt);
+            ? await generateExplainWithZhipu(explainPrompt.systemPrompt, explainPrompt.userPrompt, aiContext)
+            : await generateExplainWithMinimax(explainPrompt.systemPrompt, explainPrompt.userPrompt, aiContext);
         } else {
-          return await generateExplainWithOpenAI(explainPrompt.systemPrompt, explainPrompt.userPrompt);
+          return await generateExplainWithOpenAI(explainPrompt.systemPrompt, explainPrompt.userPrompt, aiContext);
         }
       })(),
       (async () => {
         if (config.provider === 'anthropic') {
           try {
-            return await generateDecideWithClaude(decidePrompt.systemPrompt, decidePrompt.userPrompt);
+            return await generateDecideWithClaude(decidePrompt.systemPrompt, decidePrompt.userPrompt, aiContext);
           } catch (claudeError) {
             console.warn('Claude API (判定页) 调用失败:', claudeError);
             // 尝试 OpenAI 备用
             const openaiKey = process.env.OPENAI_API_KEY;
             if (openaiKey) {
               console.info('尝试使用 OpenAI 作为备用方案（判定页）');
-              return await generateDecideWithOpenAI(decidePrompt.systemPrompt, decidePrompt.userPrompt);
+              return await generateDecideWithOpenAI(decidePrompt.systemPrompt, decidePrompt.userPrompt, aiContext);
             }
             throw claudeError;
           }
@@ -980,14 +998,15 @@ export async function generateResult(
             return await raceDecideZhipuMinimax(
               decidePrompt.systemPrompt,
               decidePrompt.userPrompt,
-              config.provider
+              config.provider,
+              aiContext
             );
           }
           return config.provider === 'zhipu'
-            ? await generateDecideWithZhipu(decidePrompt.systemPrompt, decidePrompt.userPrompt)
-            : await generateDecideWithMinimax(decidePrompt.systemPrompt, decidePrompt.userPrompt);
+            ? await generateDecideWithZhipu(decidePrompt.systemPrompt, decidePrompt.userPrompt, aiContext)
+            : await generateDecideWithMinimax(decidePrompt.systemPrompt, decidePrompt.userPrompt, aiContext);
         } else {
-          return await generateDecideWithOpenAI(decidePrompt.systemPrompt, decidePrompt.userPrompt);
+          return await generateDecideWithOpenAI(decidePrompt.systemPrompt, decidePrompt.userPrompt, aiContext);
         }
       })(),
     ]);

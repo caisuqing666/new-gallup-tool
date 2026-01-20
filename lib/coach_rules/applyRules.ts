@@ -1,4 +1,4 @@
-import type { Stage3Output } from '../legacy-pipeline/types';
+import type { Stage3Output } from '../pipeline/types';
 import { COACH_RULES, CoachRule } from './rules';
 
 export interface AppliedRulesResult {
