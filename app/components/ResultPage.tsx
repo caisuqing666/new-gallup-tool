@@ -97,8 +97,8 @@ function DecidePage({ data }: { data: DecideData }) {
   const getGlowColor = () => {
     const glowColors = {
       [PathDecision.DOUBLE_DOWN]: 'rgba(91, 138, 114, 0.4)',  // 绿色 - 高能量
-      [PathDecision.REFRAME]: 'rgba(184, 149, 107, 0.4)',   // 金色 - 调整中
-      [PathDecision.NARROW]: 'rgba(107, 123, 140, 0.4)',    // 蓝色 - 收敛中
+      [PathDecision.REFRAME]: 'rgba(184, 149, 107, 0.5)',   // 金棕色 - 调整中
+      [PathDecision.NARROW]: 'rgba(107, 123, 140, 0.35)',    // 柔和蓝色 - 收敛中
       [PathDecision.EXIT]: 'rgba(184, 90, 90, 0.4)',        // 红色 - 低能量
     };
     return glowColors[data.pathDecision] || glowColors[PathDecision.NARROW];
@@ -153,7 +153,7 @@ function DecidePage({ data }: { data: DecideData }) {
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative bg-gradient-to-br from-text-primary to-text-primary/90 text-white rounded-2xl p-6 sm:p-8 shadow-elevated overflow-hidden border border-text-primary/70"
+            className="relative bg-gradient-to-br from-brand-dark to-text-primary text-white rounded-2xl p-6 sm:p-8 shadow-elevated overflow-hidden border border-brand-dark/70"
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E")`,
             }}
