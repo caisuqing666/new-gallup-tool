@@ -153,9 +153,10 @@ function DecidePage({ data }: { data: DecideData }) {
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative bg-gradient-to-br from-brand-dark to-text-primary text-white rounded-2xl p-6 sm:p-8 shadow-elevated overflow-hidden border border-brand-dark/70"
+            className="relative text-white rounded-2xl p-6 sm:p-8 shadow-elevated overflow-hidden border border-brand-dark/80 ring-1 ring-black/30"
             style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E")`,
+              backgroundImage: `linear-gradient(135deg, #4A3F35 0%, #3B332B 45%, #221E19 100%),
+                url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E")`,
             }}
           >
             {/* 巨大水印 */}
@@ -172,18 +173,18 @@ function DecidePage({ data }: { data: DecideData }) {
 
             {/* 判定对象标签 */}
             <div className="mb-6 relative z-10">
-              <span className="inline-block px-3 py-1 bg-accent/20 border border-accent/40 rounded-full text-xs font-medium text-accent font-mono">
+              <span className="inline-block px-3 py-1 bg-white/10 border border-white/20 rounded-full text-xs font-medium text-white/90 font-mono">
                 {tResult('decide.decisionFor', { focus: data.problemFocus || tResult('decide.defaultFocus') })}
               </span>
             </div>
 
             {/* 主标题：超大衬线体 */}
-            <h2 className="text-h1 font-serif leading-tight mb-4 relative z-10 text-white tracking-tight">
+            <h2 className="text-h1 font-serif leading-tight mb-4 relative z-10 text-white tracking-tight drop-shadow-[0_3px_8px_rgba(0,0,0,0.5)]">
               {tResult(`pathDecisionLabels.${data.pathDecision}`)}
             </h2>
 
             {/* 副标题：能量态说明 */}
-            <p className="text-accent/90 text-body-sm mb-6 relative z-10 font-mono">
+            <p className="text-white/80 text-body-sm mb-6 relative z-10 font-mono">
               {tResult(`pathDecisionEnergy.${data.pathDecision}`)}
             </p>
 
@@ -194,8 +195,8 @@ function DecidePage({ data }: { data: DecideData }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div className="flex-1">
-                  <p className="text-accent/90 text-sm font-medium mb-1">{tResult('decide.checkToday')}</p>
-                  <p className="text-white/80 text-body-sm">{data.checkRule}</p>
+                  <p className="text-white/90 text-sm font-medium mb-1">{tResult('decide.checkToday')}</p>
+                  <p className="text-white/85 text-body-sm">{data.checkRule}</p>
                 </div>
               </div>
             </div>
@@ -211,7 +212,7 @@ function DecidePage({ data }: { data: DecideData }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
-            className="bg-white/60 backdrop-blur-md border border-white/80 rounded-2xl p-6 relative overflow-hidden shadow-card"
+            className="bg-white/85 backdrop-blur-md border border-white/70 rounded-2xl p-6 relative overflow-hidden shadow-card"
           >
             {/* 背景磨砂玻璃效果 */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-white/5 pointer-events-none" />
@@ -242,7 +243,7 @@ function DecidePage({ data }: { data: DecideData }) {
                     </div>
 
                     {/* 步骤内容 */}
-                    <p className="text-text-secondary text-body-sm leading-relaxed flex-1 pt-0.5">{step}</p>
+                    <p className="text-text-primary text-body-sm leading-relaxed flex-1 pt-0.5">{step}</p>
                   </div>
                 </div>
               ))}
@@ -255,10 +256,10 @@ function DecidePage({ data }: { data: DecideData }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-            className="bg-white/40 backdrop-blur-sm rounded-2xl border border-white/60 p-5 shadow-inner-soft"
+            className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/70 p-5 shadow-inner-soft"
           >
-              <h3 className="text-sm font-medium text-text-muted mb-2">{tResult('decide.extraEvidence')}</h3>
-              <p className="text-text-secondary text-body-sm leading-relaxed">{data.pathReason}</p>
+              <h3 className="text-sm font-medium text-text-secondary mb-2">{tResult('decide.extraEvidence')}</h3>
+              <p className="text-text-primary text-body-sm leading-relaxed">{data.pathReason}</p>
             </motion.section>
           )}
         </div>
@@ -273,7 +274,7 @@ function DecidePage({ data }: { data: DecideData }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="relative bg-white/60 backdrop-blur-md rounded-2xl p-5 border border-accent/60 overflow-hidden shadow-card"
+              className="relative bg-white/85 backdrop-blur-md rounded-2xl p-5 border border-accent/60 overflow-hidden shadow-card"
             >
               {/* 渐变边框光效 */}
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-accent/20 via-transparent to-accent/20 opacity-50 pointer-events-none" />
@@ -302,7 +303,7 @@ function DecidePage({ data }: { data: DecideData }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="relative bg-white/60 backdrop-blur-md rounded-2xl p-5 border border-status-error/60 overflow-hidden shadow-card"
+              className="relative bg-white/85 backdrop-blur-md rounded-2xl p-5 border border-status-error/60 overflow-hidden shadow-card"
             >
               {/* 渐变边框光效 */}
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-status-error/20 via-transparent to-status-error/20 opacity-50 pointer-events-none" />
@@ -338,7 +339,7 @@ function DecidePage({ data }: { data: DecideData }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25 }}
-              className="bg-white/60 backdrop-blur-md rounded-2xl border border-white/80 p-6 shadow-card"
+              className="bg-white/85 backdrop-blur-md rounded-2xl border border-white/70 p-6 shadow-card"
             >
               <h3 className="text-h4 font-serif text-text-primary mb-6 flex items-center gap-2">
                 <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -358,7 +359,7 @@ function DecidePage({ data }: { data: DecideData }) {
                     <div className="grid grid-cols-2 gap-4">
                       {/* 左侧：负责 */}
                       <div className="bg-bg-secondary rounded-lg p-4 text-right pr-6 shadow-inner-soft">
-                        <p className="text-caption text-text-muted mb-2 font-mono uppercase tracking-wide">
+                        <p className="text-caption text-text-secondary mb-2 font-mono uppercase tracking-wide">
                           {tResult('decide.responsible')}
                         </p>
                         <p className="text-text-primary text-body-sm font-medium">{item.responsibleFor}</p>
@@ -366,7 +367,7 @@ function DecidePage({ data }: { data: DecideData }) {
 
                       {/* 右侧：不负责 */}
                       <div className="bg-bg-secondary rounded-lg p-4 text-left pl-6 shadow-inner-soft">
-                        <p className="text-caption text-text-muted mb-2 font-mono uppercase tracking-wide">
+                        <p className="text-caption text-text-secondary mb-2 font-mono uppercase tracking-wide">
                           {tResult('decide.notResponsible')}
                         </p>
                         <p className="text-text-primary text-body-sm font-medium">{item.notResponsibleFor}</p>

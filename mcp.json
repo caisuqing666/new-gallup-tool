@@ -1,0 +1,39 @@
+{
+  "scenarios": [
+    {
+      "label": "Home Page",
+      "url": "http://localhost:3000/en"
+    }
+  ],
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest"
+      ],
+      "env": {}
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ]
+    }
+  },
+  "chromeDevTools": {
+    "defaultViewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "launchOptions": {
+      "headless": false,
+      "channel": "stable"
+    },
+    "connectionOptions": {
+      "autoConnect": false,
+      "browserUrl": "http://127.0.0.1:9222"
+    }
+  }
+}
