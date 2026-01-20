@@ -191,12 +191,28 @@ export function isValidResultData(data: unknown): data is ResultData {
 export function isValidGuideResultData(data: unknown): data is GuideResultData {
   if (!data || typeof data !== 'object') return false;
   const result = data as Record<string, unknown>;
-  const personalLabel = result.personalLabel as Record<string, unknown>;
-  if (!personalLabel || typeof personalLabel !== 'object' || typeof personalLabel.label !== 'string') return false;
-  if (typeof result.oneLiner !== 'string') return false;
-  if (!Array.isArray(result.strengthGuides)) return false;
-  if (!result.comboGuide || typeof result.comboGuide !== 'object') return false;
-  if (!Array.isArray(result.weeklyActions)) return false;
+  
+  // 检查必要的顶层字段存在
+  const hasPersonalLabel = result.personalLabel && typeof result.personalLabel === 'object';
+  const hasOneLiner = typeof result.oneLiner === 'string' && result.oneLiner.length > 0;
+  const hasStrengthGuides = Array.isArray(result.strengthGuides) && result.strengthGuides.length > 0;
+  const hasComboGuide = result.comboGuide && typeof result.comboGuide === 'object';
+  const hasWeeklyActions = Array.isArray(result.weeklyActions) && result.weeklyActions.length > 0;
+  
+  // 对 personalLabel 的检查更宽松，只需确保有 label 字段即可
+  if (hasPersonalLabel) {
+    const personalLabel = result.personalLabel as Record<string, unknown>;
+    const hasLabel = typeof personalLabel.label === 'string' && personalLabel.label.length > 0;
+    if (!hasLabel) return false;
+  } else {
+    return false;
+  }
+  
+  // 其他字段都需要存在
+  if (!hasOneLiner || !hasStrengthGuides || !hasComboGuide || !hasWeeklyActions) {
+    return false;
+  }
+  
   return true;
 }
 

@@ -24,6 +24,15 @@ import {
 } from './context-generator';
 import { parseConfusion } from './confusion-parser';
 import { getStrengthProfiles, type StrengthProfile } from './strength-profiles';
+import {
+  selectTemplateFamily,
+  analyzeComboFeatures,
+  TEMPLATE_FAMILIES,
+  type TemplateFamilyKey,
+  describeComboFeature,
+  adaptContentForScenario,
+  type ScenarioContext,
+} from './mock-templates';
 
 // 重新导出规则函数，保持向后兼容
 export { detectStrengthConflicts, detectBasementStrength, DOMAIN_CONFLICTS };
@@ -346,6 +355,275 @@ function generateGenericDecide(
   };
 }
 
+// ============================================================
+// 新的模板驱动的生成函数（集成模板系统）
+// ============================================================
+
+/**
+ * 基于模板系统生成解释页
+ */
+function generatePersonalizedExplain(
+  scenario: ScenarioId | string,
+  strengths: StrengthId[] | string[],
+  confusion: string
+): ExplainData {
+  const strengthDetails = getStrengthDetails(strengths);
+  const strengthProfiles = getStrengthProfiles(strengthDetails.map(s => s.id));
+  const strengthNames = getStrengthNames(strengthDetails);
+  
+  // 分析优势组合特征
+  const profilesWithDomain = strengthProfiles.map(p => ({
+    id: strengthDetails.find(s => s.name === p.name)?.id as StrengthId,
+    domain: p.domain || 'unknown',
+  }));
+  
+  // 选择合适的模板族
+  const templateFamily = selectTemplateFamily(
+    strengths as StrengthId[],
+    profilesWithDomain,
+    confusion,
+    scenario
+  );
+  
+  const template = TEMPLATE_FAMILIES[templateFamily as TemplateFamilyKey]?.explain;
+  
+  if (!template) {
+    // 降级到通用生成
+    return generateGenericExplain(scenario, strengths, confusion);
+  }
+  
+  // 从模板生成内容
+  const strengthInteractions = (template.strengthInteractionsPattern as any)(strengthNames);
+  const blindspots = template.blindspotsPattern(confusion || '当前困惑');
+  const summary = (template.summaryPattern as any)();
+  
+  // 调整场景感知
+  const scenarioAdjustedInteractions = adaptContentForScenario(
+    strengthInteractions,
+    scenario,
+    templateFamily
+  );
+  
+  const scenarioAdjustedBlindspots = adaptContentForScenario(
+    blindspots,
+    scenario,
+    templateFamily
+  );
+  
+  // 生成优势行为表现
+  const manifestations = strengthProfiles.slice(0, 3).map((profile) => ({
+    strengthId: profile.name,
+    behaviors: buildStrengthBehavior(profile, confusion || '当前困惑'),
+  }));
+  
+  return {
+    strengthManifestations: manifestations,
+    strengthInteractions: scenarioAdjustedInteractions,
+    blindspots: scenarioAdjustedBlindspots,
+    summary,
+  };
+}
+
+/**
+ * 基于模板系统生成判定页
+ */
+function generatePersonalizedDecide(
+  scenario: ScenarioId | string,
+  strengths: StrengthId[] | string[],
+  confusion: string
+): DecideData {
+  const strengthDetails = getStrengthDetails(strengths);
+  const strengthNames = getStrengthNames(strengthDetails);
+  const firstStrength = strengthNames[0] || '优势1';
+  const secondStrength = strengthNames[1] || '优势2';
+  
+  // 分析优势组合特征
+  const strengthProfiles = getStrengthProfiles(strengthDetails.map(s => s.id));
+  const profilesWithDomain = strengthProfiles.map(p => ({
+    id: strengthDetails.find(s => s.name === p.name)?.id as StrengthId,
+    domain: p.domain || 'unknown',
+  }));
+  
+  // 选择合适的模板族
+  const templateFamily = selectTemplateFamily(
+    strengths as StrengthId[],
+    profilesWithDomain,
+    confusion,
+    scenario
+  );
+  
+  const template = TEMPLATE_FAMILIES[templateFamily as TemplateFamilyKey]?.decide;
+  
+  if (!template) {
+    // 降级到通用生成
+    return generateGenericDecide(scenario, strengths, confusion);
+  }
+  
+  // 从模板生成核心 logic
+  const pathLogic = (template.pathDecisionLogic as any)(firstStrength, secondStrength);
+  
+  // 调整场景感知
+  const scenarioAdjustedPathLogic = adaptContentForScenario(
+    pathLogic,
+    scenario,
+    templateFamily
+  );
+  
+  // 根据模板族选择路径判定
+  let pathDecision = PathDecision.NARROW;
+  if (templateFamily === 'RELATIONSHIP' || templateFamily === 'HIGH_RESPONSIBILITY' || templateFamily === 'POPULARITY') {
+    pathDecision = PathDecision.REFRAME;
+  } else if (templateFamily === 'CONFLICTED' || templateFamily === 'EXECUTION_RELATIONSHIP' || templateFamily === 'RELATIONSHIP_STRATEGIC') {
+    pathDecision = PathDecision.REFRAME;
+  }
+  
+  // 生成 do-more 和 do-less 建议
+  const doMore = generateDoMoreFromTemplate(
+    templateFamily as TemplateFamilyKey,
+    firstStrength,
+    secondStrength,
+    scenario
+  );
+  
+  const doLess = generateDoLessFromTemplate(
+    templateFamily as TemplateFamilyKey,
+    firstStrength,
+    secondStrength
+  );
+  
+  const boundaries = generateBoundariesFromTemplate(
+    templateFamily as TemplateFamilyKey,
+    firstStrength
+  );
+  
+  const checkRule = generateCheckRuleFromTemplate(
+    templateFamily as TemplateFamilyKey,
+    firstStrength,
+    secondStrength
+  );
+  
+  return {
+    pathDecision,
+    problemFocus: confusion.length > 10 ? `关于${confusion.slice(0, 15)}` : '当前困惑',
+    reframedInsight: `在「${scenario}」场景下，你的「${firstStrength}」优势虽然强大，但需要用「${secondStrength}」来平衡使用方式。`,
+    pathLogic: scenarioAdjustedPathLogic,
+    pathReason: `你的优势组合在这个场景下的最大价值来自于 balanced 使用，而非单一依赖。现在需要重新调整使用策略。`,
+    doMore,
+    doLess,
+    boundaries,
+    checkRule,
+  };
+}
+
+/**
+ * 从模板生成 do-more 建议
+ */
+function generateDoMoreFromTemplate(
+  templateFamily: TemplateFamilyKey,
+  firstStrength: string,
+  secondStrength: string,
+  scenario: ScenarioId | string
+): Array<{ action: string; timing: string; criteria: string; consequence: string }> {
+  // 场景特定的建议
+  const scenarioPrefix = scenario.toString().includes('work') 
+    ? '在工作中，' 
+    : scenario.toString().includes('relationship') 
+    ? '在关系上，' 
+    : '';
+  
+  const defaultActions = [
+    {
+      action: `用「${secondStrength}」优势明确今天的第一优先级`,
+      timing: '今天上午',
+      criteria: '这一件事做完就值得休息',
+      consequence: '否则，你会继续被多个方向拉扯，到晚上什么重要的都没推进。',
+    },
+    {
+      action: `定义「不碰清单」——列出3件今天绝对不做的事`,
+      timing: '今天开始',
+      criteria: '这3件事不做，也不会影响核心目标',
+      consequence: '否则，你的时间会自动被各种「看起来重要」的事项填满。',
+    },
+    {
+      action: `在下午3点前，停止接收新信息或新任务`,
+      timing: '立即',
+      criteria: '给自己一个不受打扰的思考和执行时段',
+      consequence: '否则，你又会陷入「新信息—改变计划—再优化」的循环。',
+    },
+  ];
+  
+  return defaultActions;
+}
+
+/**
+ * 从模板生成 do-less 建议
+ */
+function generateDoLessFromTemplate(
+  templateFamily: TemplateFamilyKey,
+  firstStrength: string,
+  secondStrength: string
+): Array<{ action: string; replacement: string; timing: string }> {
+  return [
+    {
+      action: `不再试图用「${firstStrength}」去解决所有问题`,
+      replacement: `用「${secondStrength}」优势重新定义问题`,
+      timing: '从下一个任务开始',
+    },
+    {
+      action: '不再等所有信息齐了再做决定',
+      replacement: '用现有信息做出最佳判断，然后推进',
+      timing: '立即',
+    },
+    {
+      action: '不再试图让所有人都满意',
+      replacement: '接受「有些人会不高兴」，这是选择的代价',
+      timing: '从今天开始',
+    },
+  ];
+}
+
+/**
+ * 从模板生成边界建议
+ */
+function generateBoundariesFromTemplate(
+  templateFamily: TemplateFamilyKey,
+  firstStrength: string
+): Array<{ responsibleFor: string; notResponsibleFor: string }> {
+  return [
+    {
+      responsibleFor: '你选定的那件事的完成质量',
+      notResponsibleFor: '所有其他事的结果',
+    },
+    {
+      responsibleFor: '用「' + firstStrength + '」优势发挥最大价值',
+      notResponsibleFor: '补齐所有短板',
+    },
+    {
+      responsibleFor: '做出决定并推进',
+      notResponsibleFor: '证明决定是「最正确的」',
+    },
+  ];
+}
+
+/**
+ * 从模板生成检查规则
+ */
+function generateCheckRuleFromTemplate(
+  templateFamily: TemplateFamilyKey,
+  firstStrength: string,
+  secondStrength: string
+): string {
+  if (templateFamily === 'HIGH_RESPONSIBILITY' || templateFamily === 'PERFECTIONIST') {
+    return `判断标准：今天有没有对一件事说「不」，对一件事说「是」。`;
+  }
+  
+  if (templateFamily === 'RELATIONSHIP' || templateFamily === 'POPULARITY') {
+    return `判断标准：是否在维持关系的同时，也为自己设立了一个明确的边界。`;
+  }
+  
+  return `判断标准：今天是否用「${secondStrength}」选定了一件事并推进到底。`;
+}
+
 // 统一的 Mock 生成入口
 export function generateMockResult(
   scenario: ScenarioId | string,
@@ -371,7 +649,22 @@ export function generateMockResult(
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 旧逻辑（保持向后兼容）
+  // 新模板驱动的逻辑（推荐）
+  // ═══════════════════════════════════════════════════════════
+  try {
+    const explainData = generatePersonalizedExplain(scenario, strengths, confusion);
+    const decideData = generatePersonalizedDecide(scenario, strengths, confusion);
+    
+    return {
+      explain: explainData,
+      decide: decideData,
+    };
+  } catch (error) {
+    console.warn('模板驱动生成出错，回退到旧逻辑:', error);
+  }
+  
+  // ═══════════════════════════════════════════════════════════
+  // 旧逻辑（降级后备）
   // ═══════════════════════════════════════════════════════════
   
   // 检测特殊案例类型

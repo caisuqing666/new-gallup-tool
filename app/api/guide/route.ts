@@ -83,7 +83,7 @@ const API_TIMEOUT = (() => {
   if (Number.isFinite(envTimeout) && envTimeout > 0) {
     return envTimeout;
   }
-  return process.env.VERCEL ? 8000 : 55000;
+  return process.env.VERCEL ? 12000 : 55000;
 })();
 
 async function generateGuideWithAI(
