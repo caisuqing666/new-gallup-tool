@@ -28,16 +28,16 @@ import { AIContext, createGenerateAIContext } from './ai-context';
 export const ENABLE_AI = process.env.ENABLE_AI === 'true' || process.env.NEXT_PUBLIC_ENABLE_AI === 'true';
 
 // AI 提供商选择（anthropic、openai、zhipu 或 minimax）
-function getAIProvider(): 'anthropic' | 'openai' | 'zhipu' | 'minimax' {
-  return (process.env.AI_PROVIDER || 'anthropic') as 'anthropic' | 'openai' | 'zhipu' | 'minimax';
+function getAIProvider(override?: AIContext['provider']): 'anthropic' | 'openai' | 'zhipu' | 'minimax' {
+  return (override || process.env.AI_PROVIDER || 'anthropic') as 'anthropic' | 'openai' | 'zhipu' | 'minimax';
 }
 
 const AI_RACE_PROVIDERS = process.env.AI_RACE_PROVIDERS !== 'false';
 const AI_RACE_HEDGE_MS = parseInt(process.env.AI_RACE_HEDGE_MS || '500', 10);
 
 // AI API 配置
-const getAIConfig = () => {
-  const provider = getAIProvider();
+const getAIConfig = (providerOverride?: AIContext['provider']) => {
+  const provider = getAIProvider(providerOverride);
 
   if (provider === 'anthropic') {
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -157,7 +157,7 @@ async function generateExplainWithClaude(
   context: AIContext,
   signal?: AbortSignal
 ): Promise<ExplainData> {
-  const config = getAIConfig();
+  const config = getAIConfig('anthropic');
 
   const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal, context.timeout);
 
@@ -208,7 +208,7 @@ async function generateExplainWithOpenAI(
   context: AIContext,
   signal?: AbortSignal
 ): Promise<ExplainData> {
-  const config = getAIConfig();
+  const config = getAIConfig('openai');
 
   const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal, context.timeout);
 
@@ -281,7 +281,7 @@ async function generateDecideWithClaude(
   context: AIContext,
   signal?: AbortSignal
 ): Promise<DecideOutput> {
-  const config = getAIConfig();
+  const config = getAIConfig('anthropic');
 
   const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal, context.timeout);
 
@@ -332,7 +332,7 @@ async function generateDecideWithOpenAI(
   context: AIContext,
   signal?: AbortSignal
 ): Promise<DecideOutput> {
-  const config = getAIConfig();
+  const config = getAIConfig('openai');
 
   const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal, context.timeout);
 
@@ -405,7 +405,7 @@ async function generateExplainWithZhipu(
   context: AIContext,
   signal?: AbortSignal
 ): Promise<ExplainData> {
-  const config = getAIConfig();
+  const config = getAIConfig('zhipu');
 
   const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal, context.timeout);
 
@@ -452,7 +452,7 @@ async function generateDecideWithZhipu(
   context: AIContext,
   signal?: AbortSignal
 ): Promise<DecideOutput> {
-  const config = getAIConfig();
+  const config = getAIConfig('zhipu');
 
   const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal, context.timeout);
 
@@ -503,7 +503,7 @@ async function generateExplainWithMinimax(
   context: AIContext,
   signal?: AbortSignal
 ): Promise<ExplainData> {
-  const config = getAIConfig();
+  const config = getAIConfig('minimax');
 
   const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal, context.timeout);
 
@@ -553,7 +553,7 @@ async function generateDecideWithMinimax(
   context: AIContext,
   signal?: AbortSignal
 ): Promise<DecideOutput> {
-  const config = getAIConfig();
+  const config = getAIConfig('minimax');
 
   const { controller, timeoutId, externalSignal, onAbort } = createAbortController(signal, context.timeout);
 
@@ -708,103 +708,29 @@ async function raceDecideZhipuMinimax(
 }
 
 // ========================================
-// 问题锁定
+// 性能埋点工具（仅开发环境输出）
 // ========================================
 
-/**
- * 锁定用户当前想解决的核心问题
- */
-async function lockProblem(
-  scenario: string,
-  confusion: string,
-  context: AIContext
-): Promise<string> {
-  const config = getAIConfig();
-  
-    const problemLockPrompt = `场景：${scenario}
+interface TimingMetrics {
+  contextPackMs: number;
+  understandingMs: number;
+  explainDecideMs: number;
+  totalMs: number;
+}
 
-用户描述的困惑：
-${confusion}
+function logTimingMetrics(metrics: TimingMetrics) {
+  // 仅在开发环境输出，生产环境不输出，避免日志成本
+  const isDev = process.env.NODE_ENV !== 'production';
+  if (!isDev) return;
 
-请用一句话复述用户"此刻最想解决的问题"。`;
+  const json = {
+    timestamp: new Date().toISOString(),
+    type: 'generate_performance',
+    metrics,
+  };
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
-
-  try {
-    if (config.provider === 'anthropic') {
-      const response = await fetch(config.endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': config.apiKey,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: config.model,
-          max_tokens: 500,
-          system: PROBLEM_LOCK_PROMPT,
-          messages: [
-            {
-              role: 'user',
-              content: problemLockPrompt,
-            },
-          ],
-        }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Claude API 错误 (${response.status}): ${error}`);
-      }
-
-      const data = await response.json();
-      return data.content[0].text.trim();
-    } else {
-      // OpenAI
-      const response = await fetch(config.endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${config.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: config.model,
-          messages: [
-            {
-              role: 'system',
-              content: PROBLEM_LOCK_PROMPT,
-            },
-            {
-              role: 'user',
-              content: problemLockPrompt,
-            },
-          ],
-          max_tokens: 500,
-        }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`OpenAI API 错误 (${response.status}): ${error}`);
-      }
-
-      const data = await response.json();
-      return data.choices[0].message.content.trim();
-    }
-  } catch (error) {
-    clearTimeout(timeoutId);
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`AI 请求超时（${API_TIMEOUT}ms），请稍后重试`);
-    }
-    throw error;
-  }
+  // 输出为 JSON 便于后续聚合分析
+  console.log(JSON.stringify(json));
 }
 
 // ========================================
@@ -832,15 +758,28 @@ export async function generateResult(
   context?: AIContext
 ): Promise<GallupResult> {
   // ═══════════════════════════════════════════════════════════
+  // 性能埋点：记录总开始时间
+  // ═══════════════════════════════════════════════════════════
+  const timingStart = Date.now();
+  const timing: TimingMetrics = {
+    contextPackMs: 0,
+    understandingMs: 0,
+    explainDecideMs: 0,
+    totalMs: 0,
+  };
+
+  // ═══════════════════════════════════════════════════════════
   // 第零步：构建 Context Pack（无论 AI 还是 Mock 都需要）
   // confusion-parser → strength-profiles → combo-rules → Context Pack
   // ═══════════════════════════════════════════════════════════
   // 创建或使用传入的 AIContext
   const aiContext = context || createGenerateAIContext();
 
+  const contextPackStart = Date.now();
   let contextPack: ContextPack | undefined;
   try {
     contextPack = buildContextPack(strengths, confusion);
+    timing.contextPackMs = Date.now() - contextPackStart;
     console.info('✓ 已构建 Context Pack:', {
       problemType: contextPack.confusion.problemType,
       problemFocus: contextPack.confusion.problemFocus,
@@ -854,14 +793,18 @@ export async function generateResult(
 
   // 如果未启用 AI，直接使用 Mock（使用新的数据流管道）
   if (!useAI) {
+    timing.totalMs = Date.now() - timingStart;
+    logTimingMetrics(timing);
     return generateMockResult(scenario, strengths, confusion, problemType, problemFocus, true);
   }
 
   // 检查 AI 配置
   let config: ReturnType<typeof getAIConfig>;
   try {
-    config = getAIConfig();
+    config = getAIConfig(aiContext.provider);
   } catch (error) {
+    timing.totalMs = Date.now() - timingStart;
+    logTimingMetrics(timing);
     console.warn('AI 配置错误，回退到 Mock:', error);
     return generateMockResult(scenario, strengths, confusion, problemType, problemFocus, true);
   }
@@ -883,6 +826,7 @@ export async function generateResult(
     // 第零步：生成理解层转译
     // 将用户的困惑，转译为「揭示内在控制机制」的结构化理解
     // ═══════════════════════════════════════════════════════════
+    const understandingStart = Date.now();
     let confusionUnderstanding: ConfusionUnderstanding | undefined;
     try {
       const understandingInput: UnderstandingInput = {
@@ -894,27 +838,18 @@ export async function generateResult(
       if (understandingProvider) {
         confusionUnderstanding = await generateUnderstanding(understandingInput, understandingProvider);
       }
+      timing.understandingMs = Date.now() - understandingStart;
       console.info('✓ 已生成理解层转译:', {
         coreBlock: confusionUnderstanding?.coreBlock?.substring(0, 40) + '...',
         decisionTension: confusionUnderstanding?.decisionTension,
       });
     } catch (error) {
+      timing.understandingMs = Date.now() - understandingStart;
       console.warn('理解层转译生成失败，将继续使用基础流程:', error);
       // 理解层转译失败不影响后续流程
     }
 
-    // 第一步：锁定"用户当前问题"（作为后续所有内容的"问题锚点"）
-    let lockedProblem: string;
-    try {
-      lockedProblem = await lockProblem(scenarioTitle, confusion, aiContext);
-      console.info('✓ 已锁定用户当前问题:', lockedProblem);
-    } catch (error) {
-      console.warn('问题锁定失败，将直接使用用户原始描述:', error);
-      // 如果有 Context Pack，使用解析后的 problemFocus
-      lockedProblem = contextPack?.confusion.problemFocus || `用户问题：${confusion}`;
-    }
-
-    // 第二步：使用统一的 buildPrompt 函数构建 prompt
+    // 第一步：使用统一的 buildPrompt 函数构建 prompt
     // 这是唯一的 prompt 构建入口，确保所有路径使用一致的规范
     const explainPrompt = buildPrompt({
       pathType: 'breakthrough-explain',
@@ -948,6 +883,7 @@ export async function generateResult(
     }
 
     // 第四步：并行生成解释页和判定页
+    const explainDecideStart = Date.now();
     const [explainData, decideData] = await Promise.all([
       (async () => {
         if (config.provider === 'anthropic') {
@@ -1040,11 +976,18 @@ export async function generateResult(
       understanding: confusionUnderstanding,
     });
 
+    // 记录解释页和判定页的总耗时
+    timing.explainDecideMs = Date.now() - explainDecideStart;
+    timing.totalMs = Date.now() - timingStart;
+    logTimingMetrics(timing);
+
     return {
       explain: ensuredExplainData,
       decide: ensuredDecideData,
     };
   } catch (error) {
+    timing.totalMs = Date.now() - timingStart;
+    logTimingMetrics(timing);
     console.error('AI 生成失败，回退到 Mock:', error);
     return generateMockResult(scenario, strengths, confusion, problemType, problemFocus, true);
   }

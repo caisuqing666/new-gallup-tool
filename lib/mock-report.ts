@@ -294,6 +294,163 @@ const STRENGTH_PROFILES: Record<string, {
   },
 };
 
+const DOMAIN_TEMPLATES: Record<string, {
+  whatItIs: string[];
+  yourStrength: string[];
+  watchOut: string[];
+  bestWhen: string[][];
+  pairWith: string[][];
+  avoid: string[][];
+}> = {
+  '执行力': {
+    whatItIs: [
+      '这是一种把想法变成行动的优势，重视结果与落地',
+      '你擅长把事情推进到底，让计划成为现实',
+    ],
+    yourStrength: [
+      '你会主动推动进度，把目标拆解成可执行的步骤',
+      '你会把事情做成，比说更在行',
+    ],
+    watchOut: [
+      '容易忽略过程中的情绪和共识，只看结果',
+      '在节奏过快时，可能压缩思考与复盘',
+    ],
+    bestWhen: [
+      ['需要执行落地', '推进里程碑', '解决卡点', '扛结果'],
+      ['需要明确目标', '时间紧迫', '要求产出', '交付压力大'],
+    ],
+    pairWith: [
+      ['专注', '纪律', '责任'],
+      ['成就', '排难', '统筹'],
+    ],
+    avoid: [
+      ['适应', '理念', '思维'],
+      ['和谐', '体谅', '包容'],
+    ],
+  },
+  '影响力': {
+    whatItIs: [
+      '这是一种影响他人、带动氛围、推动共识的优势',
+      '你擅长把想法讲清楚，让他人愿意跟随',
+    ],
+    yourStrength: [
+      '你会用表达与气场推动行动，让人愿意投入',
+      '你能在关键时刻站出来，带动局面',
+    ],
+    watchOut: [
+      '过度强调影响力，忽略聆听与事实',
+      '在强势表达时，可能压过他人的声音',
+    ],
+    bestWhen: [
+      ['需要说服推动', '演示展示', '会议引导', '变革时刻'],
+      ['需要对外沟通', '争取资源', '团队动员', '提升士气'],
+    ],
+    pairWith: [
+      ['沟通', '统率', '积极'],
+      ['自信', '竞争', '行动'],
+    ],
+    avoid: [
+      ['和谐', '体谅', '个别'],
+      ['审慎', '学习', '搜集'],
+    ],
+  },
+  '关系建立': {
+    whatItIs: [
+      '这是一种建立信任与连结的优势，重视人际关系',
+      '你擅长营造温暖、稳定的团队氛围',
+    ],
+    yourStrength: [
+      '你会倾听和理解他人，让人愿意靠近你',
+      '你能在团队里建立信任，稳住关系',
+    ],
+    watchOut: [
+      '可能为了关系而回避必要的冲突',
+      '在关注他人时忽略自己的边界',
+    ],
+    bestWhen: [
+      ['需要建立信任', '团队协作', '跨部门沟通', '客户维护'],
+      ['需要协调关系', '氛围紧张', '新团队磨合', '支持型角色'],
+    ],
+    pairWith: [
+      ['体谅', '包容', '个别'],
+      ['和谐', '积极', '沟通'],
+    ],
+    avoid: [
+      ['统率', '竞争', '行动'],
+      ['审慎', '公平', '思维'],
+    ],
+  },
+  '战略思维': {
+    whatItIs: [
+      '这是一种洞察趋势与构建框架的优势，重视方向与意义',
+      '你擅长看全局、做分析并规划未来',
+    ],
+    yourStrength: [
+      '你会从复杂信息中抓住关键，形成清晰判断',
+      '你能提出有远见的方案，给团队方向感',
+    ],
+    watchOut: [
+      '过度分析导致迟迟不行动',
+      '可能沉浸在思考中忽略现实约束',
+    ],
+    bestWhen: [
+      ['需要策略规划', '复杂问题分析', '方向选择', '长期布局'],
+      ['需要判断趋势', '制定方案', '风险评估', '系统思考'],
+    ],
+    pairWith: [
+      ['分析', '学习', '前瞻'],
+      ['搜集', '理念', '思维'],
+    ],
+    avoid: [
+      ['行动', '竞争', '统率'],
+      ['成就', '排难', '纪律'],
+    ],
+  },
+};
+
+const SUMMARY_TEMPLATES = [
+  '你的 TOP5 优势形成了独特组合：{strengths}。这让你在{domain}方面尤为突出，同时具备把想法转化为行动的能力。',
+  '从{strengths}的组合来看，你既能抓住重点，也能带动他人推进，这是一种很难得的优势结构。',
+  '你的优势在{domain}上占据主导，配合{top2}形成稳定的驱动力，适合在关键任务中扛住节奏。',
+];
+
+const INSIGHT_TEMPLATES = [
+  '你的{strength}是核心优势之一，它会决定你做事的主节奏。',
+  '当你发挥{strength}时，团队会明显感觉到推进速度的提升。',
+  '注意在高压场景下保护精力，避免优势过度使用进入地下室状态。',
+];
+
+const ADVICE_TEMPLATES = [
+  '优先选择能让你发挥{top1}与{top2}的场景，特别是在需要明确目标和持续推进的任务中。',
+  '在做重要决策时，先用{domain}优势把方向框清楚，再用行动类优势快速落地。',
+  '留出复盘和恢复的时间，避免优势过度激活导致能量透支。',
+];
+
+function seedFromString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) % 100000;
+  }
+  return hash;
+}
+
+function pickBySeed<T>(list: T[], seed: number): T {
+  return list[seed % list.length];
+}
+
+function buildFallbackProfile(strengthName: string, domain: string) {
+  const templates = DOMAIN_TEMPLATES[domain] || DOMAIN_TEMPLATES['执行力'];
+  const seed = seedFromString(`${strengthName}-${domain}`);
+  return {
+    whatItIs: pickBySeed(templates.whatItIs, seed),
+    yourStrength: pickBySeed(templates.yourStrength, seed + 1),
+    watchOut: pickBySeed(templates.watchOut, seed + 2),
+    bestWhen: pickBySeed(templates.bestWhen, seed + 3),
+    pairWith: pickBySeed(templates.pairWith, seed + 4),
+    avoid: pickBySeed(templates.avoid, seed + 5),
+  };
+}
+
 /**
  * 生成完整的报告解读结果
  * @param strengths 识别到的优势 ID 列表
@@ -356,14 +513,7 @@ export function generateMockReportResult(strengths?: StrengthId[], _imageData?: 
 
   // 生成每个优势的解读
   const strengthInterpretations = top5Strengths.map((s) => {
-    const profile = STRENGTH_PROFILES[s.name] || {
-      whatItIs: `这是${s.domain}领域的核心优势`,
-      yourStrength: `你在${s.name}方面表现出色`,
-      watchOut: '注意过度使用',
-      bestWhen: [`使用${s.name}的场景`],
-      pairWith: [],
-      avoid: [],
-    };
+    const profile = STRENGTH_PROFILES[s.name] || buildFallbackProfile(s.name, s.domain);
 
     return {
       name: s.name,
@@ -402,10 +552,13 @@ export function generateMockReportResult(strengths?: StrengthId[], _imageData?: 
   }));
 
   // 生成关键洞察
+  const dominantDomain = Object.keys(domainCounts)[0] || '执行力';
   const keyInsights = [
-    `你的优势组合形成了强大的${Object.keys(domainCounts)[0]}基础`,
-    ...top5Strengths.slice(0, 3).map(s => `"${s.name}"是你的核心优势之一`),
-    '建议你在使用优势时注意避免进入"地下室状态"',
+    `你的优势组合形成了强大的${dominantDomain}基础`,
+    ...top5Strengths.slice(0, 2).map((s, index) =>
+      pickBySeed(INSIGHT_TEMPLATES, seedFromString(`${s.name}-${index}`)).replace('{strength}', s.name)
+    ),
+    pickBySeed(INSIGHT_TEMPLATES, seedFromString('general-warning')).replace('{strength}', top5Strengths[0]?.name || '优势'),
   ];
 
   // 生成建议路径
@@ -430,12 +583,22 @@ export function generateMockReportResult(strengths?: StrengthId[], _imageData?: 
   return {
     top5Strengths,
     personalLabel,
-    summary: `你的 TOP5 优势形成了独特的组合：${top5Strengths.map(s => s.name).join('、')}。这个组合让你在${Object.keys(domainCounts)[0]}方面特别出色，同时具备${Object.keys(domainCounts)[0] === '执行力' ? '推动结果和' : ''}带动他人${Object.keys(domainCounts)[0] === '关系建立' ? '和建立关系' : ''}的能力。`,
+    summary: pickBySeed(SUMMARY_TEMPLATES, seedFromString(top5Strengths.map(s => s.name).join('-')))
+      .replace('{strengths}', top5Strengths.map(s => s.name).join('、'))
+      .replace('{domain}', dominantDomain)
+      .replace('{top2}', top5Strengths.slice(0, 2).map(s => s.name).join('×')),
     strengthInterpretations,
     comboInterpretation,
     domainAnalysis,
     keyInsights,
     suggestedPaths,
-    personalizedAdvice: `基于你的优势组合，建议你在选择工作和角色时，优先考虑那些能让你发挥${top5Strengths[0]?.name}和${top5Strengths[1]?.name}优势的场景。同时，注意${top5Strengths.find(s => s.name === '责任' || s.name === '和谐')?.name}优势不要过度使用，避免承担过多责任或回避必要的冲突。`,
+    personalizedAdvice: [
+      pickBySeed(ADVICE_TEMPLATES, seedFromString('advice-1'))
+        .replace('{top1}', top5Strengths[0]?.name || '核心优势')
+        .replace('{top2}', top5Strengths[1]?.name || '第二优势'),
+      pickBySeed(ADVICE_TEMPLATES, seedFromString('advice-2'))
+        .replace('{domain}', dominantDomain),
+      pickBySeed(ADVICE_TEMPLATES, seedFromString('advice-3')),
+    ].join(''),
   };
 }

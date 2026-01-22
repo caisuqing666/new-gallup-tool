@@ -80,7 +80,7 @@ export const COACH_RULES: CoachRule[] = [
     id: 'R4-responsibility-overload',
     when: {
       trigger: '责任感过载把一切扛在自己身上',
-      patterns: ['都我来', '责任在我', '无法放手', '接盘', '不敢交出去'],
+      patterns: ['都我来', '责任在我', '自己扛', '无法放手', '接盘', '不敢交出去'],
       strengths: ['责任', '成就', 'responsibility', 'achiever'],
     },
     because: {

@@ -166,16 +166,30 @@ export function parseReportInterpretResponse(
  */
 export function isValidReportInterpretResult(data: any): data is ReportInterpretResult {
   if (!data || typeof data !== 'object') return false;
-  if (!Array.isArray(data.top5Strengths)) return false;
+  const isNonEmptyString = (value: unknown) =>
+    typeof value === 'string' && value.trim().length > 0;
+
+  if (!Array.isArray(data.top5Strengths) || data.top5Strengths.length === 0) return false;
   if (!data.personalLabel || typeof data.personalLabel !== 'object') return false;
-  if (typeof data.personalLabel.label !== 'string') return false;
-  if (typeof data.summary !== 'string') return false;
-  if (!Array.isArray(data.strengthInterpretations)) return false;
+  if (!isNonEmptyString(data.personalLabel.label)) return false;
+  if (!isNonEmptyString(data.personalLabel.description)) return false;
+  if (!isNonEmptyString(data.summary)) return false;
+  if (!Array.isArray(data.strengthInterpretations) || data.strengthInterpretations.length === 0) return false;
+  for (const item of data.strengthInterpretations) {
+    if (!isNonEmptyString(item?.name)) return false;
+    if (!isNonEmptyString(item?.domain)) return false;
+    if (!isNonEmptyString(item?.whatItIs)) return false;
+    if (!isNonEmptyString(item?.yourStrength)) return false;
+    if (!isNonEmptyString(item?.watchOut)) return false;
+  }
   if (!data.comboInterpretation || typeof data.comboInterpretation !== 'object') return false;
-  if (!Array.isArray(data.domainAnalysis)) return false;
-  if (!Array.isArray(data.keyInsights)) return false;
-  if (!Array.isArray(data.suggestedPaths)) return false;
-  if (typeof data.personalizedAdvice !== 'string') return false;
+  if (!isNonEmptyString(data.comboInterpretation.coreDrive)) return false;
+  if (!Array.isArray(data.comboInterpretation.potentialTraps) || data.comboInterpretation.potentialTraps.length === 0) return false;
+  if (!Array.isArray(data.comboInterpretation.synergies) || data.comboInterpretation.synergies.length === 0) return false;
+  if (!Array.isArray(data.domainAnalysis) || data.domainAnalysis.length === 0) return false;
+  if (!Array.isArray(data.keyInsights) || data.keyInsights.length === 0) return false;
+  if (!Array.isArray(data.suggestedPaths) || data.suggestedPaths.length === 0) return false;
+  if (!isNonEmptyString(data.personalizedAdvice)) return false;
   return true;
 }
 

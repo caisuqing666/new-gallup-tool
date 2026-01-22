@@ -25,6 +25,8 @@ export interface OcrResult {
   confidence: number;
 }
 
+export type OcrMode = 'client' | 'server' | 'auto';
+
 /**
  * 从文本中提取 TOP5 优势
  */
@@ -62,6 +64,44 @@ function convertToStrengthIds(names: string[]): StrengthId[] {
       return strength?.id || null;
     })
     .filter((id): id is StrengthId => id !== null);
+}
+
+async function fetchOcrFromServer(base64Image: string): Promise<OcrResult> {
+  const response = await fetch('/api/ocr', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ image: base64Image }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.success) {
+    const errorMessage = data?.error || 'OCR 识别失败';
+    throw new Error(errorMessage);
+  }
+
+  const top5 = data?.data?.top5 || [];
+  const allText = data?.data?.all_text || data?.data?.allText || '';
+  const confidence = data?.data?.confidence || 0;
+  const top5Ids = convertToStrengthIds(top5);
+
+  return {
+    success: true,
+    top5,
+    top5Ids,
+    allText,
+    confidence,
+  };
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('读取图片失败'));
+    reader.readAsDataURL(file);
+  });
 }
 
 /**
@@ -115,6 +155,59 @@ export async function performOcr(
       confidence: 0,
     };
   }
+}
+
+export async function performOcrUnified(options: {
+  file?: File;
+  base64Image?: string;
+  mode?: OcrMode;
+  onProgress?: (_progress: number) => void;
+}): Promise<OcrResult> {
+  const mode = options.mode || 'auto';
+  const { file, base64Image, onProgress } = options;
+
+  if (mode === 'server') {
+    const imageData = base64Image || (file ? await readFileAsDataUrl(file) : '');
+    if (!imageData) {
+      throw new Error('缺少 OCR 图片数据');
+    }
+    return fetchOcrFromServer(imageData);
+  }
+
+  if (mode === 'client') {
+    if (file) {
+      return performOcr(file, onProgress);
+    }
+    if (base64Image) {
+      return performOcrFromBase64(base64Image, onProgress);
+    }
+    throw new Error('缺少 OCR 图片数据');
+  }
+
+  try {
+    const imageData = base64Image || (file ? await readFileAsDataUrl(file) : '');
+    if (imageData) {
+      return await fetchOcrFromServer(imageData);
+    }
+  } catch (error) {
+    console.warn('OCR 服务不可用，切换到本地识别:', error);
+  }
+
+  if (file) {
+    const clientResult = await performOcr(file, onProgress);
+    if (clientResult.success) {
+      return clientResult;
+    }
+  }
+
+  if (base64Image) {
+    const clientResult = await performOcrFromBase64(base64Image, onProgress);
+    if (clientResult.success) {
+      return clientResult;
+    }
+  }
+
+  throw new Error('OCR 识别失败');
 }
 
 /**

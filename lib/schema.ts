@@ -231,16 +231,38 @@ export function isValidCareerResultData(data: unknown): data is CareerResultData
 export function isValidReportResultData(data: unknown): data is ReportResultData {
   if (!data || typeof data !== 'object') return false;
   const result = data as Record<string, unknown>;
-  if (!Array.isArray(result.top5Strengths)) return false;
+  const isNonEmptyString = (value: unknown) =>
+    typeof value === 'string' && value.trim().length > 0;
+
+  if (!Array.isArray(result.top5Strengths) || result.top5Strengths.length === 0) return false;
+
   const personalLabel = result.personalLabel as Record<string, unknown> | undefined;
-  if (personalLabel && (typeof personalLabel !== 'object' || typeof personalLabel.label !== 'string')) return false;
-  if (result.summary !== undefined && typeof result.summary !== 'string') return false;
-  if (!Array.isArray(result.strengthInterpretations)) return false;
-  if (result.comboInterpretation !== undefined && typeof result.comboInterpretation !== 'object') return false;
-  if (result.domainAnalysis !== undefined && !Array.isArray(result.domainAnalysis)) return false;
-  if (result.keyInsights !== undefined && !Array.isArray(result.keyInsights)) return false;
-  if (result.suggestedPaths !== undefined && !Array.isArray(result.suggestedPaths)) return false;
-  if (result.personalizedAdvice !== undefined && typeof result.personalizedAdvice !== 'string') return false;
+  if (!personalLabel || typeof personalLabel !== 'object') return false;
+  if (!isNonEmptyString(personalLabel.label)) return false;
+  if (!isNonEmptyString(personalLabel.description)) return false;
+
+  if (!isNonEmptyString(result.summary)) return false;
+
+  if (!Array.isArray(result.strengthInterpretations) || result.strengthInterpretations.length === 0) return false;
+  for (const item of result.strengthInterpretations as Record<string, unknown>[]) {
+    if (!isNonEmptyString(item.name)) return false;
+    if (!isNonEmptyString(item.domain)) return false;
+    if (!isNonEmptyString(item.whatItIs)) return false;
+    if (!isNonEmptyString(item.yourStrength)) return false;
+    if (!isNonEmptyString(item.watchOut)) return false;
+  }
+
+  const comboInterpretation = result.comboInterpretation as Record<string, unknown> | undefined;
+  if (!comboInterpretation || typeof comboInterpretation !== 'object') return false;
+  if (!isNonEmptyString(comboInterpretation.coreDrive)) return false;
+  if (!Array.isArray(comboInterpretation.potentialTraps) || comboInterpretation.potentialTraps.length === 0) return false;
+  if (!Array.isArray(comboInterpretation.synergies) || comboInterpretation.synergies.length === 0) return false;
+
+  if (!Array.isArray(result.domainAnalysis) || result.domainAnalysis.length === 0) return false;
+  if (!Array.isArray(result.keyInsights) || result.keyInsights.length === 0) return false;
+  if (!Array.isArray(result.suggestedPaths) || result.suggestedPaths.length === 0) return false;
+
+  if (!isNonEmptyString(result.personalizedAdvice)) return false;
   return true;
 }
 

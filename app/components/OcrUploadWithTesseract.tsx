@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { StrengthId, ALL_STRENGTHS } from '@/lib/gallup-strengths';
-import { performOcr, OcrResult } from '@/lib/ocr-service';
+import { performOcrUnified, OcrResult } from '@/lib/ocr-service';
 import { useTranslations } from 'next-intl';
 
 interface OcrUploadProps {
@@ -40,9 +40,13 @@ export default function OcrUploadWithTesseract({
 
       // 执行 OCR 识别
       try {
-        const result = await performOcr(file, (p) => {
-          setProgress(p);
-          setOcrStatus('recognizing');
+        const result = await performOcrUnified({
+          file,
+          mode: 'client',
+          onProgress: (p) => {
+            setProgress(p);
+            setOcrStatus('recognizing');
+          },
         });
 
         if (result.success && result.top5.length > 0) {

@@ -31,78 +31,110 @@ ENABLE_AI=false
 
 #### 选择 AI 提供商
 
-**方式 1: 智谱 GLM**
+通过 `AI_PROVIDER` 环境变量选择 AI 提供商（默认为 `zhipu`）。修改此变量后需要重启服务或重新部署：
+
+**选项 1: 智谱 GLM**（默认推荐）
 ```bash
 AI_PROVIDER=zhipu
 ZHIPU_API_KEY=your_zhipu_api_key_here
 ```
-
 获取 API Key：https://open.bigmodel.cn/usercenter/apikeys
 
-**方式 2: MiniMax**
+**选项 2: MiniMax**
 ```bash
 AI_PROVIDER=minimax
 MINIMAX_API_KEY=your_minimax_api_key_here
 MINIMAX_GROUP_ID=your_minimax_group_id_here
 ```
-
 获取 API Key：https://platform.minimax.chat/
 
-**方式 3: Anthropic Claude**
+**选项 3: Anthropic Claude**
 ```bash
 AI_PROVIDER=anthropic
 ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxxx
 ```
-
 获取 API Key：https://console.anthropic.com/
 
-**方式 4: OpenAI**
+**选项 4: OpenAI**
 ```bash
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxx
 ```
-
 获取 API Key：https://platform.openai.com/api-keys
+
+**切换提供商示例**：
+```bash
+# 切换到 Anthropic Claude
+AI_PROVIDER=anthropic
+
+# 切换到 OpenAI
+AI_PROVIDER=openai
+
+# 回到默认的 Zhipu
+AI_PROVIDER=zhipu
+```
 
 #### 模型选择
 
 **Claude 模型**
 ```bash
-# 默认（推荐）
+# 详细版本（默认，15-20秒）
 ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
 
-# 更快更便宜
-ANTHROPIC_MODEL=claude-3-haiku-20240307
+# 快速版本（3-5秒）
+ANTHROPIC_FAST_MODEL=claude-3-haiku-20250307
 
-# 最强
+# 最强版本
 ANTHROPIC_MODEL=claude-3-opus-20240229
 ```
 
 **OpenAI 模型**
 ```bash
-# 默认（推荐）
+# 详细版本（默认，15-20秒）
 OPENAI_MODEL=gpt-4o
 
-# 更快更便宜
-OPENAI_MODEL=gpt-3.5-turbo
+# 快速版本（3-5秒）
+OPENAI_FAST_MODEL=gpt-4o-mini
 ```
 
-**智谱模型**
+**智谱 GLM 模型**
 ```bash
-# 默认（推荐）
+# 详细版本（默认，15-20秒）
 ZHIPU_MODEL=glm-4-plus
+
+# 快速版本（3-5秒）
+ZHIPU_FAST_MODEL=glm-4-flash
 
 # 其他可选
 ZHIPU_MODEL=glm-4
 ZHIPU_MODEL=glm-4-air
-ZHIPU_MODEL=glm-4-flash
 ```
 
 **MiniMax 模型**
 ```bash
-# 默认（推荐）
+# 统一模型（快速和详细版本相同）
 MINIMAX_MODEL=abab6.5-chat
 ```
+
+#### 快速/详细模型切换
+
+在 API 请求中使用 `useFastModel` 参数控制：
+
+```bash
+# 使用详细版本（默认，更长更全面的解读）
+curl -X POST http://localhost:3000/api/interpret \
+  -H "Content-Type: application/json" \
+  -d '{"strengths": [...], "useFastModel": false}'
+
+# 使用快速版本（更短更快的解读）
+curl -X POST http://localhost:3000/api/interpret \
+  -H "Content-Type: application/json" \
+  -d '{"strengths": [...], "useFastModel": true}'
+```
+
+**性能对比**：
+- 快速版本（useFastModel=true）：3-5秒，简洁回答
+- 详细版本（useFastModel=false，默认）：15-20秒，深度分析
 
 ---
 

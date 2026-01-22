@@ -13,6 +13,7 @@ import { ProblemType } from '../types';
 import type { GallupResult } from '../schema';
 import { isValidResultData } from '../schema';
 import { generateResult } from '../ai-generate';
+import { createGenerateAIContext } from '../ai-context';
 import { parseConfusion, ProblemType as ConfusionProblemType } from '../confusion-parser';
 import { validateConfig } from '../config-validator';
 
@@ -83,31 +84,21 @@ async function generateWithAI(
   provider: ProviderConfig['provider'],
   locale?: 'zh' | 'en'
 ): Promise<GallupResult> {
-  // 设置环境变量以启用 AI
-  const originalEnableAi = process.env.ENABLE_AI;
-  const originalProvider = process.env.AI_PROVIDER;
-  process.env.ENABLE_AI = 'true';
+  const aiContext = createGenerateAIContext({
+    enableAI: true,
+    ...(provider ? { provider } : {}),
+  });
 
-  try {
-    // 设置 AI 提供商
-    if (provider) {
-      process.env.AI_PROVIDER = provider;
-    }
-
-    return await generateResult(scenario, strengths, confusion, problemType, problemFocus, true, locale);
-  } finally {
-    // 恢复环境变量
-    if (originalEnableAi !== undefined) {
-      process.env.ENABLE_AI = originalEnableAi;
-    } else {
-      delete process.env.ENABLE_AI;
-    }
-    if (originalProvider !== undefined) {
-      process.env.AI_PROVIDER = originalProvider;
-    } else {
-      delete process.env.AI_PROVIDER;
-    }
-  }
+  return await generateResult(
+    scenario,
+    strengths,
+    confusion,
+    problemType,
+    problemFocus,
+    true,
+    locale,
+    aiContext
+  );
 }
 
 // ============================================================

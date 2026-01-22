@@ -4,15 +4,11 @@ import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { StrengthId, ALL_STRENGTHS } from '@/lib/gallup-strengths';
+import { performOcrUnified, OcrResult } from '@/lib/ocr-service';
 
 interface OcrUploadProps {
   onNext: (_strengths: StrengthId[]) => void;
   onBack: () => void;
-}
-
-interface OcrResult {
-  top5: string[];
-  all_text: string;
 }
 
 type OcrStatus = 'idle' | 'uploading' | 'recognizing' | 'success' | 'error';
@@ -29,48 +25,30 @@ export default function OcrUploadPlaceholder({
   const [errorMessage, setErrorMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 将中文优势名转换为 StrengthId
-  const convertToStrengthId = useCallback((chineseName: string): StrengthId | null => {
-    const strength = ALL_STRENGTHS.find(s => s.name === chineseName);
-    return strength?.id || null;
-  }, []);
-
   // 执行 OCR 识别
   const performOcr = useCallback(async (imageData: string) => {
     setOcrStatus('recognizing');
     setErrorMessage('');
 
     try {
-      // 调用 Next.js API 路由
-      const response = await fetch('/api/ocr', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ image: imageData }),
+      const result = await performOcrUnified({
+        base64Image: imageData,
+        mode: 'auto',
       });
 
-      const data = await response.json();
-
-      if (data.success && data.data?.top5) {
-        setOcrResult(data.data);
-        
-        // 转换识别到的优势为 StrengthId
-        const validStrengths = data.data.top5
-          .map((name: string) => convertToStrengthId(name))
-          .filter((id: StrengthId | null): id is StrengthId => id !== null);
-
-        setSelectedStrengths(validStrengths);
-        setOcrStatus('success');
-      } else {
-        throw new Error(data.error || 'OCR 识别失败');
+      if (!result.success) {
+        throw new Error('OCR 识别失败');
       }
+
+      setOcrResult(result);
+      setSelectedStrengths(result.top5Ids);
+      setOcrStatus('success');
     } catch (error) {
       console.error('OCR 错误:', error);
       setErrorMessage(error instanceof Error ? error.message : 'OCR 识别失败');
       setOcrStatus('error');
     }
-  }, [convertToStrengthId]);
+  }, []);
 
   const handleFileSelect = useCallback(async (file: File) => {
     // 创建预览

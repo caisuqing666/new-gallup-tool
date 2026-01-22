@@ -113,8 +113,10 @@ export function createCareerAIContext(overrides?: Partial<AIContext>): AIContext
  * @returns 报告解读 API 专用的 AI 上下文
  */
 export function createInterpretAIContext(overrides?: Partial<AIContext>): AIContext {
+  const baseTimeout = process.env.VERCEL ? 15000 : 30000;
+
   return createAIContext({
-    timeout: parseInt(process.env.API_TIMEOUT || '55000', 10),
+    timeout: parseInt(process.env.API_TIMEOUT || String(baseTimeout), 10),
     ...overrides,
   });
 }

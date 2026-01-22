@@ -121,6 +121,11 @@ export const InterpretRequestSchema = z
       .min(1, '至少需要 1 个优势')
       .max(5, '最多 5 个优势'),
     useAi: z.boolean().optional().default(true),
+    useFastModel: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe('使用快速模型（3-5秒）而非详细模型（15-20秒）'),
     locale: LocaleSchema,
   })
   .strict('不允许额外字段');
