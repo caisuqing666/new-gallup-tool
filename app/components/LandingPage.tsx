@@ -98,16 +98,37 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             })}
           </motion.p>
 
-          {/* CTA 按钮 */}
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            onClick={onStart}
-            className="bg-brand hover:bg-brand-dark text-white px-8 py-4 rounded-lg text-lg font-medium transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 mb-16 sm:mb-20"
-          >
-            {t('cta')}
-          </motion.button>
+          {/* CTA + 支付按钮 */}
+          <div className="flex flex-col sm:flex-row items-start justify-center gap-4 mb-16 sm:mb-20">
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              onClick={onStart}
+              className="bg-brand hover:bg-brand-dark text-white px-8 h-12 inline-flex items-center justify-center rounded-lg text-lg font-medium transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
+            >
+              {t('cta')}
+            </motion.button>
+            <div className="flex flex-col items-center gap-2">
+              <motion.a
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.38, ease: [0.16, 1, 0.3, 1] }}
+                href="https://www.creem.io/test/payment/prod_6et66EkKRDaU7mwOCqIXNH"
+                target="_blank"
+                rel="noreferrer"
+                className="bg-brand hover:bg-brand-dark text-white px-7 h-12 inline-flex items-center justify-center rounded-lg text-lg font-medium transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-glow gap-3"
+              >
+                <span>{t('payCta')}</span>
+                <span className="text-sm tracking-wide bg-white/10 border border-white/20 px-2.5 py-1 rounded-full">
+                  $5.99
+                </span>
+              </motion.a>
+              <span className="text-[11px] text-text-tertiary tracking-wide">
+                One-time payment. No subscription.
+              </span>
+            </div>
+          </div>
 
           {/* 特征数据统计 */}
           <motion.div
