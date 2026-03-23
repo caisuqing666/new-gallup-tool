@@ -41,6 +41,12 @@ export interface GenerateOptions {
   locale?: 'zh' | 'en';
 }
 
+/** 降级原因类型 */
+export type FallbackReason = 'ai_disabled' | 'invalid_config' | 'ai_error' | 'schema_invalid';
+
+/** 有效 Provider 类型 */
+export type EffectiveProviderType = 'ai' | 'mock';
+
 /** 生成结果 */
 export interface GenerateResult {
   data: GallupResult;
@@ -49,6 +55,12 @@ export interface GenerateResult {
     problemType: ProblemType;
     problemFocus: string;
     usedMockFallback: boolean;
+    /** 降级原因 */
+    fallbackReason: FallbackReason | null;
+    /** AI 是否启用（配置层面） */
+    aiEnabled: boolean;
+    /** 实际生效的 Provider 类型 */
+    effectiveProviderType: EffectiveProviderType;
   };
 }
 
@@ -151,7 +163,7 @@ function normalizeProblemFocus(focus: string): string {
 export async function generateActionPlan(options: GenerateOptions): Promise<GenerateResult> {
   const { scenario, strengths, confusion, problemType, problemFocus, provider, locale } = options;
 
-  // 确定 Provider
+  // 确定 Provider 和配置状态
   const config = validateConfig();
   const aiEnabled = config.config.aiEnabled && config.valid;
   if (config.config.aiEnabled && !config.valid) {
@@ -192,41 +204,126 @@ export async function generateActionPlan(options: GenerateOptions): Promise<Gene
     ? normalizeProblemFocus(problemFocus)
     : normalizeProblemFocus(parsedProblem.problemFocus);
 
-  // 根据 Provider 选择生成方式
-  let result: GallupResult;
+  // 初始化 metadata 字段
   let usedMockFallback = false;
+  let fallbackReason: FallbackReason | null = null;
+  let actualProviderType: EffectiveProviderType = 'mock';
 
-  if (effectiveProvider.type === 'mock') {
-    result = await generateWithMock(scenario, strengths, confusion, finalProblemType, finalProblemFocus, locale);
-  } else {
-    try {
-      result = await generateWithAI(scenario, strengths, confusion, finalProblemType, finalProblemFocus, effectiveProvider.provider, locale);
-    } catch (error) {
-      console.warn('AI 生成失败，降级到 Mock:', error);
-      result = await generateWithMock(scenario, strengths, confusion, finalProblemType, finalProblemFocus, locale);
-      usedMockFallback = true;
+  // 情况1：AI 未启用或配置无效 → ai_disabled / invalid_config
+  if (!aiEnabled) {
+    if (config.config.aiEnabled) {
+      fallbackReason = 'invalid_config';
+      console.warn('[action-plan] AI 配置无效，使用 Mock');
+    } else {
+      fallbackReason = 'ai_disabled';
+      console.info('[action-plan] AI 未启用，使用 Mock');
     }
+    const result = await generateWithMock(scenario, strengths, confusion, finalProblemType, finalProblemFocus, locale);
+    return {
+      data: result,
+      provider: effectiveProvider,
+      metadata: {
+        problemType: finalProblemType,
+        problemFocus: finalProblemFocus,
+        usedMockFallback: true,
+        fallbackReason,
+        aiEnabled: false,
+        effectiveProviderType: 'mock',
+      },
+    };
   }
 
-  if (!isValidResultData(result)) {
-    console.warn('生成结果未通过 schema 校验，进行降级处理');
-    if (effectiveProvider.type === 'ai') {
-      result = await generateWithMock(scenario, strengths, confusion, finalProblemType, finalProblemFocus, locale);
-      usedMockFallback = true;
+  // 情况2：AI 启用且配置有效，尝试 AI 生成（最多重试1次）
+  if (effectiveProvider.type === 'ai') {
+    actualProviderType = 'ai';
+    let result!: GallupResult;
+    let attempt = 0;
+    const maxAttempts = 2;
+
+    while (attempt < maxAttempts) {
+      attempt += 1;
+      console.info(`[action-plan] AI 生成尝试 ${attempt}/${maxAttempts}`);
+
+      try {
+        result = await generateWithAI(scenario, strengths, confusion, finalProblemType, finalProblemFocus, effectiveProvider.provider, locale);
+
+        // Schema 校验
+        if (!isValidResultData(result)) {
+          console.warn(`[action-plan] 第 ${attempt} 次尝试未通过 schema 校验`);
+          if (attempt < maxAttempts) {
+            console.info(`[action-plan] 准备第 ${attempt + 1} 次尝试...`);
+            continue;
+          }
+          // 最后一次尝试仍失败，降级到 Mock
+          console.warn('[action-plan] 所有尝试均未通过 schema 校验，降级到 Mock');
+          result = await generateWithMock(scenario, strengths, confusion, finalProblemType, finalProblemFocus, locale);
+          usedMockFallback = true;
+          fallbackReason = 'schema_invalid';
+          actualProviderType = 'mock';
+          break;
+        }
+
+        // 成功：返回结果
+        console.info(`[action-plan] 第 ${attempt} 次尝试成功`);
+        return {
+          data: result,
+          provider: effectiveProvider,
+          metadata: {
+            problemType: finalProblemType,
+            problemFocus: finalProblemFocus,
+            usedMockFallback,
+            fallbackReason,
+            aiEnabled: true,
+            effectiveProviderType: actualProviderType,
+          },
+        };
+      } catch (error) {
+        console.warn(`[action-plan] 第 ${attempt} 次尝试抛错:`, error);
+        if (attempt < maxAttempts) {
+          console.info(`[action-plan] 准备第 ${attempt + 1} 次尝试...`);
+          continue;
+        }
+        // 最后一次尝试仍失败，降级到 Mock
+        console.warn('[action-plan] 所有尝试均失败，降级到 Mock:', error);
+        result = await generateWithMock(scenario, strengths, confusion, finalProblemType, finalProblemFocus, locale);
+        usedMockFallback = true;
+        fallbackReason = 'ai_error';
+        actualProviderType = 'mock';
+        break;
+      }
     }
+
+    // 最终 schema 校验（理论上上面已经保证 result 是有效的，但保留双重检查）
+    if (!isValidResultData(result)) {
+      throw new Error('生成结果未通过 schema 校验');
+    }
+
+    return {
+      data: result,
+      provider: effectiveProvider,
+      metadata: {
+        problemType: finalProblemType,
+        problemFocus: finalProblemFocus,
+        usedMockFallback,
+        fallbackReason,
+        aiEnabled: true,
+        effectiveProviderType: actualProviderType,
+      },
+    };
   }
 
-  if (!isValidResultData(result)) {
-    throw new Error('生成结果未通过 schema 校验');
-  }
-
+  // 情况3：明确指定使用 Mock
+  const result = await generateWithMock(scenario, strengths, confusion, finalProblemType, finalProblemFocus, locale);
   return {
     data: result,
     provider: effectiveProvider,
     metadata: {
       problemType: finalProblemType,
       problemFocus: finalProblemFocus,
-      usedMockFallback,
+      usedMockFallback: true,
+      fallbackReason: 'ai_disabled',
+      aiEnabled,
+      effectiveProviderType: 'mock',
     },
   };
 }
