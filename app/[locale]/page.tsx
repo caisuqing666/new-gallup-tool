@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import LandingPage from '../components/LandingPage';
 import PathSelectionPage from '../components/PathSelectionPage';
@@ -13,6 +13,7 @@ import GuideResultPage from '../components/GuideResultPage';
 import CareerResultPage from '../components/CareerResultPage';
 import OcrUploadWithTesseract from '../components/OcrUploadWithTesseract';
 import ReportResultPlaceholder from '../components/ReportResultPlaceholder';
+import PaywallModal from '../components/PaywallModal';
 import { useStepMachine } from '../hooks/useStepMachine';
 import { GallupResult } from '@/lib/types';
 import { ALL_STRENGTHS } from '@/lib/gallup-strengths';
@@ -27,11 +28,28 @@ export default function Home() {
   const locale = (params.locale as string) || 'zh';
   const { state, actions } = useStepMachine();
   const [mounted, setMounted] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [isPaid, setIsPaid] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // 确保 hydration 匹配
   useEffect(() => {
     setMounted(true);
+    // 从 localStorage 恢复付费状态
+    const storedEmail = localStorage.getItem('gallup_user_email');
+    const storedPaid = localStorage.getItem('gallup_paid');
+    if (storedEmail && storedPaid === 'true') {
+      // 二次验证后端确认
+      fetch(`/api/payment/verify?email=${encodeURIComponent(storedEmail)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.paid) setIsPaid(true);
+          else {
+            localStorage.removeItem('gallup_paid');
+          }
+        })
+        .catch(() => {});
+    }
   }, []);
 
   // 取消生成
@@ -45,6 +63,13 @@ export default function Home() {
   // 提交表单，生成方案
   useEffect(() => {
     if (state.step === 'loading' && !state.resultData && !state.guideData) {
+      // 付费检查：未付费则弹出付费墙，回退到上一步
+      if (!isPaid) {
+        actions.back();
+        setShowPaywall(true);
+        return;
+      }
+
       // 创建新的 AbortController
       abortControllerRef.current = new AbortController();
 
@@ -145,7 +170,7 @@ export default function Home() {
       generateResult();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.step, state.path]);
+  }, [state.step, state.path, isPaid]);
 
   const handleSave = (savedData: GallupResult) => {
     console.log('用户保存了方案:', {
@@ -173,20 +198,23 @@ export default function Home() {
   }
 
   // 渲染当前步骤（使用状态机统一管理）
+  let pageContent: React.ReactNode;
   switch (state.step) {
     case 'landing':
-      return <LandingPage onStart={actions.start} />;
+      pageContent = <LandingPage onStart={actions.start} />;
+      break;
 
     case 'path-selection':
-      return (
+      pageContent = (
         <PathSelectionPage
           onSelectPath={actions.selectPath}
           onBack={actions.back}
         />
       );
+      break;
 
     case 'scenario':
-      return (
+      pageContent = (
         <ScenarioPage
           selectedScenario={state.formData.scenario}
           onSelectScenario={actions.selectScenario}
@@ -194,6 +222,7 @@ export default function Home() {
           onBack={actions.back}
         />
       );
+      break;
 
     case 'strengths': {
       // 根据路径决定下一步的处理
@@ -207,7 +236,7 @@ export default function Home() {
         }
       };
 
-      return (
+      pageContent = (
         <StrengthsPage
           selectedStrengths={state.formData.strengths}
           onSelectStrength={(strengthId) => {
@@ -224,10 +253,11 @@ export default function Home() {
           path={state.path}
         />
       );
+      break;
     }
 
     case 'input':
-      return (
+      pageContent = (
         <InputPage
           selectedStrengths={state.formData.strengths}
           confusion={state.formData.confusion}
@@ -236,18 +266,20 @@ export default function Home() {
           onBack={actions.back}
         />
       );
+      break;
 
     case 'loading':
-      return (
+      pageContent = (
         <LoadingPage
           selectedStrengths={state.formData.strengths}
           confusion={state.formData.confusion}
           onCancel={handleCancelGeneration}
         />
       );
+      break;
 
     case 'result':
-      return state.resultData ? (
+      pageContent = state.resultData ? (
         <ResultPage
           explainData={state.resultData.explain}
           decideData={state.resultData.decide}
@@ -260,9 +292,10 @@ export default function Home() {
           <p className="text-gray-600">加载中...</p>
         </div>
       );
+      break;
 
     case 'guide-result':
-      return state.guideData ? (
+      pageContent = state.guideData ? (
         <GuideResultPage
           guideData={state.guideData}
           strengths={state.formData.strengths}
@@ -274,9 +307,10 @@ export default function Home() {
           <p className="text-gray-600">加载中...</p>
         </div>
       );
+      break;
 
     case 'career-result':
-      return state.careerData ? (
+      pageContent = state.careerData ? (
         <CareerResultPage
           careerData={state.careerData}
           strengths={state.formData.strengths}
@@ -288,6 +322,7 @@ export default function Home() {
           <p className="text-gray-600">加载中...</p>
         </div>
       );
+      break;
 
     case 'ocr-upload':
       return (
@@ -341,9 +376,10 @@ export default function Home() {
           onBack={actions.back}
         />
       );
+      break;
 
     case 'report-result':
-      return state.reportData ? (
+      pageContent = state.reportData ? (
         <ReportResultPlaceholder
           reportData={state.reportData}
           onBack={actions.back}
@@ -353,8 +389,24 @@ export default function Home() {
           <p className="text-gray-600">加载中...</p>
         </div>
       );
+      break;
 
     default:
-      return <LandingPage onStart={actions.start} />;
+      pageContent = <LandingPage onStart={actions.start} />;
   }
+
+  return (
+    <>
+      {pageContent}
+      {showPaywall && (
+        <PaywallModal
+          onSuccess={(email) => {
+            setIsPaid(true);
+            setShowPaywall(false);
+          }}
+          onClose={() => setShowPaywall(false)}
+        />
+      )}
+    </>
+  );
 }

@@ -1,0 +1,43 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+
+export default function PaymentSuccessPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const email = searchParams.get('email') || '';
+
+  useEffect(() => {
+    // 存储邮箱到 localStorage，下次自动识别
+    if (email) {
+      localStorage.setItem('gallup_user_email', email);
+      localStorage.setItem('gallup_paid', 'true');
+    }
+  }, [email]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-bg-primary">
+      <div className="text-center max-w-md px-6">
+        <div className="text-5xl mb-6">🎉</div>
+        <h1 className="text-2xl font-semibold text-text-primary mb-3">
+          支付成功，已永久解锁
+        </h1>
+        <p className="text-text-secondary mb-2">
+          感谢你的支持！
+        </p>
+        {email && (
+          <p className="text-text-secondary text-sm mb-8">
+            解锁邮箱：<span className="text-brand font-medium">{email}</span>
+          </p>
+        )}
+        <button
+          onClick={() => router.push('/')}
+          className="bg-brand text-white px-8 py-3 rounded-xl font-medium hover:opacity-90 transition-opacity"
+        >
+          开始使用
+        </button>
+      </div>
+    </div>
+  );
+}
