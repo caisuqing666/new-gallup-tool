@@ -196,9 +196,20 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         transition={{ duration: 1, delay: 0.6 }}
         className="pb-8 text-center"
       >
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-gray-400 mb-4">
           {t('footer')}
         </p>
+        {/* 免责声明 + 法律链接 */}
+        <p className="text-[11px] text-gray-400 max-w-md mx-auto mb-3 px-4 leading-relaxed">
+          This product is not affiliated with, endorsed by, or associated with Gallup, Inc. CliftonStrengths® is a registered trademark of Gallup, Inc.
+        </p>
+        <div className="flex items-center justify-center gap-4 text-[11px] text-gray-400">
+          <a href="/privacy" className="hover:text-gray-600 underline underline-offset-2 transition-colors">Privacy Policy</a>
+          <span>·</span>
+          <a href="/terms" className="hover:text-gray-600 underline underline-offset-2 transition-colors">Terms of Service</a>
+          <span>·</span>
+          <a href="mailto:cahalthang747@gmail.com" className="hover:text-gray-600 underline underline-offset-2 transition-colors">Support</a>
+        </div>
       </motion.div>
     </div>
   );
