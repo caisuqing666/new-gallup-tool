@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import LanguageSwitcher from './LanguageSwitcher';
 
 interface LandingPageProps {
@@ -204,11 +205,11 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           This product is not affiliated with, endorsed by, or associated with Gallup, Inc. CliftonStrengths® is a registered trademark of Gallup, Inc.
         </p>
         <div className="flex items-center justify-center gap-4 text-[11px] text-gray-400">
-          <a href="/privacy" className="hover:text-gray-600 underline underline-offset-2 transition-colors">Privacy Policy</a>
+          <Link href="/privacy" className="hover:text-gray-600 underline underline-offset-2 transition-colors">Privacy Policy</Link>
           <span>·</span>
-          <a href="/terms" className="hover:text-gray-600 underline underline-offset-2 transition-colors">Terms of Service</a>
+          <Link href="/terms" className="hover:text-gray-600 underline underline-offset-2 transition-colors">Terms of Service</Link>
           <span>·</span>
-          <a href="mailto:cahalthang747@gmail.com" className="hover:text-gray-600 underline underline-offset-2 transition-colors">Support</a>
+          <a href="mailto:hello@gallup-tool.com" className="hover:text-gray-600 underline underline-offset-2 transition-colors">Support</a>
         </div>
       </motion.div>
     </div>
