@@ -110,20 +110,22 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               {t('cta')}
             </motion.button>
             <div className="flex flex-col items-center gap-2">
-              <motion.a
+              <motion.button
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.38, ease: [0.16, 1, 0.3, 1] }}
-                href="https://www.creem.io/test/payment/prod_6et66EkKRDaU7mwOCqIXNH"
-                target="_blank"
-                rel="noreferrer"
+                onClick={async () => {
+                  const res = await fetch('/api/payment/checkout', { method: 'POST' });
+                  const data = await res.json();
+                  if (data.url) window.location.href = data.url;
+                }}
                 className="bg-brand hover:bg-brand-dark text-white px-7 h-12 inline-flex items-center justify-center rounded-lg text-lg font-medium transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-glow gap-3"
               >
                 <span>{t('payCta')}</span>
                 <span className="text-sm tracking-wide bg-white/10 border border-white/20 px-2.5 py-1 rounded-full">
                   $5.99
                 </span>
-              </motion.a>
+              </motion.button>
               <span className="text-[11px] text-text-tertiary tracking-wide">
                 One-time payment. No subscription.
               </span>
