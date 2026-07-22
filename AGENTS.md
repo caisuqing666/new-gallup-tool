@@ -37,3 +37,6 @@
 ## Configuration & Security Notes
 - Copy `.env.local.example` to `.env.local` and update keys; see `CONFIG.md` for details.
 - Never commit secrets; `.env.local` is gitignored.
+
+## 操作原则
+- **删除文件必须用 `trash` 命令，严禁使用 `rm`**（`trash` 移入回收站，可恢复；`rm` 永久删除，不可逆）

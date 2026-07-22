@@ -823,33 +823,33 @@ export async function generateResult(
     const scenarioTitle = SCENARIOS.find(s => s.id === scenario)?.title || scenario;
 
     // ═══════════════════════════════════════════════════════════
-    // 第零步：生成理解层转译
+    // 第零步（并行）：生成理解层转译
     // 将用户的困惑，转译为「揭示内在控制机制」的结构化理解
+    // 性能优化：不立即 await，而是启动 Promise，让其在后台执行
+    // 在真正需要结果时（构建 decidePrompt 前）再 await
     // ═══════════════════════════════════════════════════════════
     const understandingStart = Date.now();
-    let confusionUnderstanding: ConfusionUnderstanding | undefined;
-    try {
-      const understandingInput: UnderstandingInput = {
-        confusion,
-        scenarioTitle,
-      };
-      // 默认使用智谱 GLM4
-      const understandingProvider = config.provider === 'minimax' ? undefined : config.provider;
-      if (understandingProvider) {
-        confusionUnderstanding = await generateUnderstanding(understandingInput, understandingProvider);
-      }
-      timing.understandingMs = Date.now() - understandingStart;
-      console.info('✓ 已生成理解层转译:', {
-        coreBlock: confusionUnderstanding?.coreBlock?.substring(0, 40) + '...',
-        decisionTension: confusionUnderstanding?.decisionTension,
-      });
-    } catch (error) {
-      timing.understandingMs = Date.now() - understandingStart;
-      console.warn('理解层转译生成失败，将继续使用基础流程:', error);
-      // 理解层转译失败不影响后续流程
-    }
+    const understandingProvider = config.provider === 'minimax' ? undefined : config.provider;
 
-    // 第一步：使用统一的 buildPrompt 函数构建 prompt
+    // 启动理解层转译 Promise（不阻塞后续流程）
+    const understandingPromise: Promise<ConfusionUnderstanding | undefined> = (async () => {
+      if (!understandingProvider) {
+        return undefined;
+      }
+
+      try {
+        const understandingInput: UnderstandingInput = {
+          confusion,
+          scenarioTitle,
+        };
+        return await generateUnderstanding(understandingInput, understandingProvider);
+      } catch (error) {
+        console.warn('理解层转译生成失败，将继续使用基础流程:', error);
+        return undefined;
+      }
+    })();
+
+    // 第一步：使用统一的 buildPrompt 函数构建 prompt（立即执行，不等待 understanding）
     // 这是唯一的 prompt 构建入口，确保所有路径使用一致的规范
     const explainPrompt = buildPrompt({
       pathType: 'breakthrough-explain',
@@ -862,6 +862,21 @@ export async function generateResult(
         locale,
       },
     });
+
+    // 在真正需要 understanding 结果时再 await
+    let confusionUnderstanding: ConfusionUnderstanding | undefined;
+    try {
+      confusionUnderstanding = await understandingPromise;
+      timing.understandingMs = Date.now() - understandingStart;
+      console.info('✓ 已生成理解层转译:', {
+        coreBlock: confusionUnderstanding?.coreBlock?.substring(0, 40) + '...',
+        decisionTension: confusionUnderstanding?.decisionTension,
+      });
+    } catch (error) {
+      timing.understandingMs = Date.now() - understandingStart;
+      console.warn('理解层转译生成失败，将继续使用基础流程:', error);
+      // 理解层转译失败不影响后续流程
+    }
 
     const decidePrompt = buildPrompt({
       pathType: 'breakthrough-decide',
